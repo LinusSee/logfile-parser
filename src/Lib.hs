@@ -41,8 +41,18 @@ loglevelParser = do
 
 messageParser :: Parsec.Parsec String () String
 messageParser = do
-  message <- Parsec.manyTill Parsec.anyChar Parsec.eof
+  message <- Parsec.manyTill Parsec.anyChar eolParser
   return message
+
+newlineParser :: Parsec.Parsec String () ()
+newlineParser = do
+  Parsec.choice [Parsec.string "\n", Parsec.string "\r\n"]
+  return ()
+
+eolParser :: Parsec.Parsec String () ()
+eolParser = do
+  Parsec.choice [newlineParser, Parsec.eof]
+  return ()
 
 toParseThemAll :: Parsec.Parsec String () (String, String, String, String)
 toParseThemAll = do

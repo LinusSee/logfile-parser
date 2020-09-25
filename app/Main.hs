@@ -11,7 +11,7 @@ dateInput :: String
 dateInput = "2011-11-23 17:08:00,769 random continuation"
 
 fullInputSample :: String
-fullInputSample = "2011-11-23 17:08:00,769 WARN random continuation to have a dummy message"
+fullInputSample = "2011-11-23 17:08:00,769 WARN random continuation to have a dummy message \nstuff continues"
 
 main :: IO ()
 --main = putStrLn (show $ parse dateTimeParser dateInput)
