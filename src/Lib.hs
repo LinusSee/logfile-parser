@@ -3,6 +3,7 @@ module Lib
     , dateParser
     , dateTimeParser
     , loglevelParser
+    , toParseThemAll
     ) where
 
 import qualified Text.Parsec as Parsec
@@ -27,20 +28,32 @@ timeParser = do
   ms <- Parsec.count 3 Parsec.digit
   return (hours ++ [sep1] ++ minutes ++ [sep2] ++ seconds ++ [sep3] ++ ms)
 
-dateTimeParser :: Parsec.Parsec String () String
+dateTimeParser :: Parsec.Parsec String () (String, String)
 dateTimeParser = do
   date <- dateParser
   Parsec.char ' '
   time <- timeParser
-  return (date ++ [' '] ++ time)
+  return (date, time)
 
 loglevelParser :: Parsec.Parsec String () String
 loglevelParser = do
   Parsec.choice (map Parsec.string ["DEBUG", "WARN"])
 
---toParseThemAll :: Parsec.Parsec String () (String, String)
---toParseThemAll = do
+messageParser :: Parsec.Parsec String () String
+messageParser = do
+  message <- Parsec.manyTill Parsec.anyChar Parsec.eof
+  return message
 
+toParseThemAll :: Parsec.Parsec String () (String, String, String, String)
+toParseThemAll = do
+  date <- dateParser
+  Parsec.char ' '
+  time <- timeParser
+  Parsec.char ' '
+  loglevel <- loglevelParser
+  Parsec.char ' '
+  message <- messageParser
+  return (date, time, loglevel, message)
 
 
 someFunc :: IO ()
