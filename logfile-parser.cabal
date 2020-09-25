@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ec10b24d0a0b41c0c4cf84e4012605e66fbc62156b1ad8bd2d1d8dc32b60dd96
+-- hash: 09f78a2c9957d4b5be38ef9b66fc3381cc803d03a2d48360686a73ae34a87e33
 
 name:           logfile-parser
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
   build-depends:
       base >=4.7 && <5
     , parsec
+    , time
   default-language: Haskell2010
 
 executable logfile-parser-exe
@@ -48,6 +49,7 @@ executable logfile-parser-exe
       base >=4.7 && <5
     , logfile-parser
     , parsec
+    , time
   default-language: Haskell2010
 
 test-suite logfile-parser-test
@@ -62,4 +64,5 @@ test-suite logfile-parser-test
       base >=4.7 && <5
     , logfile-parser
     , parsec
+    , time
   default-language: Haskell2010
