@@ -1,10 +1,5 @@
 module Lib
-    ( someFunc
-    , dateParser
-    , dateTimeParser
-    , loglevelParser
-    , toParseThemAll
-    , fileParser
+    ( fileParser
     ) where
 
 import qualified Text.Parsec as Parsec
@@ -66,10 +61,6 @@ toParseThemAll = do
   message <- messageParser
   return (date, time, loglevel, message)
 
-fileParser :: Parsec.Parsec String () [(String, String, String, String)]
-fileParser = do
-  fileContent <- Parsec.manyTill toParseThemAll Parsec.eof
-  return fileContent
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+fileParser :: Parsec.Parsec String () [(String, String, String, String)]
+fileParser = Parsec.manyTill toParseThemAll Parsec.eof
