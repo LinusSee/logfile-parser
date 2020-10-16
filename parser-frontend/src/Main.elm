@@ -7,9 +7,9 @@ module Main exposing (..)
 --
 
 import Browser
-import Html exposing (Html, button, div, input, label, text)
+import Html exposing (Html, button, div, h2, input, label, text)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 
 
 
@@ -25,12 +25,18 @@ main =
 
 
 type alias Model =
-    Int
+    { patternType : String
+    , matching : String
+    , name : String
+    }
 
 
 init : Model
 init =
-    0
+    { patternType = ""
+    , matching = ""
+    , name = ""
+    }
 
 
 
@@ -38,18 +44,36 @@ init =
 
 
 type Msg
-    = Reset
+    = ChangePatternType String
+    | ChangeMatching String
+    | ChangeName String
+    | Reset
     | Submit
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
+        ChangePatternType newTypeContent ->
+            { model | patternType = newTypeContent }
+
+        ChangeMatching newMatchingContent ->
+            { model | matching = newMatchingContent }
+
+        ChangeName newName ->
+            { model | name = newName }
+
         Reset ->
-            model + 1
+            { patternType = ""
+            , matching = ""
+            , name = ""
+            }
 
         Submit ->
-            model - 1
+            { patternType = ""
+            , matching = ""
+            , name = "Submitted"
+            }
 
 
 
@@ -58,21 +82,22 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.form []
-        [ div []
+    div []
+        [ h2 [] [ text "Create specialized parsers" ]
+        , div []
             [ label []
                 [ text "Type"
-                , input [ placeholder "e.g. one of" ] []
+                , input [ placeholder "e.g. one of", value model.patternType, onInput ChangePatternType ] []
                 ]
             , label []
                 [ text "Matching"
-                , input [ placeholder "'a', 'b', 'c'" ] []
+                , input [ placeholder "'a', 'b', 'c'", value model.matching, onInput ChangeMatching ] []
                 ]
             ]
         , div []
             [ label []
                 [ text "Name"
-                , input [ placeholder "Loglevel oneof" ] []
+                , input [ placeholder "Loglevel oneof", value model.name, onInput ChangeName ] []
                 ]
             ]
         , div []
