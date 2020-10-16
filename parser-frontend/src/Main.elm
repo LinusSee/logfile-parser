@@ -7,7 +7,7 @@ module Main exposing (..)
 --
 
 import Browser
-import Html exposing (Html, button, div, h2, input, label, text)
+import Html exposing (Html, button, div, h2, input, label, option, select, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 
@@ -87,7 +87,13 @@ view model =
         , div []
             [ label []
                 [ text "Type"
-                , input [ placeholder "e.g. one of", value model.patternType, onInput ChangePatternType ] []
+                , select [ value model.patternType, onInput ChangePatternType ]
+                    [ option [ value "asdf1", selected (model.patternType == "asdf1") ] [ text "Option 1" ]
+                    , option [ value "qwert2", selected (model.patternType == "qwert2") ] [ text "Option 2" ]
+                    , option [ value "yxcv3", selected (model.patternType == "yxcv3") ] [ text "Option 3" ]
+                    ]
+
+                --, input [ placeholder "e.g. one of", value model.patternType, onInput ChangePatternType ] []
                 ]
             , label []
                 [ text "Matching"
