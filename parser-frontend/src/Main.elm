@@ -7,7 +7,8 @@ module Main exposing (..)
 --
 
 import Browser
-import Html exposing (Html, button, div, text)
+import Html exposing (Html, button, div, input, label, text)
+import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 
 
@@ -37,17 +38,17 @@ init =
 
 
 type Msg
-    = Increment
-    | Decrement
+    = Reset
+    | Submit
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        Increment ->
+        Reset ->
             model + 1
 
-        Decrement ->
+        Submit ->
             model - 1
 
 
@@ -57,8 +58,25 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    form []
-        [ button [ onClick Decrement ] [ text "-" ]
-        , div [] [ text (String.fromInt model) ]
-        , button [ onClick Increment ] [ text "+" ]
+    Html.form []
+        [ div []
+            [ label []
+                [ text "Type"
+                , input [ placeholder "e.g. one of" ] []
+                ]
+            , label []
+                [ text "Matching"
+                , input [ placeholder "'a', 'b', 'c'" ] []
+                ]
+            ]
+        , div []
+            [ label []
+                [ text "Name"
+                , input [ placeholder "Loglevel oneof" ] []
+                ]
+            ]
+        , div []
+            [ button [ onClick Reset ] [ text "Reset" ]
+            , button [ onClick Submit ] [ text "Submit" ]
+            ]
         ]
