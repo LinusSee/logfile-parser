@@ -89,7 +89,7 @@ update msg model =
             case result of
                 Ok data ->
                     ( Success
-                        { patternType = ""
+                        { patternType = "asdf1"
                         , matching = ""
                         , name = ""
                         }
@@ -110,10 +110,7 @@ update msg model =
 
                 Success formData loadedData ->
                     ( Success { formData | patternType = newTypeContent }
-                        { val1 = 1
-                        , val2 = ""
-                        , val3 = ""
-                        }
+                        loadedData
                     , Cmd.none
                     )
 
@@ -127,10 +124,7 @@ update msg model =
 
                 Success formData loadedData ->
                     ( Success { formData | matching = newMatchingContent }
-                        { val1 = 1
-                        , val2 = ""
-                        , val3 = ""
-                        }
+                        loadedData
                     , Cmd.none
                     )
 
@@ -144,16 +138,13 @@ update msg model =
 
                 Success formData loadedData ->
                     ( Success { formData | name = newName }
-                        { val1 = 1
-                        , val2 = ""
-                        , val3 = ""
-                        }
+                        loadedData
                     , Cmd.none
                     )
 
         Reset ->
             ( Success
-                { patternType = ""
+                { patternType = "qwert2"
                 , matching = ""
                 , name = ""
                 }
@@ -166,7 +157,7 @@ update msg model =
 
         Submit ->
             ( Success
-                { patternType = ""
+                { patternType = "yxcv3"
                 , matching = ""
                 , name = "Submitted"
                 }
