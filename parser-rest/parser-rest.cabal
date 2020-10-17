@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6104efe997cd91632ab38ca9dc1cab7b7b344cac1019c700f5edc206eb2d28cb
+-- hash: c443534647dcf769a3dd9a52ecc8224d06e3eb8de992c3b1b4e15737976aba9e
 
 name:           parser-rest
 version:        0.1.0.0
@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:
+      CustomParsers
       Lib
   other-modules:
       Paths_parser_rest
@@ -35,6 +36,7 @@ library
       aeson
     , base >=4.7 && <5
     , servant-server
+    , text
     , wai
     , wai-cors
     , warp
@@ -52,6 +54,7 @@ executable parser-rest-exe
     , base
     , parser-rest
     , servant-server
+    , text
     , wai
     , wai-cors
     , warp
@@ -73,6 +76,7 @@ test-suite parser-rest-test
     , hspec-wai-json
     , parser-rest
     , servant-server
+    , text
     , wai
     , wai-cors
     , warp

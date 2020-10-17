@@ -13,6 +13,9 @@ import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 
+import CustomParsers
+
+
 data User = User
   { userId        :: Int
   , userFirstName :: String
@@ -31,8 +34,11 @@ $(deriveJSON defaultOptions ''DummyData)
 type API = "api" :>
       (    "users" :> Get '[JSON] [User]
       :<|> "sample" :> Get '[JSON] DummyData
-      :<|> "simple-string" :> Get '[JSON] String
+      :<|> "simple-parser" :> Get '[JSON] ElementaryParser
       )
+
+myElementaryParser :: ElementaryParser
+myElementaryParser = OneOf ["Hello", "World", "!"]
 
 startApp :: IO ()
 startApp = run 8080 $ simpleCors app
@@ -47,7 +53,7 @@ server :: Server API
 server =
        return users
   :<|> return dummyData
-  :<|> return "A simple string!"
+  :<|> return myElementaryParser--"A simple string!"
 
 
 users :: [User]
