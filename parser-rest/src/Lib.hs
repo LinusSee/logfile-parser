@@ -18,9 +18,19 @@ data User = User
   , userLastName  :: String
   } deriving (Eq, Show)
 
-$(deriveJSON defaultOptions ''User)
+data DummyData = DummyData
+  { dummy1 :: Int
+  , dummy2 :: String
+  , dummy3 :: String
+  } deriving (Eq, Show)
 
-type API = "users" :> Get '[JSON] [User]
+$(deriveJSON defaultOptions ''User)
+$(deriveJSON defaultOptions ''DummyData)
+
+type API = "api" :>
+      (    "users" :> Get '[JSON] [User]
+      :<|> "sample" :> Get '[JSON] DummyData
+      )
 
 startApp :: IO ()
 startApp = run 8080 app
@@ -32,9 +42,15 @@ api :: Proxy API
 api = Proxy
 
 server :: Server API
-server = return users
+server =
+       return users
+  :<|> return dummyData
+
 
 users :: [User]
 users = [ User 1 "Isaac" "Newton"
         , User 2 "Albert" "Einstein"
         ]
+
+dummyData :: DummyData
+dummyData = DummyData 5 "MyString1" "OtherString"
