@@ -11,6 +11,7 @@ import Html exposing (Html, button, div, h2, input, label, option, select, text)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Json.Decode exposing (Decoder, field, int, map3, string)
 
 
 
@@ -33,7 +34,7 @@ main =
 type Model
     = Failure
     | Loading
-    | Success PatternFormData String
+    | Success PatternFormData SampleData
 
 
 type alias PatternFormData =
@@ -54,8 +55,8 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading
     , Http.get
-        { url = "http://localhost:8080/api/simple-string"
-        , expect = Http.expectString GotDummyData
+        { url = "http://localhost:8080/api/sample"
+        , expect = Http.expectJson GotDummyData sampleDataDecoder
         }
     )
 
@@ -73,7 +74,7 @@ init _ =
 
 
 type Msg
-    = GotDummyData (Result Http.Error String)
+    = GotDummyData (Result Http.Error SampleData)
     | ChangePatternType String
     | ChangeMatching String
     | ChangeName String
@@ -108,7 +109,13 @@ update msg model =
                     ( Failure, Cmd.none )
 
                 Success formData loadedData ->
-                    ( Success { formData | patternType = newTypeContent } "ChangePatternType", Cmd.none )
+                    ( Success { formData | patternType = newTypeContent }
+                        { val1 = 1
+                        , val2 = ""
+                        , val3 = ""
+                        }
+                    , Cmd.none
+                    )
 
         ChangeMatching newMatchingContent ->
             case model of
@@ -119,7 +126,13 @@ update msg model =
                     ( Failure, Cmd.none )
 
                 Success formData loadedData ->
-                    ( Success { formData | matching = newMatchingContent } "ChangeMatching", Cmd.none )
+                    ( Success { formData | matching = newMatchingContent }
+                        { val1 = 1
+                        , val2 = ""
+                        , val3 = ""
+                        }
+                    , Cmd.none
+                    )
 
         ChangeName newName ->
             case model of
@@ -130,7 +143,13 @@ update msg model =
                     ( Failure, Cmd.none )
 
                 Success formData loadedData ->
-                    ( Success { formData | name = newName } "ChangeName", Cmd.none )
+                    ( Success { formData | name = newName }
+                        { val1 = 1
+                        , val2 = ""
+                        , val3 = ""
+                        }
+                    , Cmd.none
+                    )
 
         Reset ->
             ( Success
@@ -138,7 +157,10 @@ update msg model =
                 , matching = ""
                 , name = ""
                 }
-                "Reset"
+                { val1 = 1
+                , val2 = ""
+                , val3 = ""
+                }
             , Cmd.none
             )
 
@@ -148,7 +170,10 @@ update msg model =
                 , matching = ""
                 , name = "Submitted"
                 }
-                "Submit"
+                { val1 = 1
+                , val2 = ""
+                , val3 = ""
+                }
             , Cmd.none
             )
 
@@ -204,5 +229,17 @@ view model =
                     [ button [ onClick Reset ] [ text "Reset" ]
                     , button [ onClick Submit ] [ text "Submit" ]
                     ]
-                , text ("Loaded this string: " ++ loadedData)
+                , text ("Loaded this string: " ++ loadedData.val2)
                 ]
+
+
+
+-- HTTP
+
+
+sampleDataDecoder : Decoder SampleData
+sampleDataDecoder =
+    map3 SampleData
+        (field "dummy1" int)
+        (field "dummy2" string)
+        (field "dummy3" string)
