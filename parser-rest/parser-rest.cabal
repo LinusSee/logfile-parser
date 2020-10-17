@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6be8eada2086294e7ede6bf79bd67fa0d60c6f6ef3186d2550e7d830a7acda74
+-- hash: 6104efe997cd91632ab38ca9dc1cab7b7b344cac1019c700f5edc206eb2d28cb
 
 name:           parser-rest
 version:        0.1.0.0
@@ -36,6 +36,7 @@ library
     , base >=4.7 && <5
     , servant-server
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -52,6 +53,7 @@ executable parser-rest-exe
     , parser-rest
     , servant-server
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010
 
@@ -72,5 +74,6 @@ test-suite parser-rest-test
     , parser-rest
     , servant-server
     , wai
+    , wai-cors
     , warp
   default-language: Haskell2010

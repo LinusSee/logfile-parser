@@ -10,6 +10,7 @@ import Data.Aeson
 import Data.Aeson.TH
 import Network.Wai
 import Network.Wai.Handler.Warp
+import Network.Wai.Middleware.Cors (simpleCors)
 import Servant
 
 data User = User
@@ -30,10 +31,11 @@ $(deriveJSON defaultOptions ''DummyData)
 type API = "api" :>
       (    "users" :> Get '[JSON] [User]
       :<|> "sample" :> Get '[JSON] DummyData
+      :<|> "simple-string" :> Get '[JSON] String
       )
 
 startApp :: IO ()
-startApp = run 8080 app
+startApp = run 8080 $ simpleCors app
 
 app :: Application
 app = serve api server
@@ -45,6 +47,7 @@ server :: Server API
 server =
        return users
   :<|> return dummyData
+  :<|> return "A simple string!"
 
 
 users :: [User]

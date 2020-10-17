@@ -23,6 +23,7 @@ dependencies:
 - aeson
 - servant-server
 - wai
+- wai-cors
 - warp
 
 library:
