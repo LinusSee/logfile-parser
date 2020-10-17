@@ -92,7 +92,7 @@ update msg model =
                         , matching = ""
                         , name = ""
                         }
-                        "GotResult"
+                        data
                     , Cmd.none
                     )
 
@@ -204,4 +204,5 @@ view model =
                     [ button [ onClick Reset ] [ text "Reset" ]
                     , button [ onClick Submit ] [ text "Submit" ]
                     ]
+                , text ("Loaded this string: " ++ loadedData)
                 ]
