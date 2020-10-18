@@ -33,6 +33,7 @@ $(deriveJSON defaultOptions ''DummyData)
 
 type API = "api" :>
       (    "users" :> Get '[JSON] [User]
+      :<|> "parsers" :> "building-blocks" :> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
       :<|> "sample" :> Get '[JSON] DummyData
       :<|> "simple-parser" :> Get '[JSON] ElementaryParser
       )
@@ -52,6 +53,7 @@ api = Proxy
 server :: Server API
 server =
        return users
+  :<|> (\_parser -> return NoContent)
   :<|> return dummyData
   :<|> return myElementaryParser--"A simple string!"
 

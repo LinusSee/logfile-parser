@@ -15,20 +15,23 @@ data ElementaryParser =
   | Date DatePattern
   | Characters String
 
-oneOfType :: Text
-oneOfType = "oneOf"
-
-timeType :: Text
-timeType = "time"
-
-dateType :: Text
-dateType = "date"
-
-charactersType :: Text
-charactersType = "characters"
 
 instance ToJSON ElementaryParser where
-  toJSON (OneOf xs)     = object [ "type" .= oneOfType,      "values" .= xs ]
-  toJSON (Time p)       = object [ "type" .= timeType,       "pattern" .= p ]
-  toJSON (Date p)       = object [ "type" .= dateType,       "pattern" .= p ]
-  toJSON (Characters s) = object [ "type" .= charactersType, "value" .= s ]
+  toJSON (OneOf xs)     = object [ "type" .= ("oneOf" :: Text),      "values" .= xs ]
+  toJSON (Time p)       = object [ "type" .= ("time" :: Text),       "pattern" .= p ]
+  toJSON (Date p)       = object [ "type" .= ("date" :: Text),       "pattern" .= p ]
+  toJSON (Characters s) = object [ "type" .= ("characters" :: Text), "value" .= s ]
+
+instance FromJSON ElementaryParser where
+  parseJSON (Object o) =
+    do parserType <- o .: "type"
+       case parserType of String "oneOf"      -> OneOf      <$> o .: "values"
+                          String "time"       -> Time       <$> o .: "pattern"
+                          String "date"       -> Date       <$> o .: "pattern"
+                          String "characters" -> Characters <$> o .: "value"
+
+-- toElementaryParser :: Text -> Text -> ElementaryParser
+-- toElementaryParser "oneOf"      = OneOf
+-- toElementaryParser "time"       = Time
+-- toElementaryParser "date"       = Date
+-- toElementaryParser "characters" = Characters
