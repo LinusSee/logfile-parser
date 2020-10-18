@@ -89,7 +89,7 @@ update msg model =
             case result of
                 Ok data ->
                     ( Success
-                        { patternType = "asdf1"
+                        { patternType = "oneOf"
                         , matching = ""
                         , name = ""
                         }
@@ -144,7 +144,7 @@ update msg model =
 
         Reset ->
             ( Success
-                { patternType = "qwert2"
+                { patternType = "oneOf"
                 , matching = ""
                 , name = ""
                 }
@@ -157,7 +157,7 @@ update msg model =
 
         Submit ->
             ( Success
-                { patternType = "yxcv3"
+                { patternType = "oneOf"
                 , matching = ""
                 , name = "Submitted"
                 }
@@ -198,9 +198,10 @@ view model =
                     [ label []
                         [ text "Type"
                         , select [ value formData.patternType, onInput ChangePatternType ]
-                            [ option [ value "asdf1", selected (formData.patternType == "asdf1") ] [ text "Option 1" ]
-                            , option [ value "qwert2", selected (formData.patternType == "qwert2") ] [ text "Option 2" ]
-                            , option [ value "yxcv3", selected (formData.patternType == "yxcv3") ] [ text "Option 3" ]
+                            [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
+                            , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
+                            , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
+                            , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
                             ]
 
                         --, input [ placeholder "e.g. one of", value model.patternType, onInput ChangePatternType ] []
