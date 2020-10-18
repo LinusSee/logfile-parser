@@ -1,11 +1,5 @@
 module Main exposing (..)
 
--- Press buttons to increment and decrement a counter.
---
--- Read how it works:
---   https://guide.elm-lang.org/architecture/buttons.html
---
-
 import Browser
 import Html exposing (Html, button, div, h2, input, label, option, select, text)
 import Html.Attributes exposing (..)
@@ -62,14 +56,6 @@ init _ =
 
 
 
--- { patternType = ""
--- , matching = ""
--- , name = ""
--- }
--- { val1 = 1
--- , val2 = ""
--- , val3 = ""
--- }
 -- UPDATE
 
 
@@ -81,9 +67,6 @@ type FormChanged
 
 type Msg
     = GotDummyData (Result Http.Error SampleData)
-      --| ChangePatternType String
-      --| ChangeMatching String
-      --| ChangeName String
     | ChangeForm FormChanged String
     | Reset
     | Submit
