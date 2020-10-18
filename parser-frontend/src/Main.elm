@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, h2, input, label, option, select, text)
+import Html exposing (Html, button, div, h2, input, label, li, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -22,13 +22,24 @@ main =
 
 
 
+-- DUMMY DATA
+
+
+parsers : List ElementaryParser
+parsers =
+    [ OneOf [ "Hello", "Darkness", "..." ]
+    , Date "yyyy-mm-dd"
+    ]
+
+
+
 -- MODEL
 
 
 type Model
     = Failure
     | Loading
-    | Success PatternFormData SampleData
+    | Success PatternFormData SampleData (List ElementaryParser)
 
 
 type alias PatternFormData =
@@ -43,6 +54,21 @@ type alias SampleData =
     , val2 : String
     , val3 : String
     }
+
+
+type alias TimePattern =
+    String
+
+
+type alias DatePattern =
+    String
+
+
+type ElementaryParser
+    = OneOf (List String)
+    | Time TimePattern
+    | Date DatePattern
+    | Characters String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -84,6 +110,7 @@ update msg model =
                         , name = ""
                         }
                         data
+                        parsers
                     , Cmd.none
                     )
 
@@ -98,23 +125,26 @@ update msg model =
                 Loading ->
                     ( Failure, Cmd.none )
 
-                Success formData loadedData ->
+                Success formData loadedData existingParsers ->
                     case field of
                         ChangePatternType ->
                             ( Success { formData | patternType = newContent }
                                 loadedData
+                                existingParsers
                             , Cmd.none
                             )
 
                         ChangeMatching ->
                             ( Success { formData | matching = newContent }
                                 loadedData
+                                existingParsers
                             , Cmd.none
                             )
 
                         ChangeName ->
                             ( Success { formData | name = newContent }
                                 loadedData
+                                existingParsers
                             , Cmd.none
                             )
 
@@ -128,6 +158,7 @@ update msg model =
                 , val2 = ""
                 , val3 = ""
                 }
+                []
             , Cmd.none
             )
 
@@ -141,6 +172,7 @@ update msg model =
                 , val2 = ""
                 , val3 = ""
                 }
+                []
             , Cmd.none
             )
 
@@ -167,7 +199,7 @@ view model =
         Loading ->
             div [] [ text "Loading..." ]
 
-        Success formData loadedData ->
+        Success formData loadedData existingParsers ->
             div []
                 [ h2 [] [ text "Create specialized parsers" ]
                 , div []
@@ -196,7 +228,24 @@ view model =
                     , button [ onClick Submit ] [ text "Submit" ]
                     ]
                 , text ("Loaded this string: " ++ loadedData.val2)
+                , ul [] (List.map viewParser existingParsers)
                 ]
+
+
+viewParser : ElementaryParser -> Html Msg
+viewParser parser =
+    case parser of
+        OneOf xs ->
+            li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
+
+        Time pattern ->
+            li [] [ text pattern ]
+
+        Date pattern ->
+            li [] [ text pattern ]
+
+        Characters s ->
+            li [] [ text s ]
 
 
 
