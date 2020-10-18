@@ -31,12 +31,16 @@ data DummyData = DummyData
 $(deriveJSON defaultOptions ''User)
 $(deriveJSON defaultOptions ''DummyData)
 
-type API = "api" :>
-      (    "users" :> Get '[JSON] [User]
-      :<|> "parsers" :> "building-blocks" :> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-      :<|> "sample" :> Get '[JSON] DummyData
-      :<|> "simple-parser" :> Get '[JSON] ElementaryParser
-      )
+type API =
+  "api" :>
+        (    "users" :> Get '[JSON] [User]
+        :<|> "sample" :> Get '[JSON] DummyData
+        :<|> "simple-parser" :> Get '[JSON] ElementaryParser
+        :<|> "parsers" :> "building-blocks" :>
+             (    "complex" :> Get '[JSON] [ElementaryParser]
+             :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+             )
+        )
 
 myElementaryParser :: ElementaryParser
 myElementaryParser = OneOf ["Hello", "World", "!"]
@@ -53,9 +57,10 @@ api = Proxy
 server :: Server API
 server =
        return users
-  :<|> (\_parser -> return NoContent)
   :<|> return dummyData
   :<|> return myElementaryParser--"A simple string!"
+  :<|> return existingParsers
+  :<|> (\_parser -> return NoContent)
 
 
 users :: [User]
@@ -65,3 +70,12 @@ users = [ User 1 "Isaac" "Newton"
 
 dummyData :: DummyData
 dummyData = DummyData 5 "MyString1" "OtherString"
+
+existingParsers :: [ElementaryParser]
+existingParsers =
+  [ OneOf ["Hello", "World", "!"]
+  , Date "yyyy-mm-dd"
+  , Date "yyyy-dd-mm"
+  , Date "HH:mm"
+  , Characters "Some string to match" 
+  ]
