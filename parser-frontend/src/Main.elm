@@ -73,11 +73,18 @@ init _ =
 -- UPDATE
 
 
+type FormChanged
+    = ChangePatternType
+    | ChangeMatching
+    | ChangeName
+
+
 type Msg
     = GotDummyData (Result Http.Error SampleData)
-    | ChangePatternType String
-    | ChangeMatching String
-    | ChangeName String
+      --| ChangePatternType String
+      --| ChangeMatching String
+      --| ChangeName String
+    | ChangeForm FormChanged String
     | Reset
     | Submit
 
@@ -100,7 +107,7 @@ update msg model =
                 Err error ->
                     Debug.log (Debug.toString error) ( Failure, Cmd.none )
 
-        ChangePatternType newTypeContent ->
+        ChangeForm field newContent ->
             case model of
                 Failure ->
                     ( Failure, Cmd.none )
@@ -109,38 +116,24 @@ update msg model =
                     ( Failure, Cmd.none )
 
                 Success formData loadedData ->
-                    ( Success { formData | patternType = newTypeContent }
-                        loadedData
-                    , Cmd.none
-                    )
+                    case field of
+                        ChangePatternType ->
+                            ( Success { formData | patternType = newContent }
+                                loadedData
+                            , Cmd.none
+                            )
 
-        ChangeMatching newMatchingContent ->
-            case model of
-                Failure ->
-                    ( Failure, Cmd.none )
+                        ChangeMatching ->
+                            ( Success { formData | matching = newContent }
+                                loadedData
+                            , Cmd.none
+                            )
 
-                Loading ->
-                    ( Failure, Cmd.none )
-
-                Success formData loadedData ->
-                    ( Success { formData | matching = newMatchingContent }
-                        loadedData
-                    , Cmd.none
-                    )
-
-        ChangeName newName ->
-            case model of
-                Failure ->
-                    ( Failure, Cmd.none )
-
-                Loading ->
-                    ( Failure, Cmd.none )
-
-                Success formData loadedData ->
-                    ( Success { formData | name = newName }
-                        loadedData
-                    , Cmd.none
-                    )
+                        ChangeName ->
+                            ( Success { formData | name = newContent }
+                                loadedData
+                            , Cmd.none
+                            )
 
         Reset ->
             ( Success
@@ -197,24 +190,22 @@ view model =
                 , div []
                     [ label []
                         [ text "Type"
-                        , select [ value formData.patternType, onInput ChangePatternType ]
+                        , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
                             [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
                             , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
                             , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
                             , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
                             ]
-
-                        --, input [ placeholder "e.g. one of", value model.patternType, onInput ChangePatternType ] []
                         ]
                     , label []
                         [ text "Matching"
-                        , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput ChangeMatching ] []
+                        , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
                         ]
                     ]
                 , div []
                     [ label []
                         [ text "Name"
-                        , input [ placeholder "Loglevel oneof", value formData.name, onInput ChangeName ] []
+                        , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
                         ]
                     ]
                 , div []
