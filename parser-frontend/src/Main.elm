@@ -5,7 +5,7 @@ import Html exposing (Html, button, div, h2, input, label, li, option, select, t
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (Decoder, field, int, map3, string)
+import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 
 
 
@@ -74,10 +74,16 @@ type ElementaryParser
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( Loading
-    , Http.get
-        { url = "http://localhost:8080/api/sample"
-        , expect = Http.expectJson GotDummyData sampleDataDecoder
-        }
+    , Cmd.batch
+        [ Http.get
+            { url = "http://localhost:8080/api/sample"
+            , expect = Http.expectJson GotDummyData sampleDataDecoder
+            }
+        , Http.get
+            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+            }
+        ]
     )
 
 
@@ -93,6 +99,7 @@ type FormChanged
 
 type Msg
     = GotDummyData (Result Http.Error SampleData)
+    | GotElementaryParsers (Result Http.Error (List ElementaryParser))
     | ChangeForm FormChanged String
     | Reset
     | Submit
@@ -104,15 +111,60 @@ update msg model =
         GotDummyData result ->
             case result of
                 Ok data ->
-                    ( Success
-                        { patternType = "oneOf"
-                        , matching = ""
-                        , name = ""
-                        }
-                        data
-                        parsers
-                    , Cmd.none
-                    )
+                    case model of
+                        Failure ->
+                            ( Failure, Cmd.none )
+
+                        Loading ->
+                            ( Success
+                                { patternType = "oneOf"
+                                , matching = ""
+                                , name = ""
+                                }
+                                data
+                                []
+                            , Cmd.none
+                            )
+
+                        Success formData _ existingParsers ->
+                            ( Success
+                                formData
+                                data
+                                existingParsers
+                            , Cmd.none
+                            )
+
+                Err error ->
+                    Debug.log (Debug.toString error) ( Failure, Cmd.none )
+
+        GotElementaryParsers result ->
+            case result of
+                Ok data ->
+                    case model of
+                        Failure ->
+                            ( Failure, Cmd.none )
+
+                        Loading ->
+                            ( Success
+                                { patternType = "oneOf"
+                                , matching = ""
+                                , name = ""
+                                }
+                                { val1 = 0
+                                , val2 = ""
+                                , val3 = ""
+                                }
+                                data
+                            , Cmd.none
+                            )
+
+                        Success formData loadedData _ ->
+                            ( Success
+                                formData
+                                loadedData
+                                data
+                            , Cmd.none
+                            )
 
                 Err error ->
                     Debug.log (Debug.toString error) ( Failure, Cmd.none )
@@ -258,3 +310,58 @@ sampleDataDecoder =
         (field "dummy1" int)
         (field "dummy2" string)
         (field "dummy3" string)
+
+
+parsersDataDecoder : Decoder (List ElementaryParser)
+parsersDataDecoder =
+    Decode.list parserDataDecoder
+
+
+parserDataDecoder : Decoder ElementaryParser
+parserDataDecoder =
+    field "type" string
+        |> Decode.andThen parserDataDecoderHelp
+
+
+parserDataDecoderHelp : String -> Decoder ElementaryParser
+parserDataDecoderHelp typeName =
+    case typeName of
+        "oneOf" ->
+            oneOfParserDecoder
+
+        "time" ->
+            timeParserDecoder
+
+        "date" ->
+            dateParserDecoder
+
+        "characters" ->
+            charactersParserDecoder
+
+        _ ->
+            Decode.fail <|
+                "Trying to decode parser but found incorrect type."
+                    ++ "Type was "
+                    ++ typeName
+                    ++ "but expected one of "
+                    ++ "[ \"oneOf\", \"time\", \"date\", \"characters\" ]"
+
+
+oneOfParserDecoder : Decoder ElementaryParser
+oneOfParserDecoder =
+    Decode.map OneOf (field "values" (Decode.list string))
+
+
+timeParserDecoder : Decoder ElementaryParser
+timeParserDecoder =
+    Decode.map Time (field "pattern" string)
+
+
+charactersParserDecoder : Decoder ElementaryParser
+charactersParserDecoder =
+    Decode.map Characters (field "value" string)
+
+
+dateParserDecoder : Decoder ElementaryParser
+dateParserDecoder =
+    Decode.map Date (field "pattern" string)
