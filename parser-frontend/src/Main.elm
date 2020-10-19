@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
+import Json.Encode as Encode
 
 
 
@@ -39,10 +40,10 @@ parsers =
 type Model
     = Failure
     | Loading
-    | Success PatternFormData SampleData (List ElementaryParser)
+    | Success ParserFormData SampleData (List ElementaryParser)
 
 
-type alias PatternFormData =
+type alias ParserFormData =
     { patternType : String
     , matching : String
     , name : String
@@ -100,9 +101,10 @@ type FormChanged
 type Msg
     = GotDummyData (Result Http.Error SampleData)
     | GotElementaryParsers (Result Http.Error (List ElementaryParser))
+    | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | Reset
-    | Submit
+    | Submit ParserFormData
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -169,6 +171,14 @@ update msg model =
                 Err error ->
                     Debug.log (Debug.toString error) ( Failure, Cmd.none )
 
+        PostedParser result ->
+            case result of
+                Ok _ ->
+                    ( model, Cmd.none )
+
+                Err error ->
+                    Debug.log (Debug.toString error) ( Failure, Cmd.none )
+
         ChangeForm field newContent ->
             case model of
                 Failure ->
@@ -214,18 +224,9 @@ update msg model =
             , Cmd.none
             )
 
-        Submit ->
-            ( Success
-                { patternType = "oneOf"
-                , matching = ""
-                , name = "Submitted"
-                }
-                { val1 = 1
-                , val2 = ""
-                , val3 = ""
-                }
-                []
-            , Cmd.none
+        Submit formData ->
+            ( model
+            , postParser formData
             )
 
 
@@ -277,7 +278,7 @@ view model =
                     ]
                 , div []
                     [ button [ onClick Reset ] [ text "Reset" ]
-                    , button [ onClick Submit ] [ text "Submit" ]
+                    , button [ onClick (Submit formData) ] [ text "Submit" ]
                     ]
                 , text ("Loaded this string: " ++ loadedData.val2)
                 , ul [] (List.map viewParser existingParsers)
@@ -304,12 +305,65 @@ viewParser parser =
 -- HTTP
 
 
+postParser : ParserFormData -> Cmd Msg
+postParser formData =
+    Http.post
+        { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+        , body = Http.jsonBody (parserEncoder formData)
+        , expect = Http.expectWhatever PostedParser
+        }
+
+
 sampleDataDecoder : Decoder SampleData
 sampleDataDecoder =
     map3 SampleData
         (field "dummy1" int)
         (field "dummy2" string)
         (field "dummy3" string)
+
+
+
+-- Maybe TEMP
+
+
+toMatchingList : String -> List String
+toMatchingList matching =
+    [ "HARDCODED", "DATA" ]
+
+
+parserEncoder : ParserFormData -> Encode.Value
+parserEncoder formData =
+    case formData.patternType of
+        "oneOf" ->
+            Encode.object
+                [ ( "type", Encode.string "oneOf" )
+                , ( "values", Encode.list Encode.string (toMatchingList formData.matching) )
+                ]
+
+        "time" ->
+            Encode.object
+                [ ( "type", Encode.string "time" )
+                , ( "pattern", Encode.string formData.matching )
+                ]
+
+        "date" ->
+            Encode.object
+                [ ( "type", Encode.string "date" )
+                , ( "pattern", Encode.string formData.matching )
+                ]
+
+        "characters" ->
+            Encode.object
+                [ ( "type", Encode.string "characters" )
+                , ( "value", Encode.string formData.matching )
+                ]
+
+        -- TEMP: Need to find out how to solve this
+        _ ->
+            Encode.object
+                [ ( "type", Encode.string "invalidType" )
+                , ( "value", Encode.string "invalidValue" )
+                ]
 
 
 parsersDataDecoder : Decoder (List ElementaryParser)
