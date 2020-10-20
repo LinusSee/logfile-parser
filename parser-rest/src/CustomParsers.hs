@@ -29,7 +29,7 @@ instance FromJSON ElementaryParser where
                           String "time"       -> Time       <$> o .: "pattern"
                           String "date"       -> Date       <$> o .: "pattern"
                           String "characters" -> Characters <$> o .: "value"
-                          _                   -> empty
+                          --_                   -> empty
 
 -- toElementaryParser :: Text -> Text -> ElementaryParser
 -- toElementaryParser "oneOf"      = OneOf
