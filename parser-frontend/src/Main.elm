@@ -14,7 +14,7 @@ import Json.Encode as Encode
 
 
 main =
-    Browser.element
+    Browser.document
         { init = init
         , update = update
         , subscriptions = subscriptions
@@ -243,46 +243,50 @@ subscriptions model =
 -- VIEW
 
 
-view : Model -> Html Msg
+view : Model -> Browser.Document Msg
 view model =
     case model of
         Failure ->
-            div [] [ text "Failed to load data" ]
+            { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
 
         Loading ->
-            div [] [ text "Loading..." ]
+            { title = "Hello World", body = [ div [] [ text "Loading..." ] ] }
 
         Success formData loadedData existingParsers ->
-            div []
-                [ h2 [] [ text "Create specialized parsers" ]
-                , div []
-                    [ label []
-                        [ text "Type"
-                        , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
-                            [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
-                            , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
-                            , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
-                            , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
+            { title = "Hello World"
+            , body =
+                [ div []
+                    [ h2 [] [ text "Create specialized parsers" ]
+                    , div []
+                        [ label []
+                            [ text "Type"
+                            , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
+                                [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
+                                , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
+                                , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
+                                , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
+                                ]
+                            ]
+                        , label []
+                            [ text "Matching"
+                            , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
                             ]
                         ]
-                    , label []
-                        [ text "Matching"
-                        , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
+                    , div []
+                        [ label []
+                            [ text "Name"
+                            , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+                            ]
                         ]
-                    ]
-                , div []
-                    [ label []
-                        [ text "Name"
-                        , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+                    , div []
+                        [ button [ onClick Reset ] [ text "Reset" ]
+                        , button [ onClick (Submit formData) ] [ text "Submit" ]
                         ]
+                    , text ("Loaded this string: " ++ loadedData.val2)
+                    , ul [] (List.map viewParser existingParsers)
                     ]
-                , div []
-                    [ button [ onClick Reset ] [ text "Reset" ]
-                    , button [ onClick (Submit formData) ] [ text "Submit" ]
-                    ]
-                , text ("Loaded this string: " ++ loadedData.val2)
-                , ul [] (List.map viewParser existingParsers)
                 ]
+            }
 
 
 viewParser : ElementaryParser -> Html Msg
