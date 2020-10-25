@@ -41,7 +41,13 @@ parsers =
 -- MODEL
 
 
-type Model
+type alias Model =
+    { key : Nav.Key
+    , requestState : HttpRequestState
+    }
+
+
+type HttpRequestState
     = Failure
     | Loading
     | Success ParserFormData SampleData (List ElementaryParser)
@@ -77,8 +83,8 @@ type ElementaryParser
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ _ _ =
-    ( Loading
+init _ _ key =
+    ( { key = key, requestState = Loading }
     , Cmd.batch
         [ Http.get
             { url = "http://localhost:8080/api/sample"
@@ -119,63 +125,75 @@ update msg model =
         GotDummyData result ->
             case result of
                 Ok data ->
-                    case model of
+                    case model.requestState of
                         Failure ->
-                            ( Failure, Cmd.none )
+                            ( model, Cmd.none )
 
                         Loading ->
-                            ( Success
-                                { patternType = "oneOf"
-                                , matching = ""
-                                , name = ""
-                                }
-                                data
-                                []
+                            ( { model
+                                | requestState =
+                                    Success
+                                        { patternType = "oneOf"
+                                        , matching = ""
+                                        , name = ""
+                                        }
+                                        data
+                                        []
+                              }
                             , Cmd.none
                             )
 
                         Success formData _ existingParsers ->
-                            ( Success
-                                formData
-                                data
-                                existingParsers
+                            ( { model
+                                | requestState =
+                                    Success
+                                        formData
+                                        data
+                                        existingParsers
+                              }
                             , Cmd.none
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( Failure, Cmd.none )
+                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
 
         GotElementaryParsers result ->
             case result of
                 Ok data ->
-                    case model of
+                    case model.requestState of
                         Failure ->
-                            ( Failure, Cmd.none )
+                            ( { model | requestState = Failure }, Cmd.none )
 
                         Loading ->
-                            ( Success
-                                { patternType = "oneOf"
-                                , matching = ""
-                                , name = ""
-                                }
-                                { val1 = 0
-                                , val2 = ""
-                                , val3 = ""
-                                }
-                                data
+                            ( { model
+                                | requestState =
+                                    Success
+                                        { patternType = "oneOf"
+                                        , matching = ""
+                                        , name = ""
+                                        }
+                                        { val1 = 0
+                                        , val2 = ""
+                                        , val3 = ""
+                                        }
+                                        data
+                              }
                             , Cmd.none
                             )
 
                         Success formData loadedData _ ->
-                            ( Success
-                                formData
-                                loadedData
-                                data
+                            ( { model
+                                | requestState =
+                                    Success
+                                        formData
+                                        loadedData
+                                        data
+                              }
                             , Cmd.none
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( Failure, Cmd.none )
+                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
 
         PostedParser result ->
             case result of
@@ -183,50 +201,62 @@ update msg model =
                     ( model, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( Failure, Cmd.none )
+                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
 
         ChangeForm field newContent ->
-            case model of
+            case model.requestState of
                 Failure ->
-                    ( Failure, Cmd.none )
+                    ( model, Cmd.none )
 
                 Loading ->
-                    ( Failure, Cmd.none )
+                    ( { model | requestState = Failure }, Cmd.none )
 
                 Success formData loadedData existingParsers ->
                     case field of
                         ChangePatternType ->
-                            ( Success { formData | patternType = newContent }
-                                loadedData
-                                existingParsers
+                            ( { model
+                                | requestState =
+                                    Success { formData | patternType = newContent }
+                                        loadedData
+                                        existingParsers
+                              }
                             , Cmd.none
                             )
 
                         ChangeMatching ->
-                            ( Success { formData | matching = newContent }
-                                loadedData
-                                existingParsers
+                            ( { model
+                                | requestState =
+                                    Success { formData | matching = newContent }
+                                        loadedData
+                                        existingParsers
+                              }
                             , Cmd.none
                             )
 
                         ChangeName ->
-                            ( Success { formData | name = newContent }
-                                loadedData
-                                existingParsers
+                            ( { model
+                                | requestState =
+                                    Success { formData | name = newContent }
+                                        loadedData
+                                        existingParsers
+                              }
                             , Cmd.none
                             )
 
         Reset ->
-            ( Success
-                { patternType = "oneOf"
-                , matching = ""
-                , name = ""
-                }
-                { val1 = 1
-                , val2 = ""
-                , val3 = ""
-                }
-                []
+            ( { model
+                | requestState =
+                    Success
+                        { patternType = "oneOf"
+                        , matching = ""
+                        , name = ""
+                        }
+                        { val1 = 1
+                        , val2 = ""
+                        , val3 = ""
+                        }
+                        []
+              }
             , Cmd.none
             )
 
@@ -262,7 +292,7 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
-    case model of
+    case model.requestState of
         Failure ->
             { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
 
