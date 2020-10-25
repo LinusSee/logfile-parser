@@ -41,9 +41,20 @@ parsers =
 -- MODEL
 
 
-type alias Model =
+type Model
+    = NotFound
+    | CreateParser CreateParserModel
+    | ParseLogfile ParseLogfileModel
+
+
+type alias CreateParserModel =
     { key : Nav.Key
     , requestState : HttpRequestState
+    }
+
+
+type alias ParseLogfileModel =
+    { key : Nav.Key
     }
 
 
@@ -84,7 +95,7 @@ type ElementaryParser
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ _ key =
-    ( { key = key, requestState = Loading }
+    ( CreateParser { key = key, requestState = Loading }
     , Cmd.batch
         [ Http.get
             { url = "http://localhost:8080/api/sample"
@@ -121,162 +132,174 @@ type Msg
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        GotDummyData result ->
+    case ( msg, model ) of
+        ( GotDummyData result, CreateParser parserModel ) ->
             case result of
                 Ok data ->
-                    case model.requestState of
+                    case parserModel.requestState of
                         Failure ->
                             ( model, Cmd.none )
 
                         Loading ->
-                            ( { model
-                                | requestState =
-                                    Success
-                                        { patternType = "oneOf"
-                                        , matching = ""
-                                        , name = ""
-                                        }
-                                        data
-                                        []
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success
+                                            { patternType = "oneOf"
+                                            , matching = ""
+                                            , name = ""
+                                            }
+                                            data
+                                            []
+                                }
                             , Cmd.none
                             )
 
                         Success formData _ existingParsers ->
-                            ( { model
-                                | requestState =
-                                    Success
-                                        formData
-                                        data
-                                        existingParsers
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success
+                                            formData
+                                            data
+                                            existingParsers
+                                }
                             , Cmd.none
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
 
-        GotElementaryParsers result ->
+        ( GotElementaryParsers result, CreateParser parserModel ) ->
             case result of
                 Ok data ->
-                    case model.requestState of
+                    case parserModel.requestState of
                         Failure ->
-                            ( { model | requestState = Failure }, Cmd.none )
+                            ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
 
                         Loading ->
-                            ( { model
-                                | requestState =
-                                    Success
-                                        { patternType = "oneOf"
-                                        , matching = ""
-                                        , name = ""
-                                        }
-                                        { val1 = 0
-                                        , val2 = ""
-                                        , val3 = ""
-                                        }
-                                        data
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success
+                                            { patternType = "oneOf"
+                                            , matching = ""
+                                            , name = ""
+                                            }
+                                            { val1 = 0
+                                            , val2 = ""
+                                            , val3 = ""
+                                            }
+                                            data
+                                }
                             , Cmd.none
                             )
 
                         Success formData loadedData _ ->
-                            ( { model
-                                | requestState =
-                                    Success
-                                        formData
-                                        loadedData
-                                        data
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success
+                                            formData
+                                            loadedData
+                                            data
+                                }
                             , Cmd.none
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
 
-        PostedParser result ->
+        ( PostedParser result, CreateParser parserModel ) ->
             case result of
                 Ok _ ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( { model | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
 
-        ChangeForm field newContent ->
-            case model.requestState of
+        ( ChangeForm field newContent, CreateParser parserModel ) ->
+            case parserModel.requestState of
                 Failure ->
                     ( model, Cmd.none )
 
                 Loading ->
-                    ( { model | requestState = Failure }, Cmd.none )
+                    ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
 
                 Success formData loadedData existingParsers ->
                     case field of
                         ChangePatternType ->
-                            ( { model
-                                | requestState =
-                                    Success { formData | patternType = newContent }
-                                        loadedData
-                                        existingParsers
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success { formData | patternType = newContent }
+                                            loadedData
+                                            existingParsers
+                                }
                             , Cmd.none
                             )
 
                         ChangeMatching ->
-                            ( { model
-                                | requestState =
-                                    Success { formData | matching = newContent }
-                                        loadedData
-                                        existingParsers
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success { formData | matching = newContent }
+                                            loadedData
+                                            existingParsers
+                                }
                             , Cmd.none
                             )
 
                         ChangeName ->
-                            ( { model
-                                | requestState =
-                                    Success { formData | name = newContent }
-                                        loadedData
-                                        existingParsers
-                              }
+                            ( CreateParser
+                                { parserModel
+                                    | requestState =
+                                        Success { formData | name = newContent }
+                                            loadedData
+                                            existingParsers
+                                }
                             , Cmd.none
                             )
 
-        Reset ->
-            ( { model
-                | requestState =
-                    Success
-                        { patternType = "oneOf"
-                        , matching = ""
-                        , name = ""
-                        }
-                        { val1 = 1
-                        , val2 = ""
-                        , val3 = ""
-                        }
-                        []
-              }
+        ( Reset, CreateParser parserModel ) ->
+            ( CreateParser
+                { parserModel
+                    | requestState =
+                        Success
+                            { patternType = "oneOf"
+                            , matching = ""
+                            , name = ""
+                            }
+                            { val1 = 1
+                            , val2 = ""
+                            , val3 = ""
+                            }
+                            []
+                }
             , Cmd.none
             )
 
-        Submit formData ->
+        ( Submit formData, _ ) ->
             ( model
             , postParser formData
             )
 
-        ClickedLink urlRequest ->
+        ( ClickedLink urlRequest, CreateParser parserModel ) ->
             case urlRequest of
                 Browser.External href ->
                     ( model, Nav.load href )
 
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                    ( model, Nav.pushUrl parserModel.key (Url.toString url) )
 
-        ChangedUrl _ ->
+        ( ChangedUrl _, _ ) ->
             ( model
             , Cmd.none
             )
+
+        ( _, _ ) ->
+            -- Disregard invalid combinations
+            ( model, Cmd.none )
 
 
 
@@ -294,6 +317,19 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
+    case model of
+        NotFound ->
+            Debug.todo "not found"
+
+        CreateParser parserModel ->
+            viewCreateParser parserModel
+
+        ParseLogfile logfileModel ->
+            Debug.todo "parse logfile"
+
+
+viewCreateParser : CreateParserModel -> Browser.Document Msg
+viewCreateParser model =
     case model.requestState of
         Failure ->
             { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
@@ -338,6 +374,15 @@ view model =
                 , a [ href "http://localhost:8081/otherPage" ] [ text "Internal link" ]
                 ]
             }
+
+
+viewParseLogfile : ParseLogfileModel -> Browser.Document Msg
+viewParseLogfile _ =
+    { title = "Parse Logfile"
+    , body =
+        [ text "Success loading 'ParseLogfile'!"
+        ]
+    }
 
 
 viewParser : ElementaryParser -> Html Msg

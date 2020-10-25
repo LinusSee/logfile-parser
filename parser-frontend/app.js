@@ -5325,6 +5325,9 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$application = _Browser_application;
+var $author$project$Main$CreateParser = function (a) {
+	return {$: 'CreateParser', a: a};
+};
 var $author$project$Main$GotDummyData = function (a) {
 	return {$: 'GotDummyData', a: a};
 };
@@ -6190,7 +6193,8 @@ var $author$project$Main$sampleDataDecoder = A4(
 var $author$project$Main$init = F3(
 	function (_v0, _v1, key) {
 		return _Utils_Tuple2(
-			{key: key, requestState: $author$project$Main$Loading},
+			$author$project$Main$CreateParser(
+				{key: key, requestState: $author$project$Main$Loading}),
 			$elm$core$Platform$Cmd$batch(
 				_List_fromArray(
 					[
@@ -6396,209 +6400,260 @@ var $elm$url$Url$toString = function (url) {
 };
 var $author$project$Main$update = F2(
 	function (msg, model) {
-		switch (msg.$) {
-			case 'GotDummyData':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var data = result.a;
-					var _v2 = model.requestState;
-					switch (_v2.$) {
-						case 'Failure':
+		var _v0 = _Utils_Tuple2(msg, model);
+		_v0$8:
+		while (true) {
+			switch (_v0.a.$) {
+				case 'GotDummyData':
+					if (_v0.b.$ === 'CreateParser') {
+						var result = _v0.a.a;
+						var parserModel = _v0.b.a;
+						if (result.$ === 'Ok') {
+							var data = result.a;
+							var _v2 = parserModel.requestState;
+							switch (_v2.$) {
+								case 'Failure':
+									return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+								case 'Loading':
+									return _Utils_Tuple2(
+										$author$project$Main$CreateParser(
+											_Utils_update(
+												parserModel,
+												{
+													requestState: A3(
+														$author$project$Main$Success,
+														{matching: '', name: '', patternType: 'oneOf'},
+														data,
+														_List_Nil)
+												})),
+										$elm$core$Platform$Cmd$none);
+								default:
+									var formData = _v2.a;
+									var existingParsers = _v2.c;
+									return _Utils_Tuple2(
+										$author$project$Main$CreateParser(
+											_Utils_update(
+												parserModel,
+												{
+													requestState: A3($author$project$Main$Success, formData, data, existingParsers)
+												})),
+										$elm$core$Platform$Cmd$none);
+							}
+						} else {
+							var error = result.a;
+							return A2(
+								$elm$core$Debug$log,
+								$elm$core$Debug$toString(error),
+								_Utils_Tuple2(
+									$author$project$Main$CreateParser(
+										_Utils_update(
+											parserModel,
+											{requestState: $author$project$Main$Failure})),
+									$elm$core$Platform$Cmd$none));
+						}
+					} else {
+						break _v0$8;
+					}
+				case 'GotElementaryParsers':
+					if (_v0.b.$ === 'CreateParser') {
+						var result = _v0.a.a;
+						var parserModel = _v0.b.a;
+						if (result.$ === 'Ok') {
+							var data = result.a;
+							var _v4 = parserModel.requestState;
+							switch (_v4.$) {
+								case 'Failure':
+									return _Utils_Tuple2(
+										$author$project$Main$CreateParser(
+											_Utils_update(
+												parserModel,
+												{requestState: $author$project$Main$Failure})),
+										$elm$core$Platform$Cmd$none);
+								case 'Loading':
+									return _Utils_Tuple2(
+										$author$project$Main$CreateParser(
+											_Utils_update(
+												parserModel,
+												{
+													requestState: A3(
+														$author$project$Main$Success,
+														{matching: '', name: '', patternType: 'oneOf'},
+														{val1: 0, val2: '', val3: ''},
+														data)
+												})),
+										$elm$core$Platform$Cmd$none);
+								default:
+									var formData = _v4.a;
+									var loadedData = _v4.b;
+									return _Utils_Tuple2(
+										$author$project$Main$CreateParser(
+											_Utils_update(
+												parserModel,
+												{
+													requestState: A3($author$project$Main$Success, formData, loadedData, data)
+												})),
+										$elm$core$Platform$Cmd$none);
+							}
+						} else {
+							var error = result.a;
+							return A2(
+								$elm$core$Debug$log,
+								$elm$core$Debug$toString(error),
+								_Utils_Tuple2(
+									$author$project$Main$CreateParser(
+										_Utils_update(
+											parserModel,
+											{requestState: $author$project$Main$Failure})),
+									$elm$core$Platform$Cmd$none));
+						}
+					} else {
+						break _v0$8;
+					}
+				case 'PostedParser':
+					if (_v0.b.$ === 'CreateParser') {
+						var result = _v0.a.a;
+						var parserModel = _v0.b.a;
+						if (result.$ === 'Ok') {
 							return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-						case 'Loading':
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										requestState: A3(
-											$author$project$Main$Success,
-											{matching: '', name: '', patternType: 'oneOf'},
-											data,
-											_List_Nil)
-									}),
-								$elm$core$Platform$Cmd$none);
-						default:
-							var formData = _v2.a;
-							var existingParsers = _v2.c;
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										requestState: A3($author$project$Main$Success, formData, data, existingParsers)
-									}),
-								$elm$core$Platform$Cmd$none);
+						} else {
+							var error = result.a;
+							return A2(
+								$elm$core$Debug$log,
+								$elm$core$Debug$toString(error),
+								_Utils_Tuple2(
+									$author$project$Main$CreateParser(
+										_Utils_update(
+											parserModel,
+											{requestState: $author$project$Main$Failure})),
+									$elm$core$Platform$Cmd$none));
+						}
+					} else {
+						break _v0$8;
 					}
-				} else {
-					var error = result.a;
-					return A2(
-						$elm$core$Debug$log,
-						$elm$core$Debug$toString(error),
-						_Utils_Tuple2(
-							_Utils_update(
-								model,
-								{requestState: $author$project$Main$Failure}),
-							$elm$core$Platform$Cmd$none));
-				}
-			case 'GotElementaryParsers':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					var data = result.a;
-					var _v4 = model.requestState;
-					switch (_v4.$) {
-						case 'Failure':
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{requestState: $author$project$Main$Failure}),
-								$elm$core$Platform$Cmd$none);
-						case 'Loading':
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										requestState: A3(
-											$author$project$Main$Success,
-											{matching: '', name: '', patternType: 'oneOf'},
-											{val1: 0, val2: '', val3: ''},
-											data)
-									}),
-								$elm$core$Platform$Cmd$none);
-						default:
-							var formData = _v4.a;
-							var loadedData = _v4.b;
-							return _Utils_Tuple2(
-								_Utils_update(
-									model,
-									{
-										requestState: A3($author$project$Main$Success, formData, loadedData, data)
-									}),
-								$elm$core$Platform$Cmd$none);
-					}
-				} else {
-					var error = result.a;
-					return A2(
-						$elm$core$Debug$log,
-						$elm$core$Debug$toString(error),
-						_Utils_Tuple2(
-							_Utils_update(
-								model,
-								{requestState: $author$project$Main$Failure}),
-							$elm$core$Platform$Cmd$none));
-				}
-			case 'PostedParser':
-				var result = msg.a;
-				if (result.$ === 'Ok') {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				} else {
-					var error = result.a;
-					return A2(
-						$elm$core$Debug$log,
-						$elm$core$Debug$toString(error),
-						_Utils_Tuple2(
-							_Utils_update(
-								model,
-								{requestState: $author$project$Main$Failure}),
-							$elm$core$Platform$Cmd$none));
-				}
-			case 'ChangeForm':
-				var field = msg.a;
-				var newContent = msg.b;
-				var _v6 = model.requestState;
-				switch (_v6.$) {
-					case 'Failure':
-						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-					case 'Loading':
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{requestState: $author$project$Main$Failure}),
-							$elm$core$Platform$Cmd$none);
-					default:
-						var formData = _v6.a;
-						var loadedData = _v6.b;
-						var existingParsers = _v6.c;
-						switch (field.$) {
-							case 'ChangePatternType':
+				case 'ChangeForm':
+					if (_v0.b.$ === 'CreateParser') {
+						var _v6 = _v0.a;
+						var field = _v6.a;
+						var newContent = _v6.b;
+						var parserModel = _v0.b.a;
+						var _v7 = parserModel.requestState;
+						switch (_v7.$) {
+							case 'Failure':
+								return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+							case 'Loading':
 								return _Utils_Tuple2(
-									_Utils_update(
-										model,
-										{
-											requestState: A3(
-												$author$project$Main$Success,
-												_Utils_update(
-													formData,
-													{patternType: newContent}),
-												loadedData,
-												existingParsers)
-										}),
-									$elm$core$Platform$Cmd$none);
-							case 'ChangeMatching':
-								return _Utils_Tuple2(
-									_Utils_update(
-										model,
-										{
-											requestState: A3(
-												$author$project$Main$Success,
-												_Utils_update(
-													formData,
-													{matching: newContent}),
-												loadedData,
-												existingParsers)
-										}),
+									$author$project$Main$CreateParser(
+										_Utils_update(
+											parserModel,
+											{requestState: $author$project$Main$Failure})),
 									$elm$core$Platform$Cmd$none);
 							default:
-								return _Utils_Tuple2(
-									_Utils_update(
-										model,
-										{
-											requestState: A3(
-												$author$project$Main$Success,
+								var formData = _v7.a;
+								var loadedData = _v7.b;
+								var existingParsers = _v7.c;
+								switch (field.$) {
+									case 'ChangePatternType':
+										return _Utils_Tuple2(
+											$author$project$Main$CreateParser(
 												_Utils_update(
-													formData,
-													{name: newContent}),
-												loadedData,
-												existingParsers)
-										}),
-									$elm$core$Platform$Cmd$none);
+													parserModel,
+													{
+														requestState: A3(
+															$author$project$Main$Success,
+															_Utils_update(
+																formData,
+																{patternType: newContent}),
+															loadedData,
+															existingParsers)
+													})),
+											$elm$core$Platform$Cmd$none);
+									case 'ChangeMatching':
+										return _Utils_Tuple2(
+											$author$project$Main$CreateParser(
+												_Utils_update(
+													parserModel,
+													{
+														requestState: A3(
+															$author$project$Main$Success,
+															_Utils_update(
+																formData,
+																{matching: newContent}),
+															loadedData,
+															existingParsers)
+													})),
+											$elm$core$Platform$Cmd$none);
+									default:
+										return _Utils_Tuple2(
+											$author$project$Main$CreateParser(
+												_Utils_update(
+													parserModel,
+													{
+														requestState: A3(
+															$author$project$Main$Success,
+															_Utils_update(
+																formData,
+																{name: newContent}),
+															loadedData,
+															existingParsers)
+													})),
+											$elm$core$Platform$Cmd$none);
+								}
 						}
-				}
-			case 'Reset':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							requestState: A3(
-								$author$project$Main$Success,
-								{matching: '', name: '', patternType: 'oneOf'},
-								{val1: 1, val2: '', val3: ''},
-								_List_Nil)
-						}),
-					$elm$core$Platform$Cmd$none);
-			case 'Submit':
-				var formData = msg.a;
-				return _Utils_Tuple2(
-					model,
-					$author$project$Main$postParser(formData));
-			case 'ClickedLink':
-				var urlRequest = msg.a;
-				if (urlRequest.$ === 'External') {
-					var href = urlRequest.a;
+					} else {
+						break _v0$8;
+					}
+				case 'Reset':
+					if (_v0.b.$ === 'CreateParser') {
+						var _v9 = _v0.a;
+						var parserModel = _v0.b.a;
+						return _Utils_Tuple2(
+							$author$project$Main$CreateParser(
+								_Utils_update(
+									parserModel,
+									{
+										requestState: A3(
+											$author$project$Main$Success,
+											{matching: '', name: '', patternType: 'oneOf'},
+											{val1: 1, val2: '', val3: ''},
+											_List_Nil)
+									})),
+							$elm$core$Platform$Cmd$none);
+					} else {
+						break _v0$8;
+					}
+				case 'Submit':
+					var formData = _v0.a.a;
 					return _Utils_Tuple2(
 						model,
-						$elm$browser$Browser$Navigation$load(href));
-				} else {
-					var url = urlRequest.a;
-					return _Utils_Tuple2(
-						model,
-						A2(
-							$elm$browser$Browser$Navigation$pushUrl,
-							model.key,
-							$elm$url$Url$toString(url)));
-				}
-			default:
-				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+						$author$project$Main$postParser(formData));
+				case 'ClickedLink':
+					if (_v0.b.$ === 'CreateParser') {
+						var urlRequest = _v0.a.a;
+						var parserModel = _v0.b.a;
+						if (urlRequest.$ === 'External') {
+							var href = urlRequest.a;
+							return _Utils_Tuple2(
+								model,
+								$elm$browser$Browser$Navigation$load(href));
+						} else {
+							var url = urlRequest.a;
+							return _Utils_Tuple2(
+								model,
+								A2(
+									$elm$browser$Browser$Navigation$pushUrl,
+									parserModel.key,
+									$elm$url$Url$toString(url)));
+						}
+					} else {
+						break _v0$8;
+					}
+				default:
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			}
 		}
+		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 	});
+var $elm$core$Debug$todo = _Debug_todo;
 var $author$project$Main$ChangeForm = F2(
 	function (a, b) {
 		return {$: 'ChangeForm', a: a, b: b};
@@ -6735,7 +6790,7 @@ var $author$project$Main$viewParser = function (parser) {
 					]));
 	}
 };
-var $author$project$Main$view = function (model) {
+var $author$project$Main$viewCreateParser = function (model) {
 	var _v0 = model.requestState;
 	switch (_v0.$) {
 		case 'Failure':
@@ -6949,6 +7004,28 @@ var $author$project$Main$view = function (model) {
 					]),
 				title: 'Hello World'
 			};
+	}
+};
+var $author$project$Main$view = function (model) {
+	switch (model.$) {
+		case 'NotFound':
+			return _Debug_todo(
+				'Main',
+				{
+					start: {line: 322, column: 13},
+					end: {line: 322, column: 23}
+				})('not found');
+		case 'CreateParser':
+			var parserModel = model.a;
+			return $author$project$Main$viewCreateParser(parserModel);
+		default:
+			var logfileModel = model.a;
+			return _Debug_todo(
+				'Main',
+				{
+					start: {line: 328, column: 13},
+					end: {line: 328, column: 23}
+				})('parse logfile');
 	}
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
