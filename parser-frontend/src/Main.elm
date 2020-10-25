@@ -1,12 +1,14 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, h2, input, label, li, option, select, text, ul)
+import Browser.Navigation as Nav
+import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
+import Url
 
 
 
@@ -14,8 +16,10 @@ import Json.Encode as Encode
 
 
 main =
-    Browser.document
+    Browser.application
         { init = init
+        , onUrlChange = ChangedUrl
+        , onUrlRequest = ClickedLink
         , update = update
         , subscriptions = subscriptions
         , view = view
@@ -72,8 +76,8 @@ type ElementaryParser
     | Characters String
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init _ _ _ =
     ( Loading
     , Cmd.batch
         [ Http.get
@@ -105,6 +109,8 @@ type Msg
     | ChangeForm FormChanged String
     | Reset
     | Submit ParserFormData
+    | ClickedLink Browser.UrlRequest
+    | ChangedUrl Url.Url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,6 +235,17 @@ update msg model =
             , postParser formData
             )
 
+        ClickedLink urlRequest ->
+            case urlRequest of
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+                Browser.Internal url ->
+                    Debug.todo "Internal link clicked"
+
+        ChangedUrl _ ->
+            Debug.todo "Url has been changed"
+
 
 
 -- SUBSCRIPTIONS
@@ -285,6 +302,8 @@ view model =
                     , text ("Loaded this string: " ++ loadedData.val2)
                     , ul [] (List.map viewParser existingParsers)
                     ]
+                , a [ href "https://wikipedia.org" ] [ text "External link" ]
+                , a [ href "http://localhost:8081/otherPage" ] [ text "Internal link" ]
                 ]
             }
 

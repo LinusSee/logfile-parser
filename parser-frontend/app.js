@@ -4530,7 +4530,13 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
-}var $elm$core$Basics$EQ = {$: 'EQ'};
+}var $author$project$Main$ChangedUrl = function (a) {
+	return {$: 'ChangedUrl', a: a};
+};
+var $author$project$Main$ClickedLink = function (a) {
+	return {$: 'ClickedLink', a: a};
+};
+var $elm$core$Basics$EQ = {$: 'EQ'};
 var $elm$core$Basics$GT = {$: 'GT'};
 var $elm$core$Basics$LT = {$: 'LT'};
 var $elm$core$List$cons = _List_cons;
@@ -5318,7 +5324,7 @@ var $elm$core$Task$perform = F2(
 			$elm$core$Task$Perform(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
-var $elm$browser$Browser$document = _Browser_document;
+var $elm$browser$Browser$application = _Browser_application;
 var $author$project$Main$GotDummyData = function (a) {
 	return {$: 'GotDummyData', a: a};
 };
@@ -6181,24 +6187,25 @@ var $author$project$Main$sampleDataDecoder = A4(
 	A2($elm$json$Json$Decode$field, 'dummy1', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'dummy2', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'dummy3', $elm$json$Json$Decode$string));
-var $author$project$Main$init = function (_v0) {
-	return _Utils_Tuple2(
-		$author$project$Main$Loading,
-		$elm$core$Platform$Cmd$batch(
-			_List_fromArray(
-				[
-					$elm$http$Http$get(
-					{
-						expect: A2($elm$http$Http$expectJson, $author$project$Main$GotDummyData, $author$project$Main$sampleDataDecoder),
-						url: 'http://localhost:8080/api/sample'
-					}),
-					$elm$http$Http$get(
-					{
-						expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElementaryParsers, $author$project$Main$parsersDataDecoder),
-						url: 'http://localhost:8080/api/parsers/building-blocks/complex'
-					})
-				])));
-};
+var $author$project$Main$init = F3(
+	function (_v0, _v1, _v2) {
+		return _Utils_Tuple2(
+			$author$project$Main$Loading,
+			$elm$core$Platform$Cmd$batch(
+				_List_fromArray(
+					[
+						$elm$http$Http$get(
+						{
+							expect: A2($elm$http$Http$expectJson, $author$project$Main$GotDummyData, $author$project$Main$sampleDataDecoder),
+							url: 'http://localhost:8080/api/sample'
+						}),
+						$elm$http$Http$get(
+						{
+							expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElementaryParsers, $author$project$Main$parsersDataDecoder),
+							url: 'http://localhost:8080/api/parsers/building-blocks/complex'
+						})
+					])));
+	});
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
 var $author$project$Main$subscriptions = function (model) {
@@ -6209,6 +6216,7 @@ var $author$project$Main$Success = F3(
 	function (a, b, c) {
 		return {$: 'Success', a: a, b: b, c: c};
 	});
+var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Debug$log = _Debug_log;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$PostedParser = function (a) {
@@ -6341,6 +6349,7 @@ var $author$project$Main$postParser = function (formData) {
 		});
 };
 var $elm$core$Debug$toString = _Debug_toString;
+var $elm$core$Debug$todo = _Debug_todo;
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -6466,11 +6475,34 @@ var $author$project$Main$update = F2(
 						{val1: 1, val2: '', val3: ''},
 						_List_Nil),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'Submit':
 				var formData = msg.a;
 				return _Utils_Tuple2(
 					model,
 					$author$project$Main$postParser(formData));
+			case 'ClickedLink':
+				var urlRequest = msg.a;
+				if (urlRequest.$ === 'External') {
+					var href = urlRequest.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$browser$Browser$Navigation$load(href));
+				} else {
+					var url = urlRequest.a;
+					return _Debug_todo(
+						'Main',
+						{
+							start: {line: 244, column: 21},
+							end: {line: 244, column: 31}
+						})('Internal link clicked');
+				}
+			default:
+				return _Debug_todo(
+					'Main',
+					{
+						start: {line: 247, column: 13},
+						end: {line: 247, column: 23}
+					})('Url has been changed');
 		}
 	});
 var $author$project$Main$ChangeForm = F2(
@@ -6484,9 +6516,23 @@ var $author$project$Main$Reset = {$: 'Reset'};
 var $author$project$Main$Submit = function (a) {
 	return {$: 'Submit', a: a};
 };
+var $elm$html$Html$a = _VirtualDom_node('a');
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$html$Html$div = _VirtualDom_node('div');
 var $elm$html$Html$h2 = _VirtualDom_node('h2');
+var $elm$html$Html$Attributes$stringProperty = F2(
+	function (key, string) {
+		return A2(
+			_VirtualDom_property,
+			key,
+			$elm$json$Json$Encode$string(string));
+	});
+var $elm$html$Html$Attributes$href = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'href',
+		_VirtualDom_noJavaScriptUri(url));
+};
 var $elm$html$Html$input = _VirtualDom_node('input');
 var $elm$html$Html$label = _VirtualDom_node('label');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
@@ -6538,13 +6584,6 @@ var $elm$html$Html$Events$onInput = function (tagger) {
 			A2($elm$json$Json$Decode$map, tagger, $elm$html$Html$Events$targetValue)));
 };
 var $elm$html$Html$option = _VirtualDom_node('option');
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
 var $elm$html$Html$Attributes$placeholder = $elm$html$Html$Attributes$stringProperty('placeholder');
 var $elm$html$Html$select = _VirtualDom_node('select');
 var $elm$json$Json$Encode$bool = _Json_wrap;
@@ -6791,13 +6830,33 @@ var $author$project$Main$view = function (model) {
 								$elm$html$Html$ul,
 								_List_Nil,
 								A2($elm$core$List$map, $author$project$Main$viewParser, existingParsers))
+							])),
+						A2(
+						$elm$html$Html$a,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$href('https://wikipedia.org')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('External link')
+							])),
+						A2(
+						$elm$html$Html$a,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$href('http://localhost:8081/otherPage')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Internal link')
 							]))
 					]),
 				title: 'Hello World'
 			};
 	}
 };
-var $author$project$Main$main = $elm$browser$Browser$document(
-	{init: $author$project$Main$init, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
+var $author$project$Main$main = $elm$browser$Browser$application(
+	{init: $author$project$Main$init, onUrlChange: $author$project$Main$ChangedUrl, onUrlRequest: $author$project$Main$ClickedLink, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
 _Platform_export({'Main':{'init':$author$project$Main$main(
 	$elm$json$Json$Decode$succeed(_Utils_Tuple0))(0)}});}(this));
