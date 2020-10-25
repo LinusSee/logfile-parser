@@ -9,6 +9,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
 import Url
+import Url.Parser as Parser exposing (Parser, oneOf, s)
 
 
 
@@ -42,9 +43,14 @@ parsers =
 
 
 type Model
-    = NotFound
+    = NotFound NotFoundModel
     | CreateParser CreateParserModel
     | ParseLogfile ParseLogfileModel
+
+
+type alias NotFoundModel =
+    { key : Nav.Key
+    }
 
 
 type alias CreateParserModel =
@@ -94,22 +100,23 @@ type ElementaryParser
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init _ _ key =
-    ( CreateParser { key = key, requestState = Loading }
-    , Cmd.batch
-        [ Http.get
-            { url = "http://localhost:8080/api/sample"
-            , expect = Http.expectJson GotDummyData sampleDataDecoder
-            }
-        , Http.get
-            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
-            }
-        ]
-    )
+init _ url key =
+    changeRouteTo (Parser.parse routeParser url) (NotFound { key = key })
 
 
 
+-- ( CreateParser { key = key, requestState = Loading }
+-- , Cmd.batch
+--     [ Http.get
+--         { url = "http://localhost:8080/api/sample"
+--         , expect = Http.expectJson GotDummyData sampleDataDecoder
+--         }
+--     , Http.get
+--         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+--         , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+--         }
+--     ]
+-- )
 -- UPDATE
 
 
@@ -292,14 +299,105 @@ update msg model =
                 Browser.Internal url ->
                     ( model, Nav.pushUrl parserModel.key (Url.toString url) )
 
-        ( ChangedUrl _, _ ) ->
-            ( model
-            , Cmd.none
-            )
+        ( ChangedUrl url, _ ) ->
+            changeRouteTo (Parser.parse routeParser url) model
 
+        -- ( model
+        -- , Cmd.none
+        -- )
         ( _, _ ) ->
             -- Disregard invalid combinations
             ( model, Cmd.none )
+
+
+
+-- ROUTING
+
+
+type Route
+    = CreateParserRoute
+    | ParseLogfileRoute
+
+
+routeParser : Parser (Route -> a) a
+routeParser =
+    Parser.oneOf
+        [ Parser.map CreateParserRoute Parser.top
+        , Parser.map ParseLogfileRoute (s "parse-logfile")
+        ]
+
+
+changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
+changeRouteTo maybeRoute model =
+    case maybeRoute of
+        Nothing ->
+            case model of
+                NotFound notFoundModel ->
+                    ( NotFound notFoundModel
+                    , Cmd.none
+                    )
+
+                CreateParser parserModel ->
+                    ( NotFound { key = parserModel.key }
+                    , Cmd.none
+                    )
+
+                ParseLogfile parseLogfileModel ->
+                    ( NotFound { key = parseLogfileModel.key }
+                    , Cmd.none
+                    )
+
+        Just CreateParserRoute ->
+            case model of
+                NotFound notFoundModel ->
+                    ( CreateParser { key = notFoundModel.key, requestState = Loading }
+                    , Cmd.batch
+                        [ Http.get
+                            { url = "http://localhost:8080/api/sample"
+                            , expect = Http.expectJson GotDummyData sampleDataDecoder
+                            }
+                        , Http.get
+                            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+                            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+                            }
+                        ]
+                    )
+
+                CreateParser parserModel ->
+                    ( CreateParser parserModel
+                    , Cmd.none
+                    )
+
+                ParseLogfile parseLogfileModel ->
+                    ( CreateParser { key = parseLogfileModel.key, requestState = Loading }
+                    , Cmd.batch
+                        [ Http.get
+                            { url = "http://localhost:8080/api/sample"
+                            , expect = Http.expectJson GotDummyData sampleDataDecoder
+                            }
+                        , Http.get
+                            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+                            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+                            }
+                        ]
+                    )
+
+        Just ParseLogfileRoute ->
+            case model of
+                NotFound notFoundModel ->
+                    ( ParseLogfile { key = notFoundModel.key }
+                    , Cmd.none
+                    )
+
+                CreateParser parserModel ->
+                    ( ParseLogfile { key = parserModel.key }
+                    , Cmd.none
+                    )
+
+                ParseLogfile parseLogfileModel ->
+                    ( ParseLogfile parseLogfileModel
+                    , Cmd.none
+                    )
 
 
 
@@ -318,14 +416,14 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     case model of
-        NotFound ->
+        NotFound notFoundModel ->
             Debug.todo "not found"
 
         CreateParser parserModel ->
             viewCreateParser parserModel
 
         ParseLogfile logfileModel ->
-            Debug.todo "parse logfile"
+            viewParseLogfile logfileModel
 
 
 viewCreateParser : CreateParserModel -> Browser.Document Msg
@@ -371,7 +469,7 @@ viewCreateParser model =
                     , ul [] (List.map viewParser existingParsers)
                     ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
-                , a [ href "http://localhost:8081/otherPage" ] [ text "Internal link" ]
+                , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
                 ]
             }
 

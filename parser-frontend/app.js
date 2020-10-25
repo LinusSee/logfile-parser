@@ -4530,6 +4530,23 @@ function _Http_track(router, xhr, tracker)
 			size: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
+}
+
+function _Url_percentEncode(string)
+{
+	return encodeURIComponent(string);
+}
+
+function _Url_percentDecode(string)
+{
+	try
+	{
+		return $elm$core$Maybe$Just(decodeURIComponent(string));
+	}
+	catch (e)
+	{
+		return $elm$core$Maybe$Nothing;
+	}
 }var $author$project$Main$ChangedUrl = function (a) {
 	return {$: 'ChangedUrl', a: a};
 };
@@ -5325,6 +5342,9 @@ var $elm$core$Task$perform = F2(
 				A2($elm$core$Task$map, toMessage, task)));
 	});
 var $elm$browser$Browser$application = _Browser_application;
+var $author$project$Main$NotFound = function (a) {
+	return {$: 'NotFound', a: a};
+};
 var $author$project$Main$CreateParser = function (a) {
 	return {$: 'CreateParser', a: a};
 };
@@ -5335,6 +5355,9 @@ var $author$project$Main$GotElementaryParsers = function (a) {
 	return {$: 'GotElementaryParsers', a: a};
 };
 var $author$project$Main$Loading = {$: 'Loading'};
+var $author$project$Main$ParseLogfile = function (a) {
+	return {$: 'ParseLogfile', a: a};
+};
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $elm$json$Json$Decode$decodeString = _Json_runOnString;
 var $elm$http$Http$BadStatus_ = F2(
@@ -6123,6 +6146,7 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
+var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$json$Json$Decode$list = _Json_decodeList;
 var $elm$json$Json$Decode$andThen = _Json_andThen;
 var $elm$json$Json$Decode$field = _Json_decodeField;
@@ -6190,25 +6214,331 @@ var $author$project$Main$sampleDataDecoder = A4(
 	A2($elm$json$Json$Decode$field, 'dummy1', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'dummy2', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'dummy3', $elm$json$Json$Decode$string));
-var $author$project$Main$init = F3(
-	function (_v0, _v1, key) {
-		return _Utils_Tuple2(
-			$author$project$Main$CreateParser(
-				{key: key, requestState: $author$project$Main$Loading}),
-			$elm$core$Platform$Cmd$batch(
+var $author$project$Main$changeRouteTo = F2(
+	function (maybeRoute, model) {
+		if (maybeRoute.$ === 'Nothing') {
+			switch (model.$) {
+				case 'NotFound':
+					var notFoundModel = model.a;
+					return _Utils_Tuple2(
+						$author$project$Main$NotFound(notFoundModel),
+						$elm$core$Platform$Cmd$none);
+				case 'CreateParser':
+					var parserModel = model.a;
+					return _Utils_Tuple2(
+						$author$project$Main$NotFound(
+							{key: parserModel.key}),
+						$elm$core$Platform$Cmd$none);
+				default:
+					var parseLogfileModel = model.a;
+					return _Utils_Tuple2(
+						$author$project$Main$NotFound(
+							{key: parseLogfileModel.key}),
+						$elm$core$Platform$Cmd$none);
+			}
+		} else {
+			if (maybeRoute.a.$ === 'CreateParserRoute') {
+				var _v2 = maybeRoute.a;
+				switch (model.$) {
+					case 'NotFound':
+						var notFoundModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$CreateParser(
+								{key: notFoundModel.key, requestState: $author$project$Main$Loading}),
+							$elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										$elm$http$Http$get(
+										{
+											expect: A2($elm$http$Http$expectJson, $author$project$Main$GotDummyData, $author$project$Main$sampleDataDecoder),
+											url: 'http://localhost:8080/api/sample'
+										}),
+										$elm$http$Http$get(
+										{
+											expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElementaryParsers, $author$project$Main$parsersDataDecoder),
+											url: 'http://localhost:8080/api/parsers/building-blocks/complex'
+										})
+									])));
+					case 'CreateParser':
+						var parserModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$CreateParser(parserModel),
+							$elm$core$Platform$Cmd$none);
+					default:
+						var parseLogfileModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$CreateParser(
+								{key: parseLogfileModel.key, requestState: $author$project$Main$Loading}),
+							$elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										$elm$http$Http$get(
+										{
+											expect: A2($elm$http$Http$expectJson, $author$project$Main$GotDummyData, $author$project$Main$sampleDataDecoder),
+											url: 'http://localhost:8080/api/sample'
+										}),
+										$elm$http$Http$get(
+										{
+											expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElementaryParsers, $author$project$Main$parsersDataDecoder),
+											url: 'http://localhost:8080/api/parsers/building-blocks/complex'
+										})
+									])));
+				}
+			} else {
+				var _v4 = maybeRoute.a;
+				switch (model.$) {
+					case 'NotFound':
+						var notFoundModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$ParseLogfile(
+								{key: notFoundModel.key}),
+							$elm$core$Platform$Cmd$none);
+					case 'CreateParser':
+						var parserModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$ParseLogfile(
+								{key: parserModel.key}),
+							$elm$core$Platform$Cmd$none);
+					default:
+						var parseLogfileModel = model.a;
+						return _Utils_Tuple2(
+							$author$project$Main$ParseLogfile(parseLogfileModel),
+							$elm$core$Platform$Cmd$none);
+				}
+			}
+		}
+	});
+var $elm$url$Url$Parser$State = F5(
+	function (visited, unvisited, params, frag, value) {
+		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
+	});
+var $elm$url$Url$Parser$getFirstMatch = function (states) {
+	getFirstMatch:
+	while (true) {
+		if (!states.b) {
+			return $elm$core$Maybe$Nothing;
+		} else {
+			var state = states.a;
+			var rest = states.b;
+			var _v1 = state.unvisited;
+			if (!_v1.b) {
+				return $elm$core$Maybe$Just(state.value);
+			} else {
+				if ((_v1.a === '') && (!_v1.b.b)) {
+					return $elm$core$Maybe$Just(state.value);
+				} else {
+					var $temp$states = rest;
+					states = $temp$states;
+					continue getFirstMatch;
+				}
+			}
+		}
+	}
+};
+var $elm$url$Url$Parser$removeFinalEmpty = function (segments) {
+	if (!segments.b) {
+		return _List_Nil;
+	} else {
+		if ((segments.a === '') && (!segments.b.b)) {
+			return _List_Nil;
+		} else {
+			var segment = segments.a;
+			var rest = segments.b;
+			return A2(
+				$elm$core$List$cons,
+				segment,
+				$elm$url$Url$Parser$removeFinalEmpty(rest));
+		}
+	}
+};
+var $elm$url$Url$Parser$preparePath = function (path) {
+	var _v0 = A2($elm$core$String$split, '/', path);
+	if (_v0.b && (_v0.a === '')) {
+		var segments = _v0.b;
+		return $elm$url$Url$Parser$removeFinalEmpty(segments);
+	} else {
+		var segments = _v0;
+		return $elm$url$Url$Parser$removeFinalEmpty(segments);
+	}
+};
+var $elm$url$Url$Parser$addToParametersHelp = F2(
+	function (value, maybeList) {
+		if (maybeList.$ === 'Nothing') {
+			return $elm$core$Maybe$Just(
 				_List_fromArray(
+					[value]));
+		} else {
+			var list = maybeList.a;
+			return $elm$core$Maybe$Just(
+				A2($elm$core$List$cons, value, list));
+		}
+	});
+var $elm$url$Url$percentDecode = _Url_percentDecode;
+var $elm$url$Url$Parser$addParam = F2(
+	function (segment, dict) {
+		var _v0 = A2($elm$core$String$split, '=', segment);
+		if ((_v0.b && _v0.b.b) && (!_v0.b.b.b)) {
+			var rawKey = _v0.a;
+			var _v1 = _v0.b;
+			var rawValue = _v1.a;
+			var _v2 = $elm$url$Url$percentDecode(rawKey);
+			if (_v2.$ === 'Nothing') {
+				return dict;
+			} else {
+				var key = _v2.a;
+				var _v3 = $elm$url$Url$percentDecode(rawValue);
+				if (_v3.$ === 'Nothing') {
+					return dict;
+				} else {
+					var value = _v3.a;
+					return A3(
+						$elm$core$Dict$update,
+						key,
+						$elm$url$Url$Parser$addToParametersHelp(value),
+						dict);
+				}
+			}
+		} else {
+			return dict;
+		}
+	});
+var $elm$url$Url$Parser$prepareQuery = function (maybeQuery) {
+	if (maybeQuery.$ === 'Nothing') {
+		return $elm$core$Dict$empty;
+	} else {
+		var qry = maybeQuery.a;
+		return A3(
+			$elm$core$List$foldr,
+			$elm$url$Url$Parser$addParam,
+			$elm$core$Dict$empty,
+			A2($elm$core$String$split, '&', qry));
+	}
+};
+var $elm$url$Url$Parser$parse = F2(
+	function (_v0, url) {
+		var parser = _v0.a;
+		return $elm$url$Url$Parser$getFirstMatch(
+			parser(
+				A5(
+					$elm$url$Url$Parser$State,
+					_List_Nil,
+					$elm$url$Url$Parser$preparePath(url.path),
+					$elm$url$Url$Parser$prepareQuery(url.query),
+					url.fragment,
+					$elm$core$Basics$identity)));
+	});
+var $author$project$Main$CreateParserRoute = {$: 'CreateParserRoute'};
+var $author$project$Main$ParseLogfileRoute = {$: 'ParseLogfileRoute'};
+var $elm$url$Url$Parser$Parser = function (a) {
+	return {$: 'Parser', a: a};
+};
+var $elm$url$Url$Parser$mapState = F2(
+	function (func, _v0) {
+		var visited = _v0.visited;
+		var unvisited = _v0.unvisited;
+		var params = _v0.params;
+		var frag = _v0.frag;
+		var value = _v0.value;
+		return A5(
+			$elm$url$Url$Parser$State,
+			visited,
+			unvisited,
+			params,
+			frag,
+			func(value));
+	});
+var $elm$url$Url$Parser$map = F2(
+	function (subValue, _v0) {
+		var parseArg = _v0.a;
+		return $elm$url$Url$Parser$Parser(
+			function (_v1) {
+				var visited = _v1.visited;
+				var unvisited = _v1.unvisited;
+				var params = _v1.params;
+				var frag = _v1.frag;
+				var value = _v1.value;
+				return A2(
+					$elm$core$List$map,
+					$elm$url$Url$Parser$mapState(value),
+					parseArg(
+						A5($elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
+			});
+	});
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
+var $elm$url$Url$Parser$oneOf = function (parsers) {
+	return $elm$url$Url$Parser$Parser(
+		function (state) {
+			return A2(
+				$elm$core$List$concatMap,
+				function (_v0) {
+					var parser = _v0.a;
+					return parser(state);
+				},
+				parsers);
+		});
+};
+var $elm$url$Url$Parser$s = function (str) {
+	return $elm$url$Url$Parser$Parser(
+		function (_v0) {
+			var visited = _v0.visited;
+			var unvisited = _v0.unvisited;
+			var params = _v0.params;
+			var frag = _v0.frag;
+			var value = _v0.value;
+			if (!unvisited.b) {
+				return _List_Nil;
+			} else {
+				var next = unvisited.a;
+				var rest = unvisited.b;
+				return _Utils_eq(next, str) ? _List_fromArray(
 					[
-						$elm$http$Http$get(
-						{
-							expect: A2($elm$http$Http$expectJson, $author$project$Main$GotDummyData, $author$project$Main$sampleDataDecoder),
-							url: 'http://localhost:8080/api/sample'
-						}),
-						$elm$http$Http$get(
-						{
-							expect: A2($elm$http$Http$expectJson, $author$project$Main$GotElementaryParsers, $author$project$Main$parsersDataDecoder),
-							url: 'http://localhost:8080/api/parsers/building-blocks/complex'
-						})
-					])));
+						A5(
+						$elm$url$Url$Parser$State,
+						A2($elm$core$List$cons, next, visited),
+						rest,
+						params,
+						frag,
+						value)
+					]) : _List_Nil;
+			}
+		});
+};
+var $elm$url$Url$Parser$top = $elm$url$Url$Parser$Parser(
+	function (state) {
+		return _List_fromArray(
+			[state]);
+	});
+var $author$project$Main$routeParser = $elm$url$Url$Parser$oneOf(
+	_List_fromArray(
+		[
+			A2($elm$url$Url$Parser$map, $author$project$Main$CreateParserRoute, $elm$url$Url$Parser$top),
+			A2(
+			$elm$url$Url$Parser$map,
+			$author$project$Main$ParseLogfileRoute,
+			$elm$url$Url$Parser$s('parse-logfile'))
+		]));
+var $author$project$Main$init = F3(
+	function (_v0, url, key) {
+		return A2(
+			$author$project$Main$changeRouteTo,
+			A2($elm$url$Url$Parser$parse, $author$project$Main$routeParser, url),
+			$author$project$Main$NotFound(
+				{key: key}));
 	});
 var $elm$core$Platform$Sub$batch = _Platform_batch;
 var $elm$core$Platform$Sub$none = $elm$core$Platform$Sub$batch(_List_Nil);
@@ -6222,7 +6552,6 @@ var $author$project$Main$Success = F3(
 	});
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$core$Debug$log = _Debug_log;
-var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Main$PostedParser = function (a) {
 	return {$: 'PostedParser', a: a};
 };
@@ -6648,7 +6977,11 @@ var $author$project$Main$update = F2(
 						break _v0$8;
 					}
 				default:
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					var url = _v0.a.a;
+					return A2(
+						$author$project$Main$changeRouteTo,
+						A2($elm$url$Url$Parser$parse, $author$project$Main$routeParser, url),
+						model);
 			}
 		}
 		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
@@ -6995,7 +7328,7 @@ var $author$project$Main$viewCreateParser = function (model) {
 						$elm$html$Html$a,
 						_List_fromArray(
 							[
-								$elm$html$Html$Attributes$href('http://localhost:8081/otherPage')
+								$elm$html$Html$Attributes$href('http://localhost:8081/parse-logfile')
 							]),
 						_List_fromArray(
 							[
@@ -7006,26 +7339,31 @@ var $author$project$Main$viewCreateParser = function (model) {
 			};
 	}
 };
+var $author$project$Main$viewParseLogfile = function (_v0) {
+	return {
+		body: _List_fromArray(
+			[
+				$elm$html$Html$text('Success loading \'ParseLogfile\'!')
+			]),
+		title: 'Parse Logfile'
+	};
+};
 var $author$project$Main$view = function (model) {
 	switch (model.$) {
 		case 'NotFound':
+			var notFoundModel = model.a;
 			return _Debug_todo(
 				'Main',
 				{
-					start: {line: 322, column: 13},
-					end: {line: 322, column: 23}
+					start: {line: 420, column: 13},
+					end: {line: 420, column: 23}
 				})('not found');
 		case 'CreateParser':
 			var parserModel = model.a;
 			return $author$project$Main$viewCreateParser(parserModel);
 		default:
 			var logfileModel = model.a;
-			return _Debug_todo(
-				'Main',
-				{
-					start: {line: 328, column: 13},
-					end: {line: 328, column: 23}
-				})('parse logfile');
+			return $author$project$Main$viewParseLogfile(logfileModel);
 	}
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
