@@ -271,10 +271,12 @@ update msg model =
                     ( model, Nav.load href )
 
                 Browser.Internal url ->
-                    Debug.todo "Internal link clicked"
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
 
         ChangedUrl _ ->
-            Debug.todo "Url has been changed"
+            ( model
+            , Cmd.none
+            )
 
 
 
