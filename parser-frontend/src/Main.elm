@@ -105,18 +105,6 @@ init _ url key =
 
 
 
--- ( CreateParser { key = key, requestState = Loading }
--- , Cmd.batch
---     [ Http.get
---         { url = "http://localhost:8080/api/sample"
---         , expect = Http.expectJson GotDummyData sampleDataDecoder
---         }
---     , Http.get
---         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
---         , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
---         }
---     ]
--- )
 -- UPDATE
 
 
@@ -302,9 +290,6 @@ update msg model =
         ( ChangedUrl url, _ ) ->
             changeRouteTo (Parser.parse routeParser url) model
 
-        -- ( model
-        -- , Cmd.none
-        -- )
         ( _, _ ) ->
             -- Disregard invalid combinations
             ( model, Cmd.none )
