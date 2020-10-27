@@ -28,17 +28,6 @@ main =
 
 
 
--- DUMMY DATA
-
-
-parsers : List ElementaryParser
-parsers =
-    [ OneOf [ "Hello", "Darkness", "..." ]
-    , Date "yyyy-mm-dd"
-    ]
-
-
-
 -- MODEL
 
 
