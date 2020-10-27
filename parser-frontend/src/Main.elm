@@ -2,6 +2,7 @@ module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
+import DecEnc
 import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -56,36 +57,7 @@ type alias ParseLogfileModel =
 type HttpRequestState
     = Failure
     | Loading
-    | Success ParserFormData SampleData (List ElementaryParser)
-
-
-type alias ParserFormData =
-    { patternType : String
-    , matching : String
-    , name : String
-    }
-
-
-type alias SampleData =
-    { val1 : Int
-    , val2 : String
-    , val3 : String
-    }
-
-
-type alias TimePattern =
-    String
-
-
-type alias DatePattern =
-    String
-
-
-type ElementaryParser
-    = OneOf (List String)
-    | Time TimePattern
-    | Date DatePattern
-    | Characters String
+    | Success DecEnc.ParserFormData DecEnc.SampleData (List DecEnc.ElementaryParser)
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -104,12 +76,12 @@ type FormChanged
 
 
 type Msg
-    = GotDummyData (Result Http.Error SampleData)
-    | GotElementaryParsers (Result Http.Error (List ElementaryParser))
+    = GotDummyData (Result Http.Error DecEnc.SampleData)
+    | GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | Reset
-    | Submit ParserFormData
+    | Submit DecEnc.ParserFormData
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -328,11 +300,11 @@ changeRouteTo maybeRoute model =
                     , Cmd.batch
                         [ Http.get
                             { url = "http://localhost:8080/api/sample"
-                            , expect = Http.expectJson GotDummyData sampleDataDecoder
+                            , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
                             }
                         , Http.get
                             { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+                            , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
                             }
                         ]
                     )
@@ -347,11 +319,11 @@ changeRouteTo maybeRoute model =
                     , Cmd.batch
                         [ Http.get
                             { url = "http://localhost:8080/api/sample"
-                            , expect = Http.expectJson GotDummyData sampleDataDecoder
+                            , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
                             }
                         , Http.get
                             { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                            , expect = Http.expectJson GotElementaryParsers parsersDataDecoder
+                            , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
                             }
                         ]
                     )
@@ -457,19 +429,19 @@ viewParseLogfile _ =
     }
 
 
-viewParser : ElementaryParser -> Html Msg
+viewParser : DecEnc.ElementaryParser -> Html Msg
 viewParser parser =
     case parser of
-        OneOf xs ->
+        DecEnc.OneOf xs ->
             li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
 
-        Time pattern ->
+        DecEnc.Time pattern ->
             li [] [ text pattern ]
 
-        Date pattern ->
+        DecEnc.Date pattern ->
             li [] [ text pattern ]
 
-        Characters s ->
+        DecEnc.Characters s ->
             li [] [ text s ]
 
 
@@ -477,117 +449,10 @@ viewParser parser =
 -- HTTP
 
 
-postParser : ParserFormData -> Cmd Msg
+postParser : DecEnc.ParserFormData -> Cmd Msg
 postParser formData =
     Http.post
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-        , body = Http.jsonBody (parserEncoder formData)
+        , body = Http.jsonBody (DecEnc.parserEncoder formData)
         , expect = Http.expectWhatever PostedParser
         }
-
-
-sampleDataDecoder : Decoder SampleData
-sampleDataDecoder =
-    map3 SampleData
-        (field "dummy1" int)
-        (field "dummy2" string)
-        (field "dummy3" string)
-
-
-
--- Maybe TEMP
-
-
-toMatchingList : String -> List String
-toMatchingList matching =
-    [ "HARDCODED", "DATA" ]
-
-
-parserEncoder : ParserFormData -> Encode.Value
-parserEncoder formData =
-    case formData.patternType of
-        "oneOf" ->
-            Encode.object
-                [ ( "type", Encode.string "oneOf" )
-                , ( "values", Encode.list Encode.string (toMatchingList formData.matching) )
-                ]
-
-        "time" ->
-            Encode.object
-                [ ( "type", Encode.string "time" )
-                , ( "pattern", Encode.string formData.matching )
-                ]
-
-        "date" ->
-            Encode.object
-                [ ( "type", Encode.string "date" )
-                , ( "pattern", Encode.string formData.matching )
-                ]
-
-        "characters" ->
-            Encode.object
-                [ ( "type", Encode.string "characters" )
-                , ( "value", Encode.string formData.matching )
-                ]
-
-        -- TEMP: Need to find out how to solve this
-        _ ->
-            Encode.object
-                [ ( "type", Encode.string "invalidType" )
-                , ( "value", Encode.string "invalidValue" )
-                ]
-
-
-parsersDataDecoder : Decoder (List ElementaryParser)
-parsersDataDecoder =
-    Decode.list parserDataDecoder
-
-
-parserDataDecoder : Decoder ElementaryParser
-parserDataDecoder =
-    field "type" string
-        |> Decode.andThen parserDataDecoderHelp
-
-
-parserDataDecoderHelp : String -> Decoder ElementaryParser
-parserDataDecoderHelp typeName =
-    case typeName of
-        "oneOf" ->
-            oneOfParserDecoder
-
-        "time" ->
-            timeParserDecoder
-
-        "date" ->
-            dateParserDecoder
-
-        "characters" ->
-            charactersParserDecoder
-
-        _ ->
-            Decode.fail <|
-                "Trying to decode parser but found incorrect type."
-                    ++ "Type was "
-                    ++ typeName
-                    ++ "but expected one of "
-                    ++ "[ \"oneOf\", \"time\", \"date\", \"characters\" ]"
-
-
-oneOfParserDecoder : Decoder ElementaryParser
-oneOfParserDecoder =
-    Decode.map OneOf (field "values" (Decode.list string))
-
-
-timeParserDecoder : Decoder ElementaryParser
-timeParserDecoder =
-    Decode.map Time (field "pattern" string)
-
-
-charactersParserDecoder : Decoder ElementaryParser
-charactersParserDecoder =
-    Decode.map Characters (field "value" string)
-
-
-dateParserDecoder : Decoder ElementaryParser
-dateParserDecoder =
-    Decode.map Date (field "pattern" string)
