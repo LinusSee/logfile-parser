@@ -17,6 +17,10 @@ import Url.Parser as Parser exposing (Parser, oneOf, s)
 -- MAIN
 
 
+type alias Session =
+    { key : Nav.Key }
+
+
 main =
     Browser.application
         { init = init
@@ -33,24 +37,13 @@ main =
 
 
 type Model
-    = NotFound NotFoundModel
-    | CreateParser CreateParserModel
-    | ParseLogfile ParseLogfileModel
-
-
-type alias NotFoundModel =
-    { key : Nav.Key
-    }
+    = NotFound Session
+    | CreateParser Session CreateParserModel
+    | ParseLogfile Session
 
 
 type alias CreateParserModel =
-    { key : Nav.Key
-    , requestState : HttpRequestState
-    }
-
-
-type alias ParseLogfileModel =
-    { key : Nav.Key
+    { requestState : HttpRequestState
     }
 
 
@@ -89,7 +82,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
-        ( GotDummyData result, CreateParser parserModel ) ->
+        ( GotDummyData result, CreateParser session parserModel ) ->
             case result of
                 Ok data ->
                     case parserModel.requestState of
@@ -97,7 +90,7 @@ update msg model =
                             ( model, Cmd.none )
 
                         Loading ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success
@@ -112,7 +105,7 @@ update msg model =
                             )
 
                         Success formData _ existingParsers ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success
@@ -124,17 +117,17 @@ update msg model =
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser session { parserModel | requestState = Failure }, Cmd.none )
 
-        ( GotElementaryParsers result, CreateParser parserModel ) ->
+        ( GotElementaryParsers result, CreateParser session parserModel ) ->
             case result of
                 Ok data ->
                     case parserModel.requestState of
                         Failure ->
-                            ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
+                            ( CreateParser session { parserModel | requestState = Failure }, Cmd.none )
 
                         Loading ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success
@@ -152,7 +145,7 @@ update msg model =
                             )
 
                         Success formData loadedData _ ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success
@@ -164,28 +157,28 @@ update msg model =
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser session { parserModel | requestState = Failure }, Cmd.none )
 
-        ( PostedParser result, CreateParser parserModel ) ->
+        ( PostedParser result, CreateParser session parserModel ) ->
             case result of
                 Ok _ ->
                     ( model, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
+                    Debug.log (Debug.toString error) ( CreateParser session { parserModel | requestState = Failure }, Cmd.none )
 
-        ( ChangeForm field newContent, CreateParser parserModel ) ->
+        ( ChangeForm field newContent, CreateParser session parserModel ) ->
             case parserModel.requestState of
                 Failure ->
                     ( model, Cmd.none )
 
                 Loading ->
-                    ( CreateParser { parserModel | requestState = Failure }, Cmd.none )
+                    ( CreateParser session { parserModel | requestState = Failure }, Cmd.none )
 
                 Success formData loadedData existingParsers ->
                     case field of
                         ChangePatternType ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success { formData | patternType = newContent }
@@ -196,7 +189,7 @@ update msg model =
                             )
 
                         ChangeMatching ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success { formData | matching = newContent }
@@ -207,7 +200,7 @@ update msg model =
                             )
 
                         ChangeName ->
-                            ( CreateParser
+                            ( CreateParser session
                                 { parserModel
                                     | requestState =
                                         Success { formData | name = newContent }
@@ -217,8 +210,8 @@ update msg model =
                             , Cmd.none
                             )
 
-        ( Reset, CreateParser parserModel ) ->
-            ( CreateParser
+        ( Reset, CreateParser session parserModel ) ->
+            ( CreateParser session
                 { parserModel
                     | requestState =
                         Success
@@ -240,13 +233,13 @@ update msg model =
             , postParser formData
             )
 
-        ( ClickedLink urlRequest, CreateParser parserModel ) ->
+        ( ClickedLink urlRequest, CreateParser session parserModel ) ->
             case urlRequest of
                 Browser.External href ->
                     ( model, Nav.load href )
 
                 Browser.Internal url ->
-                    ( model, Nav.pushUrl parserModel.key (Url.toString url) )
+                    ( model, Nav.pushUrl session.key (Url.toString url) )
 
         ( ChangedUrl url, _ ) ->
             changeRouteTo (Parser.parse routeParser url) model
@@ -278,25 +271,25 @@ changeRouteTo maybeRoute model =
     case maybeRoute of
         Nothing ->
             case model of
-                NotFound notFoundModel ->
-                    ( NotFound notFoundModel
+                NotFound session ->
+                    ( NotFound session
                     , Cmd.none
                     )
 
-                CreateParser parserModel ->
-                    ( NotFound { key = parserModel.key }
+                CreateParser session parserModel ->
+                    ( NotFound session
                     , Cmd.none
                     )
 
-                ParseLogfile parseLogfileModel ->
-                    ( NotFound { key = parseLogfileModel.key }
+                ParseLogfile session ->
+                    ( NotFound session
                     , Cmd.none
                     )
 
         Just CreateParserRoute ->
             case model of
-                NotFound notFoundModel ->
-                    ( CreateParser { key = notFoundModel.key, requestState = Loading }
+                NotFound session ->
+                    ( CreateParser session { requestState = Loading }
                     , Cmd.batch
                         [ Http.get
                             { url = "http://localhost:8080/api/sample"
@@ -309,13 +302,13 @@ changeRouteTo maybeRoute model =
                         ]
                     )
 
-                CreateParser parserModel ->
-                    ( CreateParser parserModel
+                CreateParser _ _ ->
+                    ( model
                     , Cmd.none
                     )
 
-                ParseLogfile parseLogfileModel ->
-                    ( CreateParser { key = parseLogfileModel.key, requestState = Loading }
+                ParseLogfile session ->
+                    ( CreateParser session { requestState = Loading }
                     , Cmd.batch
                         [ Http.get
                             { url = "http://localhost:8080/api/sample"
@@ -330,18 +323,18 @@ changeRouteTo maybeRoute model =
 
         Just ParseLogfileRoute ->
             case model of
-                NotFound notFoundModel ->
-                    ( ParseLogfile { key = notFoundModel.key }
+                NotFound session ->
+                    ( ParseLogfile session
                     , Cmd.none
                     )
 
-                CreateParser parserModel ->
-                    ( ParseLogfile { key = parserModel.key }
+                CreateParser session _ ->
+                    ( ParseLogfile session
                     , Cmd.none
                     )
 
-                ParseLogfile parseLogfileModel ->
-                    ( ParseLogfile parseLogfileModel
+                ParseLogfile session ->
+                    ( ParseLogfile session
                     , Cmd.none
                     )
 
@@ -362,14 +355,14 @@ subscriptions model =
 view : Model -> Browser.Document Msg
 view model =
     case model of
-        NotFound notFoundModel ->
+        NotFound _ ->
             Debug.todo "not found"
 
-        CreateParser parserModel ->
+        CreateParser session parserModel ->
             viewCreateParser parserModel
 
-        ParseLogfile logfileModel ->
-            viewParseLogfile logfileModel
+        ParseLogfile _ ->
+            viewParseLogfile
 
 
 viewCreateParser : CreateParserModel -> Browser.Document Msg
@@ -420,8 +413,8 @@ viewCreateParser model =
             }
 
 
-viewParseLogfile : ParseLogfileModel -> Browser.Document Msg
-viewParseLogfile _ =
+viewParseLogfile : Browser.Document Msg
+viewParseLogfile =
     { title = "Parse Logfile"
     , body =
         [ text "Success loading 'ParseLogfile'!"
