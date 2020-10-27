@@ -1,15 +1,8 @@
 module DecEnc exposing (..)
 
-import Browser
-import Browser.Navigation as Nav
-import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, ul)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
-import Url
-import Url.Parser as Parser exposing (Parser, oneOf, s)
 
 
 
