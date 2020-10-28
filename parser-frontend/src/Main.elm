@@ -61,175 +61,12 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
-        ( GotStuff parserMsg, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            case parserMsg of
-                ParserCreation.GotDummyData result ->
-                    case result of
-                        Ok data ->
-                            case parserModel.requestState of
-                                ParserCreation.Failure ->
-                                    ( model, Cmd.none )
-
-                                ParserCreation.Loading ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success
-                                                        { patternType = "oneOf"
-                                                        , matching = ""
-                                                        , name = ""
-                                                        }
-                                                        data
-                                                        []
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                                ParserCreation.Success formData _ existingParsers ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser
-                                            session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success
-                                                        formData
-                                                        data
-                                                        existingParsers
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                        Err error ->
-                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                ParserCreation.GotElementaryParsers result ->
-                    case result of
-                        Ok data ->
-                            case parserModel.requestState of
-                                ParserCreation.Failure ->
-                                    ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                                ParserCreation.Loading ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success
-                                                        { patternType = "oneOf"
-                                                        , matching = ""
-                                                        , name = ""
-                                                        }
-                                                        { val1 = 0
-                                                        , val2 = ""
-                                                        , val3 = ""
-                                                        }
-                                                        data
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                                ParserCreation.Success formData loadedData _ ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success
-                                                        formData
-                                                        loadedData
-                                                        data
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                        Err error ->
-                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                ParserCreation.PostedParser result ->
-                    case result of
-                        Ok _ ->
-                            ( model, Cmd.none )
-
-                        Err error ->
-                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                ParserCreation.ChangeForm field newContent ->
-                    case parserModel.requestState of
-                        ParserCreation.Failure ->
-                            ( model, Cmd.none )
-
-                        ParserCreation.Loading ->
-                            ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                        ParserCreation.Success formData loadedData existingParsers ->
-                            case field of
-                                ParserCreation.ChangePatternType ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success { formData | patternType = newContent }
-                                                        loadedData
-                                                        existingParsers
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                                ParserCreation.ChangeMatching ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success { formData | matching = newContent }
-                                                        loadedData
-                                                        existingParsers
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                                ParserCreation.ChangeName ->
-                                    ( CreateParser
-                                        (ParserCreation.CreateParser session
-                                            { parserModel
-                                                | requestState =
-                                                    ParserCreation.Success { formData | name = newContent }
-                                                        loadedData
-                                                        existingParsers
-                                            }
-                                        )
-                                    , Cmd.none
-                                    )
-
-                ParserCreation.Reset ->
-                    ( CreateParser
-                        (ParserCreation.CreateParser session
-                            { parserModel
-                                | requestState =
-                                    ParserCreation.Success
-                                        { patternType = "oneOf"
-                                        , matching = ""
-                                        , name = ""
-                                        }
-                                        { val1 = 1
-                                        , val2 = ""
-                                        , val3 = ""
-                                        }
-                                        []
-                            }
-                        )
-                    , Cmd.none
-                    )
-
-                ParserCreation.Submit formData ->
-                    ( model
-                    , postParser formData
-                    )
+        ( GotStuff parserMsg, CreateParser parserModel ) ->
+            let
+                ( retModel, retCmd ) =
+                    ParserCreation.update parserMsg parserModel
+            in
+            ( CreateParser retModel, Cmd.map GotStuff retCmd )
 
         ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
             case urlRequest of
@@ -245,7 +82,7 @@ update msg model =
         ( _, _ ) ->
             -- Disregard invalid combinations
             -- ( model, Cmd.none )
-            Debug.todo "Should be the case for testing"
+            Debug.todo "Should never happen"
 
 
 
@@ -288,38 +125,36 @@ changeRouteTo maybeRoute model =
         Just CreateParserRoute ->
             case model of
                 NotFound session ->
-                    ( CreateParser (ParserCreation.CreateParser session { requestState = ParserCreation.Loading })
-                      -- , Cmd.batch
-                      --     [ Http.get
-                      --         { url = "http://localhost:8080/api/sample"
-                      --         , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
-                      --         }
-                      --     , Http.get
-                      --         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                      --         , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
-                      --         }
-                      --     ]
-                    , Cmd.none
-                    )
+                    let
+                        ( retModel, retCmd ) =
+                            ParserCreation.init session
+                    in
+                    ( CreateParser retModel, Cmd.map GotStuff retCmd )
 
+                -- ( CreateParser (ParserCreation.CreateParser session { requestState = ParserCreation.Loading })
+                --   -- , Cmd.batch
+                --   --     [ Http.get
+                --   --         { url = "http://localhost:8080/api/sample"
+                --   --         , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
+                --   --         }
+                --   --     , Http.get
+                --   --         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+                --   --         , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
+                --   --         }
+                --   --     ]
+                -- , Cmd.none
+                -- )
                 CreateParser _ ->
                     ( model
                     , Cmd.none
                     )
 
                 ParseLogfile session ->
-                    ( CreateParser (ParserCreation.CreateParser session { requestState = ParserCreation.Loading })
-                    , Cmd.batch
-                        [ Http.get
-                            { url = "http://localhost:8080/api/sample"
-                            , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
-                            }
-                        , Http.get
-                            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                            , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
-                            }
-                        ]
-                    )
+                    let
+                        ( retModel, retCmd ) =
+                            ParserCreation.init session
+                    in
+                    ( CreateParser retModel, Cmd.map GotStuff retCmd )
 
         Just ParseLogfileRoute ->
             case model of
@@ -373,16 +208,3 @@ viewParseLogfile =
         [ text "Success loading 'ParseLogfile'!"
         ]
     }
-
-
-
--- HTTP
-
-
-postParser : DecEnc.ParserFormData -> Cmd Msg
-postParser formData =
-    Http.post
-        { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-        , body = Http.jsonBody (DecEnc.parserEncoder formData)
-        , expect = Http.expectWhatever PostedParser
-        }
