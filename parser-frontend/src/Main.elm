@@ -53,9 +53,6 @@ type Msg
     = GotDummyData (Result Http.Error DecEnc.SampleData)
     | GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | PostedParser (Result Http.Error ())
-    | ChangeForm ParserCreation.FormChanged String
-    | Reset
-    | Submit DecEnc.ParserFormData
     | GotStuff ParserCreation.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
@@ -64,173 +61,175 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
-        ( GotDummyData result, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            case result of
-                Ok data ->
+        ( GotStuff parserMsg, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
+            case parserMsg of
+                ParserCreation.GotDummyData result ->
+                    case result of
+                        Ok data ->
+                            case parserModel.requestState of
+                                ParserCreation.Failure ->
+                                    ( model, Cmd.none )
+
+                                ParserCreation.Loading ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success
+                                                        { patternType = "oneOf"
+                                                        , matching = ""
+                                                        , name = ""
+                                                        }
+                                                        data
+                                                        []
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
+
+                                ParserCreation.Success formData _ existingParsers ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser
+                                            session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success
+                                                        formData
+                                                        data
+                                                        existingParsers
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
+
+                        Err error ->
+                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
+
+                ParserCreation.GotElementaryParsers result ->
+                    case result of
+                        Ok data ->
+                            case parserModel.requestState of
+                                ParserCreation.Failure ->
+                                    ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
+
+                                ParserCreation.Loading ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success
+                                                        { patternType = "oneOf"
+                                                        , matching = ""
+                                                        , name = ""
+                                                        }
+                                                        { val1 = 0
+                                                        , val2 = ""
+                                                        , val3 = ""
+                                                        }
+                                                        data
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
+
+                                ParserCreation.Success formData loadedData _ ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success
+                                                        formData
+                                                        loadedData
+                                                        data
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
+
+                        Err error ->
+                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
+
+                ParserCreation.PostedParser result ->
+                    case result of
+                        Ok _ ->
+                            ( model, Cmd.none )
+
+                        Err error ->
+                            Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
+
+                ParserCreation.ChangeForm field newContent ->
                     case parserModel.requestState of
                         ParserCreation.Failure ->
                             ( model, Cmd.none )
 
                         ParserCreation.Loading ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success
-                                                { patternType = "oneOf"
-                                                , matching = ""
-                                                , name = ""
-                                                }
-                                                data
-                                                []
-                                    }
-                                )
-                            , Cmd.none
-                            )
-
-                        ParserCreation.Success formData _ existingParsers ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser
-                                    session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success
-                                                formData
-                                                data
-                                                existingParsers
-                                    }
-                                )
-                            , Cmd.none
-                            )
-
-                Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-        ( GotElementaryParsers result, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            case result of
-                Ok data ->
-                    case parserModel.requestState of
-                        ParserCreation.Failure ->
                             ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
 
-                        ParserCreation.Loading ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success
-                                                { patternType = "oneOf"
-                                                , matching = ""
-                                                , name = ""
-                                                }
-                                                { val1 = 0
-                                                , val2 = ""
-                                                , val3 = ""
-                                                }
-                                                data
-                                    }
-                                )
-                            , Cmd.none
-                            )
+                        ParserCreation.Success formData loadedData existingParsers ->
+                            case field of
+                                ParserCreation.ChangePatternType ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success { formData | patternType = newContent }
+                                                        loadedData
+                                                        existingParsers
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
 
-                        ParserCreation.Success formData loadedData _ ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success
-                                                formData
-                                                loadedData
-                                                data
-                                    }
-                                )
-                            , Cmd.none
-                            )
+                                ParserCreation.ChangeMatching ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success { formData | matching = newContent }
+                                                        loadedData
+                                                        existingParsers
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
 
-                Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
+                                ParserCreation.ChangeName ->
+                                    ( CreateParser
+                                        (ParserCreation.CreateParser session
+                                            { parserModel
+                                                | requestState =
+                                                    ParserCreation.Success { formData | name = newContent }
+                                                        loadedData
+                                                        existingParsers
+                                            }
+                                        )
+                                    , Cmd.none
+                                    )
 
-        ( PostedParser result, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            case result of
-                Ok _ ->
-                    ( model, Cmd.none )
+                ParserCreation.Reset ->
+                    ( CreateParser
+                        (ParserCreation.CreateParser session
+                            { parserModel
+                                | requestState =
+                                    ParserCreation.Success
+                                        { patternType = "oneOf"
+                                        , matching = ""
+                                        , name = ""
+                                        }
+                                        { val1 = 1
+                                        , val2 = ""
+                                        , val3 = ""
+                                        }
+                                        []
+                            }
+                        )
+                    , Cmd.none
+                    )
 
-                Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-        ( ChangeForm field newContent, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            case parserModel.requestState of
-                ParserCreation.Failure ->
-                    ( model, Cmd.none )
-
-                ParserCreation.Loading ->
-                    ( CreateParser (ParserCreation.CreateParser session { parserModel | requestState = ParserCreation.Failure }), Cmd.none )
-
-                ParserCreation.Success formData loadedData existingParsers ->
-                    case field of
-                        ParserCreation.ChangePatternType ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success { formData | patternType = newContent }
-                                                loadedData
-                                                existingParsers
-                                    }
-                                )
-                            , Cmd.none
-                            )
-
-                        ParserCreation.ChangeMatching ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success { formData | matching = newContent }
-                                                loadedData
-                                                existingParsers
-                                    }
-                                )
-                            , Cmd.none
-                            )
-
-                        ParserCreation.ChangeName ->
-                            ( CreateParser
-                                (ParserCreation.CreateParser session
-                                    { parserModel
-                                        | requestState =
-                                            ParserCreation.Success { formData | name = newContent }
-                                                loadedData
-                                                existingParsers
-                                    }
-                                )
-                            , Cmd.none
-                            )
-
-        ( Reset, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
-            ( CreateParser
-                (ParserCreation.CreateParser session
-                    { parserModel
-                        | requestState =
-                            ParserCreation.Success
-                                { patternType = "oneOf"
-                                , matching = ""
-                                , name = ""
-                                }
-                                { val1 = 1
-                                , val2 = ""
-                                , val3 = ""
-                                }
-                                []
-                    }
-                )
-            , Cmd.none
-            )
-
-        ( Submit formData, _ ) ->
-            ( model
-            , postParser formData
-            )
+                ParserCreation.Submit formData ->
+                    ( model
+                    , postParser formData
+                    )
 
         ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
             case urlRequest of
@@ -290,16 +289,17 @@ changeRouteTo maybeRoute model =
             case model of
                 NotFound session ->
                     ( CreateParser (ParserCreation.CreateParser session { requestState = ParserCreation.Loading })
-                    , Cmd.batch
-                        [ Http.get
-                            { url = "http://localhost:8080/api/sample"
-                            , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
-                            }
-                        , Http.get
-                            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                            , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
-                            }
-                        ]
+                      -- , Cmd.batch
+                      --     [ Http.get
+                      --         { url = "http://localhost:8080/api/sample"
+                      --         , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
+                      --         }
+                      --     , Http.get
+                      --         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
+                      --         , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
+                      --         }
+                      --     ]
+                    , Cmd.none
                     )
 
                 CreateParser _ ->
@@ -360,105 +360,10 @@ view model =
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
             -- { title = "Hello World", body = [ div [] [ text "Empty stuff" ] ] }
-            { title = "It works?!", body = [ Html.map GotStuff (viewCreateParser parserModel) ] }
+            { title = "It works?!", body = [ Html.map GotStuff (ParserCreation.view parserModel) ] }
 
         ParseLogfile _ ->
             viewParseLogfile
-
-
-
--- viewCreateParser : ParserCreation.CreateParserModel -> Browser.Document Msg
--- viewCreateParser model =
---     case model.requestState of
---         ParserCreation.Failure ->
---             { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
---
---         ParserCreation.Loading ->
---             { title = "Hello World", body = [ div [] [ text "Loading..." ] ] }
---
---         ParserCreation.Success formData loadedData existingParsers ->
---             { title = "Hello World"
---             , body =
---                 [ div []
---                     [ h2 [] [ text "Create specialized parsers" ]
---                     , div []
---                         [ label []
---                             [ text "Type"
---                             , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
---                                 [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
---                                 , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
---                                 , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
---                                 , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
---                                 ]
---                             ]
---                         , label []
---                             [ text "Matching"
---                             , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
---                             ]
---                         ]
---                     , div []
---                         [ label []
---                             [ text "Name"
---                             , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
---                             ]
---                         ]
---                     , div []
---                         [ button [ onClick Reset ] [ text "Reset" ]
---                         , button [ onClick (Submit formData) ] [ text "Submit" ]
---                         ]
---                     , text ("Loaded this string: " ++ loadedData.val2)
---                     , ul [] (List.map viewParser existingParsers)
---                     ]
---                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
---                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
---                 ]
---             }
-
-
-viewCreateParser : ParserCreation.CreateParserModel -> Html ParserCreation.Msg
-viewCreateParser model =
-    case model.requestState of
-        ParserCreation.Failure ->
-            div [] [ text "Failed to load data" ]
-
-        ParserCreation.Loading ->
-            div [] [ text "Loading..." ]
-
-        ParserCreation.Success formData loadedData existingParsers ->
-            div []
-                [ div []
-                    [ h2 [] [ text "Create specialized parsers" ]
-                    , div []
-                        [ label []
-                            [ text "Type"
-                            , select [ value formData.patternType, onInput (ParserCreation.ChangeForm ParserCreation.ChangePatternType) ]
-                                [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
-                                , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
-                                , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
-                                , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
-                                ]
-                            ]
-                        , label []
-                            [ text "Matching"
-                            , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ParserCreation.ChangeForm ParserCreation.ChangeMatching) ] []
-                            ]
-                        ]
-                    , div []
-                        [ label []
-                            [ text "Name"
-                            , input [ placeholder "Loglevel oneof", value formData.name, onInput (ParserCreation.ChangeForm ParserCreation.ChangeName) ] []
-                            ]
-                        ]
-                    , div []
-                        [ button [ onClick ParserCreation.Reset ] [ text "Reset" ]
-                        , button [ onClick (ParserCreation.Submit formData) ] [ text "Submit" ]
-                        ]
-                    , text ("Loaded this string: " ++ loadedData.val2)
-                    , ul [] (List.map viewParser existingParsers)
-                    ]
-                , a [ href "https://wikipedia.org" ] [ text "External link" ]
-                , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
-                ]
 
 
 viewParseLogfile : Browser.Document Msg
@@ -468,22 +373,6 @@ viewParseLogfile =
         [ text "Success loading 'ParseLogfile'!"
         ]
     }
-
-
-viewParser : DecEnc.ElementaryParser -> Html ParserCreation.Msg
-viewParser parser =
-    case parser of
-        DecEnc.OneOf xs ->
-            li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
-
-        DecEnc.Time pattern ->
-            li [] [ text pattern ]
-
-        DecEnc.Date pattern ->
-            li [] [ text pattern ]
-
-        DecEnc.Characters s ->
-            li [] [ text s ]
 
 
 
