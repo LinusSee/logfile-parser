@@ -49,19 +49,14 @@ init _ url key =
 -- UPDATE
 
 
-type FormChanged
-    = ChangePatternType
-    | ChangeMatching
-    | ChangeName
-
-
 type Msg
     = GotDummyData (Result Http.Error DecEnc.SampleData)
     | GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | PostedParser (Result Http.Error ())
-    | ChangeForm FormChanged String
+    | ChangeForm ParserCreation.FormChanged String
     | Reset
     | Submit DecEnc.ParserFormData
+    | GotStuff ParserCreation.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -173,7 +168,7 @@ update msg model =
 
                 ParserCreation.Success formData loadedData existingParsers ->
                     case field of
-                        ChangePatternType ->
+                        ParserCreation.ChangePatternType ->
                             ( CreateParser
                                 (ParserCreation.CreateParser session
                                     { parserModel
@@ -186,7 +181,7 @@ update msg model =
                             , Cmd.none
                             )
 
-                        ChangeMatching ->
+                        ParserCreation.ChangeMatching ->
                             ( CreateParser
                                 (ParserCreation.CreateParser session
                                     { parserModel
@@ -199,7 +194,7 @@ update msg model =
                             , Cmd.none
                             )
 
-                        ChangeName ->
+                        ParserCreation.ChangeName ->
                             ( CreateParser
                                 (ParserCreation.CreateParser session
                                     { parserModel
@@ -250,7 +245,8 @@ update msg model =
 
         ( _, _ ) ->
             -- Disregard invalid combinations
-            ( model, Cmd.none )
+            -- ( model, Cmd.none )
+            Debug.todo "Should be the case for testing"
 
 
 
@@ -363,30 +359,79 @@ view model =
             Debug.todo "not found"
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
-            viewCreateParser parserModel
+            -- { title = "Hello World", body = [ div [] [ text "Empty stuff" ] ] }
+            { title = "It works?!", body = [ Html.map GotStuff (viewCreateParser parserModel) ] }
 
         ParseLogfile _ ->
             viewParseLogfile
 
 
-viewCreateParser : ParserCreation.CreateParserModel -> Browser.Document Msg
+
+-- viewCreateParser : ParserCreation.CreateParserModel -> Browser.Document Msg
+-- viewCreateParser model =
+--     case model.requestState of
+--         ParserCreation.Failure ->
+--             { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
+--
+--         ParserCreation.Loading ->
+--             { title = "Hello World", body = [ div [] [ text "Loading..." ] ] }
+--
+--         ParserCreation.Success formData loadedData existingParsers ->
+--             { title = "Hello World"
+--             , body =
+--                 [ div []
+--                     [ h2 [] [ text "Create specialized parsers" ]
+--                     , div []
+--                         [ label []
+--                             [ text "Type"
+--                             , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
+--                                 [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
+--                                 , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
+--                                 , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
+--                                 , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
+--                                 ]
+--                             ]
+--                         , label []
+--                             [ text "Matching"
+--                             , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
+--                             ]
+--                         ]
+--                     , div []
+--                         [ label []
+--                             [ text "Name"
+--                             , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+--                             ]
+--                         ]
+--                     , div []
+--                         [ button [ onClick Reset ] [ text "Reset" ]
+--                         , button [ onClick (Submit formData) ] [ text "Submit" ]
+--                         ]
+--                     , text ("Loaded this string: " ++ loadedData.val2)
+--                     , ul [] (List.map viewParser existingParsers)
+--                     ]
+--                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
+--                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
+--                 ]
+--             }
+
+
+viewCreateParser : ParserCreation.CreateParserModel -> Html ParserCreation.Msg
 viewCreateParser model =
     case model.requestState of
         ParserCreation.Failure ->
-            { title = "Hello World", body = [ div [] [ text "Failed to load data" ] ] }
+            div [] [ text "Failed to load data" ]
 
         ParserCreation.Loading ->
-            { title = "Hello World", body = [ div [] [ text "Loading..." ] ] }
+            div [] [ text "Loading..." ]
 
         ParserCreation.Success formData loadedData existingParsers ->
-            { title = "Hello World"
-            , body =
+            div []
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
                     , div []
                         [ label []
                             [ text "Type"
-                            , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
+                            , select [ value formData.patternType, onInput (ParserCreation.ChangeForm ParserCreation.ChangePatternType) ]
                                 [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
                                 , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
                                 , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
@@ -395,18 +440,18 @@ viewCreateParser model =
                             ]
                         , label []
                             [ text "Matching"
-                            , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
+                            , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ParserCreation.ChangeForm ParserCreation.ChangeMatching) ] []
                             ]
                         ]
                     , div []
                         [ label []
                             [ text "Name"
-                            , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+                            , input [ placeholder "Loglevel oneof", value formData.name, onInput (ParserCreation.ChangeForm ParserCreation.ChangeName) ] []
                             ]
                         ]
                     , div []
-                        [ button [ onClick Reset ] [ text "Reset" ]
-                        , button [ onClick (Submit formData) ] [ text "Submit" ]
+                        [ button [ onClick ParserCreation.Reset ] [ text "Reset" ]
+                        , button [ onClick (ParserCreation.Submit formData) ] [ text "Submit" ]
                         ]
                     , text ("Loaded this string: " ++ loadedData.val2)
                     , ul [] (List.map viewParser existingParsers)
@@ -414,7 +459,6 @@ viewCreateParser model =
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
                 ]
-            }
 
 
 viewParseLogfile : Browser.Document Msg
@@ -426,7 +470,7 @@ viewParseLogfile =
     }
 
 
-viewParser : DecEnc.ElementaryParser -> Html Msg
+viewParser : DecEnc.ElementaryParser -> Html ParserCreation.Msg
 viewParser parser =
     case parser of
         DecEnc.OneOf xs ->
