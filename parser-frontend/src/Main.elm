@@ -50,10 +50,7 @@ init _ url key =
 
 
 type Msg
-    = GotDummyData (Result Http.Error DecEnc.SampleData)
-    | GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
-    | PostedParser (Result Http.Error ())
-    | GotStuff ParserCreation.Msg
+    = GotStuff ParserCreation.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -131,19 +128,6 @@ changeRouteTo maybeRoute model =
                     in
                     ( CreateParser retModel, Cmd.map GotStuff retCmd )
 
-                -- ( CreateParser (ParserCreation.CreateParser session { requestState = ParserCreation.Loading })
-                --   -- , Cmd.batch
-                --   --     [ Http.get
-                --   --         { url = "http://localhost:8080/api/sample"
-                --   --         , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
-                --   --         }
-                --   --     , Http.get
-                --   --         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-                --   --         , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
-                --   --         }
-                --   --     ]
-                -- , Cmd.none
-                -- )
                 CreateParser _ ->
                     ( model
                     , Cmd.none
@@ -194,7 +178,6 @@ view model =
             Debug.todo "not found"
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
-            -- { title = "Hello World", body = [ div [] [ text "Empty stuff" ] ] }
             { title = "It works?!", body = [ Html.map GotStuff (ParserCreation.view parserModel) ] }
 
         ParseLogfile _ ->
