@@ -9,6 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
+import Page.LogfileParsing as LogfileParsing
 import Page.ParserCreation as ParserCreation
 import Session exposing (Session)
 import Url
@@ -51,6 +52,7 @@ init _ url key =
 
 type Msg
     = GotStuff ParserCreation.Msg
+    | GotLogfileParsingMsg LogfileParsing.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -178,16 +180,11 @@ view model =
             Debug.todo "not found"
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
-            { title = "It works?!", body = [ Html.map GotStuff (ParserCreation.view parserModel) ] }
+            { title = "It works?!"
+            , body = [ Html.map GotStuff (ParserCreation.view parserModel) ]
+            }
 
         ParseLogfile _ ->
-            viewParseLogfile
-
-
-viewParseLogfile : Browser.Document Msg
-viewParseLogfile =
-    { title = "Parse Logfile"
-    , body =
-        [ text "Success loading 'ParseLogfile'!"
-        ]
-    }
+            { title = "Logfile Parsing"
+            , body = [ Html.map GotLogfileParsingMsg LogfileParsing.viewParseLogfile ]
+            }
