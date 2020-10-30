@@ -51,7 +51,7 @@ init _ url key =
 
 
 type Msg
-    = GotStuff ParserCreation.Msg
+    = GotCreateParserMsg ParserCreation.Msg
     | GotLogfileParsingMsg LogfileParsing.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
@@ -60,12 +60,15 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
-        ( GotStuff parserMsg, CreateParser parserModel ) ->
+        ( GotCreateParserMsg parserMsg, CreateParser parserModel ) ->
             let
                 ( retModel, retCmd ) =
                     ParserCreation.update parserMsg parserModel
             in
-            ( CreateParser retModel, Cmd.map GotStuff retCmd )
+            ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
+
+        ( GotLogfileParsingMsg _, _ ) ->
+            ( model, Cmd.none )
 
         ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
             case urlRequest of
@@ -78,13 +81,19 @@ update msg model =
         ( ChangedUrl url, _ ) ->
             changeRouteTo (Parser.parse routeParser url) model
 
-        ( _, _ ) ->
-            -- Disregard invalid combinations
-            -- ( model, Cmd.none )
-            Debug.todo "Should never happen"
+        -- Handle cases that should never happen
+        ( GotCreateParserMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( ClickedLink _, _ ) ->
+            ( model, Cmd.none )
 
 
 
+-- ( _, _ ) ->
+--     -- Disregard invalid combinations
+--     -- ( model, Cmd.none )
+--     Debug.todo "Should never happen"
 -- ROUTING
 
 
@@ -128,7 +137,7 @@ changeRouteTo maybeRoute model =
                         ( retModel, retCmd ) =
                             ParserCreation.init session
                     in
-                    ( CreateParser retModel, Cmd.map GotStuff retCmd )
+                    ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
 
                 CreateParser _ ->
                     ( model
@@ -140,7 +149,7 @@ changeRouteTo maybeRoute model =
                         ( retModel, retCmd ) =
                             ParserCreation.init session
                     in
-                    ( CreateParser retModel, Cmd.map GotStuff retCmd )
+                    ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
 
         Just ParseLogfileRoute ->
             case model of
@@ -181,7 +190,7 @@ view model =
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
             { title = "It works?!"
-            , body = [ Html.map GotStuff (ParserCreation.view parserModel) ]
+            , body = [ Html.map GotCreateParserMsg (ParserCreation.view parserModel) ]
             }
 
         ParseLogfile _ ->
