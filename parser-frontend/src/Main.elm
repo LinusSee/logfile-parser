@@ -112,39 +112,20 @@ routeParser =
 
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
 changeRouteTo maybeRoute model =
+    let
+        session =
+            toSession model
+    in
     case maybeRoute of
         Nothing ->
-            case model of
-                NotFound session ->
-                    ( NotFound session
-                    , Cmd.none
-                    )
-
-                CreateParser (ParserCreation.CreateParser session parserModel) ->
-                    ( NotFound session
-                    , Cmd.none
-                    )
-
-                ParseLogfile session ->
-                    ( NotFound session
-                    , Cmd.none
-                    )
+            ( NotFound session, Cmd.none )
 
         Just CreateParserRoute ->
             case model of
-                NotFound session ->
-                    let
-                        ( retModel, retCmd ) =
-                            ParserCreation.init session
-                    in
-                    ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
-
                 CreateParser _ ->
-                    ( model
-                    , Cmd.none
-                    )
+                    ( model, Cmd.none )
 
-                ParseLogfile session ->
+                _ ->
                     let
                         ( retModel, retCmd ) =
                             ParserCreation.init session
@@ -152,21 +133,20 @@ changeRouteTo maybeRoute model =
                     ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
 
         Just ParseLogfileRoute ->
-            case model of
-                NotFound session ->
-                    ( ParseLogfile session
-                    , Cmd.none
-                    )
+            ( ParseLogfile session, Cmd.none )
 
-                CreateParser (ParserCreation.CreateParser session _) ->
-                    ( ParseLogfile session
-                    , Cmd.none
-                    )
 
-                ParseLogfile session ->
-                    ( ParseLogfile session
-                    , Cmd.none
-                    )
+toSession : Model -> Session
+toSession model =
+    case model of
+        NotFound session ->
+            session
+
+        CreateParser (ParserCreation.CreateParser session _) ->
+            session
+
+        ParseLogfile session ->
+            session
 
 
 
