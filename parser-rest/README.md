@@ -7,6 +7,18 @@ This means building a parser for what would be logged by a single `log("someStuf
 Keep in mind that this could span a single line like `log("This is in a single line.")` or multiple lines, e.g. like `log("This \\nwill \\nspan \\nmultiple \\nlines")`. Therefore the distinction between "logline" and "line". See [here](#creating-a-logline-parser) for a detailed example.
 3. Apply a parser created in step one repeatedly to a file until there is no input left to parse.
 
+## Api
+- /api
+   - /users
+     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (a list of users). *Will be removed later on.*
+   - /sample
+     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (a single data record). *Will be removed later on.*
+   - /simple-parser
+     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (an elementary parser). *Will be removed later on.*
+   - /parsers/building-blocks/complex
+     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns a list of applied elementary parsers (e.g. "matching <some_string>").
+     <br>POST:&nbsp;&nbsp;      Apply an argument to a simple parser. Creates a new applied parser.
+
 ## Creating a logline parser
 A logline parser is supposed to parse what is written by a single `log()` command. Let's look at two examples.
 Example 1:
