@@ -14,6 +14,7 @@ data ElementaryParser =
   | Time TimePattern
   | Date DatePattern
   | Characters String
+  deriving (Show, Read)
 
 
 instance ToJSON ElementaryParser where

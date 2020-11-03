@@ -7,6 +7,7 @@ module Lib
     , app
     ) where
 
+import Control.Monad.IO.Class (liftIO)
 import Data.Aeson
 import Data.Aeson.TH
 import Network.Wai
@@ -17,6 +18,7 @@ import Network.Wai.Middleware.Servant.Options
 import Servant
 
 import CustomParsers
+import FileDb as FileDb
 
 
 data User = User
@@ -71,11 +73,14 @@ server =
        return users
   :<|> return dummyData
   :<|> return myElementaryParser
-  :<|> return existingParsers
-  :<|> (\_parser -> return NoContent)
+  :<|> do
+          parsers <- liftIO FileDb.readAll
+          return parsers
+  :<|> (\_parser -> do
+          liftIO $ FileDb.save _parser
+          return NoContent
+        )
 
-  -- helloHandler :: Handler String
-  -- helloHandler = return "Hello World!"
 
 users :: [User]
 users = [ User 1 "Isaac" "Newton"
@@ -84,12 +89,3 @@ users = [ User 1 "Isaac" "Newton"
 
 dummyData :: DummyData
 dummyData = DummyData 5 "MyString1" "OtherString"
-
-existingParsers :: [ElementaryParser]
-existingParsers =
-  [ OneOf ["Hello", "World", "!"]
-  , Date "yyyy-mm-dd"
-  , Date "yyyy-dd-mm"
-  , Date "HH:mm"
-  , Characters "Some string to match"
-  ]
