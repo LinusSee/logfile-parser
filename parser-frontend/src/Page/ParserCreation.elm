@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
+import Validate exposing (Validator, ifBlank, validate)
 
 
 
@@ -266,6 +267,14 @@ view model =
                     ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
+                , div []
+                    [ case validate modelValidator { matching = formData.matching, name = formData.name } of
+                        Ok _ ->
+                            text "Successful validaton"
+
+                        Err errs ->
+                            ul [] (List.map (\err -> li [] [ text err ]) errs)
+                    ]
                 ]
 
 
@@ -283,6 +292,40 @@ viewParser parser =
 
         DecEnc.Characters s ->
             li [] [ text s ]
+
+
+
+-- FORM
+
+
+type FormField
+    = Matching
+    | Name
+
+
+type alias Error =
+    ( FormField, String )
+
+
+
+-- validate : CreateParserModel -> List Error
+-- validate =
+--     Validate.all
+--         [ .matching >> Validate.ifBlank ( Matching, "Matching pattern musn't be empty." )
+--         , .name >> Validate.ifBlank ( Name, "Name musn't be empty." )
+--         ]
+
+
+type alias ValidatedModel =
+    { matching : String, name : String }
+
+
+modelValidator : Validator String ValidatedModel
+modelValidator =
+    Validate.all
+        [ ifBlank .matching "Matching pattern musn't be empty."
+        , ifBlank .name "Name musn't be empty."
+        ]
 
 
 
