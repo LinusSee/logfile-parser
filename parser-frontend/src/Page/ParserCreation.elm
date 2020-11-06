@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
-import Validate exposing (Validator, ifBlank, validate)
+import Validate exposing (Validator, fromErrors, ifBlank, ifTrue, validate)
 
 
 
@@ -312,19 +312,6 @@ viewParser parser =
 
 
 -- FORM
--- type FormField
---     = Matching
---     | Name
---
---
--- type alias Error =
---     ( FormField, String )
--- validate : CreateParserModel -> List Error
--- validate =
---     Validate.all
---         [ .matching >> Validate.ifBlank ( Matching, "Matching pattern musn't be empty." )
---         , .name >> Validate.ifBlank ( Name, "Name musn't be empty." )
---         ]
 
 
 type alias ValidatedModel =
@@ -338,13 +325,55 @@ validateForm formData =
 
 modelValidator : Validator ValidationProblem ValidatedModel
 modelValidator =
+    -- ifTrue (\model -> model.matching == "a") (InvalidEntry Matching "Matching pattern musn't be empty.")
     Validate.all
-        [ ifBlank .matching (InvalidEntry Matching "Matching pattern musn't be empty.")
+        [ Validate.firstError
+            [ ifBlank .matching (InvalidEntry Matching "Matching pattern musn't be empty.")
+            , ifTrue isInvalidList (InvalidEntry Matching "Each element must be a string enclosed by \"")
+            ]
         , ifBlank .name (InvalidEntry Name "Name musn't be empty.")
         ]
 
 
+isInvalidList : ValidatedModel -> Bool
+isInvalidList input =
+    let
+        inputList =
+            String.split "," input.matching
 
+        validElement element =
+            let
+                trimmedElement =
+                    String.trim element
+            in
+            not
+                (String.startsWith "\"" trimmedElement
+                    && String.endsWith "\"" trimmedElement
+                )
+                || (String.length trimmedElement < 3)
+    in
+    List.member True (List.map validElement inputList)
+
+
+
+-- oneOfMatchingToProblems : String -> List ValidationProblem
+-- oneOfMatchingToProblems input =
+--     let
+--         inputList =
+--             String.split "," input
+--
+--         validElement element =
+--             let
+--                 trimmedElement =
+--                     String.trim element
+--             in
+--             String.startsWith "\"" trimmedElement && String.endsWith "\"" trimmedElement
+--     in
+--     if List.member True (List.map validElement inputList) then
+--         [ InvalidEntry Matching "Each element must be a string enclosed by \"" ]
+--
+--     else
+--         []
 -- HTTP
 
 
