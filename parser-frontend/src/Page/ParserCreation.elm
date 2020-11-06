@@ -19,6 +19,7 @@ type Model
 
 type alias CreateParserModel =
     { requestState : HttpRequestState
+    , problems : List ValidationProblem
     }
 
 
@@ -28,9 +29,18 @@ type HttpRequestState
     | Success DecEnc.ParserFormData DecEnc.SampleData (List DecEnc.ElementaryParser)
 
 
+type ValidationProblem
+    = InvalidEntry ValidatedField String
+
+
+type ValidatedField
+    = Matching
+    | Name
+
+
 init : Session -> ( Model, Cmd Msg )
 init session =
-    ( CreateParser session { requestState = Loading }
+    ( CreateParser session { requestState = Loading, problems = [] }
     , Cmd.batch
         [ Http.get
             { url = "http://localhost:8080/api/sample"
@@ -214,10 +224,16 @@ update msg (CreateParser session model) =
             )
 
         Submit formData ->
-            ( CreateParser session model
-            , postParser formData
-              -- , Cmd.none
-            )
+            case validateForm formData of
+                Ok _ ->
+                    ( CreateParser session model
+                    , postParser formData
+                    )
+
+                Err problems ->
+                    ( CreateParser session { model | problems = problems }
+                    , Cmd.none
+                    )
 
 
 
@@ -237,6 +253,14 @@ view model =
             div []
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
+                    , div []
+                        [ case validate modelValidator { matching = formData.matching, name = formData.name } of
+                            Ok _ ->
+                                text "Successful validaton"
+
+                            Err errs ->
+                                ul [] (List.map (\(InvalidEntry _ err) -> li [] [ text err ]) errs)
+                        ]
                     , div []
                         [ label []
                             [ text "Type"
@@ -267,14 +291,6 @@ view model =
                     ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
-                , div []
-                    [ case validate modelValidator { matching = formData.matching, name = formData.name } of
-                        Ok _ ->
-                            text "Successful validaton"
-
-                        Err errs ->
-                            ul [] (List.map (\err -> li [] [ text err ]) errs)
-                    ]
                 ]
 
 
@@ -296,18 +312,13 @@ viewParser parser =
 
 
 -- FORM
-
-
-type FormField
-    = Matching
-    | Name
-
-
-type alias Error =
-    ( FormField, String )
-
-
-
+-- type FormField
+--     = Matching
+--     | Name
+--
+--
+-- type alias Error =
+--     ( FormField, String )
 -- validate : CreateParserModel -> List Error
 -- validate =
 --     Validate.all
@@ -320,11 +331,16 @@ type alias ValidatedModel =
     { matching : String, name : String }
 
 
-modelValidator : Validator String ValidatedModel
+validateForm : DecEnc.ParserFormData -> Result (List ValidationProblem) (Validate.Valid ValidatedModel)
+validateForm formData =
+    validate modelValidator { matching = formData.matching, name = formData.name }
+
+
+modelValidator : Validator ValidationProblem ValidatedModel
 modelValidator =
     Validate.all
-        [ ifBlank .matching "Matching pattern musn't be empty."
-        , ifBlank .name "Name musn't be empty."
+        [ ifBlank .matching (InvalidEntry Matching "Matching pattern musn't be empty.")
+        , ifBlank .name (InvalidEntry Name "Name musn't be empty.")
         ]
 
 

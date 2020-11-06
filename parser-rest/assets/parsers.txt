@@ -1,1 +1,1 @@
-[OneOf ["HARDCODED","DATA"],OneOf ["Hello","World","!"],Date "yyyy-mm-dd",Date "yyyy-dd-mm",Date "HH:mm",Characters "Some string to match"]
+[Date "a",OneOf ["HARDCODED","DATA"],OneOf ["HARDCODED","DATA"],OneOf ["HARDCODED","DATA"],OneOf ["Hello","World","!"],Date "yyyy-mm-dd",Date "yyyy-dd-mm",Date "HH:mm",Characters "Some string to match"]
