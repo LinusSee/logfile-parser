@@ -158,12 +158,22 @@ update msg (CreateParser session model) =
             ( CreateParser session
                 { model
                     | requestState =
-                        Success
-                            { patternType = "oneOf"
-                            , matching = ""
-                            , name = ""
-                            }
-                            []
+                        case model.requestState of
+                            Success _ parsers ->
+                                Success
+                                    { patternType = "oneOf"
+                                    , matching = ""
+                                    , name = ""
+                                    }
+                                    parsers
+
+                            _ ->
+                                Success
+                                    { patternType = "oneOf"
+                                    , matching = ""
+                                    , name = ""
+                                    }
+                                    []
                 }
             , Cmd.none
             )
