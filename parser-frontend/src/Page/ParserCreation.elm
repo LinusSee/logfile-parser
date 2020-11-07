@@ -254,7 +254,7 @@ view model =
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
                     , div []
-                        [ case validate modelValidator { matching = formData.matching, name = formData.name } of
+                        [ case validateForm formData of
                             Ok _ ->
                                 text "Successful validaton"
 
@@ -320,19 +320,43 @@ type alias ValidatedModel =
 
 validateForm : DecEnc.ParserFormData -> Result (List ValidationProblem) (Validate.Valid ValidatedModel)
 validateForm formData =
-    validate modelValidator { matching = formData.matching, name = formData.name }
+    validate (modelValidator formData.patternType) { matching = formData.matching, name = formData.name }
 
 
-modelValidator : Validator ValidationProblem ValidatedModel
-modelValidator =
+modelValidator : String -> Validator ValidationProblem ValidatedModel
+modelValidator patternType =
     -- ifTrue (\model -> model.matching == "a") (InvalidEntry Matching "Matching pattern musn't be empty.")
     Validate.all
-        [ Validate.firstError
-            [ ifBlank .matching (InvalidEntry Matching "Matching pattern musn't be empty.")
-            , ifTrue isInvalidList (InvalidEntry Matching "Each element must be a string enclosed by \"")
-            ]
+        [ matchingValidator patternType
         , ifBlank .name (InvalidEntry Name "Name musn't be empty.")
         ]
+
+
+matchingValidator : String -> Validator ValidationProblem ValidatedModel
+matchingValidator patternType =
+    -- TODO: Maybe change this to a type? Would make handling easier
+    case patternType of
+        "oneOf" ->
+            Validate.firstError
+                [ ifBlank .matching (InvalidEntry Matching "OneOf matching pattern must have at least one element.")
+                , ifTrue isInvalidList (InvalidEntry Matching "Each element must be a string enclosed by \"")
+                ]
+
+        "date" ->
+            ifBlank .matching (InvalidEntry Matching "Date matching pattern musn't be empty.")
+
+        "time" ->
+            ifBlank .matching (InvalidEntry Matching "Time matching pattern musn't be empty.")
+
+        "characters" ->
+            ifBlank .matching (InvalidEntry Matching "Characters matching pattern musn't be empty.")
+
+        _ ->
+            Debug.todo "Should never happen"
+
+
+
+-- ifTrue True (InvalidEntry Matching "Invalid selection. Please select a valid type.")
 
 
 isInvalidList : ValidatedModel -> Bool
