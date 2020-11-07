@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
-import Validate exposing (Validator, fromErrors, ifBlank, ifTrue, validate)
+import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
 
 
 
@@ -301,20 +301,22 @@ matchingValidator patternType =
                 ]
 
         "date" ->
-            ifBlank .matching (InvalidEntry Matching "Date matching pattern musn't be empty.")
+            Validate.firstError
+                [ ifBlank .matching (InvalidEntry Matching "Date matching pattern musn't be empty.")
+                , ifFalse isValidDate (InvalidEntry Matching "Incorrect pattern for type 'date'.")
+                ]
 
         "time" ->
-            ifBlank .matching (InvalidEntry Matching "Time matching pattern musn't be empty.")
+            Validate.firstError
+                [ ifBlank .matching (InvalidEntry Matching "Time matching pattern musn't be empty.")
+                , ifFalse isValidDate (InvalidEntry Matching "Incorrect pattern for type 'time'.")
+                ]
 
         "characters" ->
             ifBlank .matching (InvalidEntry Matching "Characters matching pattern musn't be empty.")
 
         _ ->
             Debug.todo "Should never happen"
-
-
-
--- ifTrue True (InvalidEntry Matching "Invalid selection. Please select a valid type.")
 
 
 isInvalidList : ValidatedModel -> Bool
@@ -335,6 +337,31 @@ isInvalidList input =
                 || (String.length trimmedElement < 3)
     in
     List.member True (List.map validElement inputList)
+
+
+isValidDate : ValidatedModel -> Bool
+isValidDate model =
+    let
+        matching =
+            model.matching
+    in
+    String.contains "yyyy" matching
+        && String.contains "mm" matching
+        && String.contains "dd" matching
+        && String.length matching
+        == 10
+
+
+isValidTime : ValidatedModel -> Bool
+isValidTime model =
+    let
+        matching =
+            model.matching
+    in
+    String.contains "hh" matching
+        && String.contains "mm" matching
+        && String.length matching
+        == 5
 
 
 
