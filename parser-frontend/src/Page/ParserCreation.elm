@@ -253,14 +253,7 @@ view model =
             div []
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
-                    , div []
-                        [ case validateForm formData of
-                            Ok _ ->
-                                text "Successful validaton"
-
-                            Err errs ->
-                                ul [] (List.map (\(InvalidEntry _ err) -> li [] [ text err ]) errs)
-                        ]
+                    , viewProblems model.problems
                     , div []
                         [ label []
                             [ text "Type"
@@ -310,6 +303,18 @@ viewParser parser =
             li [] [ text s ]
 
 
+viewProblems : List ValidationProblem -> Html Msg
+viewProblems problems =
+    div []
+        [ case problems of
+            [] ->
+                text "Successful validaton"
+
+            _ ->
+                ul [] (List.map (\(InvalidEntry _ problem) -> li [] [ text problem ]) problems)
+        ]
+
+
 
 -- FORM
 
@@ -325,7 +330,6 @@ validateForm formData =
 
 modelValidator : String -> Validator ValidationProblem ValidatedModel
 modelValidator patternType =
-    -- ifTrue (\model -> model.matching == "a") (InvalidEntry Matching "Matching pattern musn't be empty.")
     Validate.all
         [ matchingValidator patternType
         , ifBlank .name (InvalidEntry Name "Name musn't be empty.")
