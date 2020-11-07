@@ -309,7 +309,7 @@ matchingValidator patternType =
         "time" ->
             Validate.firstError
                 [ ifBlank .matching (InvalidEntry Matching "Time matching pattern musn't be empty.")
-                , ifFalse isValidDate (InvalidEntry Matching "Incorrect pattern for type 'time'.")
+                , ifFalse isValidTime (InvalidEntry Matching "Incorrect pattern for type 'time'.")
                 ]
 
         "characters" ->
@@ -348,8 +348,7 @@ isValidDate model =
     String.contains "yyyy" matching
         && String.contains "mm" matching
         && String.contains "dd" matching
-        && String.length matching
-        == 10
+        && (String.length matching == 10)
 
 
 isValidTime : ValidatedModel -> Bool
@@ -360,8 +359,7 @@ isValidTime model =
     in
     String.contains "hh" matching
         && String.contains "mm" matching
-        && String.length matching
-        == 5
+        && (String.length matching == 5)
 
 
 
