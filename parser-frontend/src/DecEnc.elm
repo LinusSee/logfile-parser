@@ -31,26 +31,8 @@ type alias ParserFormData =
     }
 
 
-type alias SampleData =
-    { val1 : Int
-    , val2 : String
-    , val3 : String
-    }
-
-
 
 -- HTTP
-
-
-sampleDataDecoder : Decoder SampleData
-sampleDataDecoder =
-    map3 SampleData
-        (field "dummy1" int)
-        (field "dummy2" string)
-        (field "dummy3" string)
-
-
-
 -- Maybe TEMP
 
 

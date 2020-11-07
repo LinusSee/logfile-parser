@@ -26,7 +26,7 @@ type alias CreateParserModel =
 type HttpRequestState
     = Failure
     | Loading
-    | Success DecEnc.ParserFormData DecEnc.SampleData (List DecEnc.ElementaryParser)
+    | Success DecEnc.ParserFormData (List DecEnc.ElementaryParser)
 
 
 type ValidationProblem
@@ -43,10 +43,6 @@ init session =
     ( CreateParser session { requestState = Loading, problems = [] }
     , Cmd.batch
         [ Http.get
-            { url = "http://localhost:8080/api/sample"
-            , expect = Http.expectJson GotDummyData DecEnc.sampleDataDecoder
-            }
-        , Http.get
             { url = "http://localhost:8080/api/parsers/building-blocks/complex"
             , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
             }
@@ -59,8 +55,7 @@ init session =
 
 
 type Msg
-    = GotDummyData (Result Http.Error DecEnc.SampleData)
-    | GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
+    = GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | Reset
@@ -76,44 +71,6 @@ type FormChanged
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg (CreateParser session model) =
     case msg of
-        GotDummyData result ->
-            case result of
-                Ok data ->
-                    case model.requestState of
-                        Failure ->
-                            ( CreateParser session model, Cmd.none )
-
-                        Loading ->
-                            ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success
-                                            { patternType = "oneOf"
-                                            , matching = ""
-                                            , name = ""
-                                            }
-                                            data
-                                            []
-                                }
-                            , Cmd.none
-                            )
-
-                        Success formData _ existingParsers ->
-                            ( CreateParser
-                                session
-                                { model
-                                    | requestState =
-                                        Success
-                                            formData
-                                            data
-                                            existingParsers
-                                }
-                            , Cmd.none
-                            )
-
-                Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser session { model | requestState = Failure }, Cmd.none )
-
         GotElementaryParsers result ->
             case result of
                 Ok data ->
@@ -130,22 +87,17 @@ update msg (CreateParser session model) =
                                             , matching = ""
                                             , name = ""
                                             }
-                                            { val1 = 0
-                                            , val2 = ""
-                                            , val3 = ""
-                                            }
                                             data
                                 }
                             , Cmd.none
                             )
 
-                        Success formData loadedData _ ->
+                        Success formData _ ->
                             ( CreateParser session
                                 { model
                                     | requestState =
                                         Success
                                             formData
-                                            loadedData
                                             data
                                 }
                             , Cmd.none
@@ -170,14 +122,13 @@ update msg (CreateParser session model) =
                 Loading ->
                     ( CreateParser session { model | requestState = Failure }, Cmd.none )
 
-                Success formData loadedData existingParsers ->
+                Success formData existingParsers ->
                     case field of
                         ChangePatternType ->
                             ( CreateParser session
                                 { model
                                     | requestState =
                                         Success { formData | patternType = newContent }
-                                            loadedData
                                             existingParsers
                                 }
                             , Cmd.none
@@ -188,7 +139,6 @@ update msg (CreateParser session model) =
                                 { model
                                     | requestState =
                                         Success { formData | matching = newContent }
-                                            loadedData
                                             existingParsers
                                 }
                             , Cmd.none
@@ -199,7 +149,6 @@ update msg (CreateParser session model) =
                                 { model
                                     | requestState =
                                         Success { formData | name = newContent }
-                                            loadedData
                                             existingParsers
                                 }
                             , Cmd.none
@@ -213,10 +162,6 @@ update msg (CreateParser session model) =
                             { patternType = "oneOf"
                             , matching = ""
                             , name = ""
-                            }
-                            { val1 = 1
-                            , val2 = ""
-                            , val3 = ""
                             }
                             []
                 }
@@ -249,7 +194,7 @@ view model =
         Loading ->
             div [] [ text "Loading..." ]
 
-        Success formData loadedData existingParsers ->
+        Success formData existingParsers ->
             div []
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
@@ -279,7 +224,6 @@ view model =
                         [ button [ onClick Reset ] [ text "Reset" ]
                         , button [ onClick (Submit formData) ] [ text "Submit" ]
                         ]
-                    , text ("Loaded this string: " ++ loadedData.val2)
                     , ul [] (List.map viewParser existingParsers)
                     ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
