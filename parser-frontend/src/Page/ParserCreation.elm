@@ -19,6 +19,10 @@ type Model
 
 type alias CreateParserModel =
     { requestState : HttpRequestState
+    , createForm : DecEnc.ParserFormData
+    , existingParsers : List DecEnc.ElementaryParser
+
+    -- , applyForm : ( String, String )
     , problems : List ValidationProblem
     }
 
@@ -26,7 +30,7 @@ type alias CreateParserModel =
 type HttpRequestState
     = Failure
     | Loading
-    | Success DecEnc.ParserFormData (List DecEnc.ElementaryParser)
+    | Success
 
 
 type ValidationProblem
@@ -40,7 +44,17 @@ type ValidatedField
 
 init : Session -> ( Model, Cmd Msg )
 init session =
-    ( CreateParser session { requestState = Loading, problems = [] }
+    ( CreateParser
+        session
+        { requestState = Loading
+        , createForm =
+            { patternType = "oneOf"
+            , matching = ""
+            , name = ""
+            }
+        , existingParsers = []
+        , problems = []
+        }
     , Cmd.batch
         [ Http.get
             { url = "http://localhost:8080/api/parsers/building-blocks/complex"
@@ -80,26 +94,21 @@ update msg (CreateParser session model) =
 
                         Loading ->
                             ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success
-                                            { patternType = "oneOf"
-                                            , matching = ""
-                                            , name = ""
-                                            }
-                                            data
+                                { requestState = Success
+                                , createForm =
+                                    { patternType = "oneOf"
+                                    , matching = ""
+                                    , name = ""
+                                    }
+                                , existingParsers = data
+                                , problems = []
                                 }
                             , Cmd.none
                             )
 
-                        Success formData _ ->
+                        Success ->
                             ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success
-                                            formData
-                                            data
-                                }
+                                { model | existingParsers = data }
                             , Cmd.none
                             )
 
@@ -122,58 +131,48 @@ update msg (CreateParser session model) =
                 Loading ->
                     ( CreateParser session { model | requestState = Failure }, Cmd.none )
 
-                Success formData existingParsers ->
+                Success ->
                     case field of
                         ChangePatternType ->
+                            let
+                                formData =
+                                    model.createForm
+                            in
                             ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success { formData | patternType = newContent }
-                                            existingParsers
-                                }
+                                { model | createForm = { formData | patternType = newContent } }
                             , Cmd.none
                             )
 
                         ChangeMatching ->
+                            let
+                                formData =
+                                    model.createForm
+                            in
                             ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success { formData | matching = newContent }
-                                            existingParsers
-                                }
+                                { model | createForm = { formData | matching = newContent } }
                             , Cmd.none
                             )
 
                         ChangeName ->
+                            let
+                                formData =
+                                    model.createForm
+                            in
                             ( CreateParser session
-                                { model
-                                    | requestState =
-                                        Success { formData | name = newContent }
-                                            existingParsers
-                                }
+                                { model | createForm = { formData | name = newContent } }
                             , Cmd.none
                             )
 
         Reset ->
             ( CreateParser session
-                { model
-                    | requestState =
-                        case model.requestState of
-                            Success _ parsers ->
-                                Success
-                                    { patternType = "oneOf"
-                                    , matching = ""
-                                    , name = ""
-                                    }
-                                    parsers
-
-                            _ ->
-                                Success
-                                    { patternType = "oneOf"
-                                    , matching = ""
-                                    , name = ""
-                                    }
-                                    []
+                { requestState = model.requestState
+                , createForm =
+                    { patternType = "oneOf"
+                    , matching = ""
+                    , name = ""
+                    }
+                , existingParsers = model.existingParsers
+                , problems = []
                 }
             , Cmd.none
             )
@@ -204,7 +203,14 @@ view model =
         Loading ->
             div [] [ text "Loading..." ]
 
-        Success formData existingParsers ->
+        Success ->
+            let
+                formData =
+                    model.createForm
+
+                existingParsers =
+                    model.existingParsers
+            in
             div []
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
@@ -236,6 +242,8 @@ view model =
                         ]
                     , ul [] (List.map viewParser existingParsers)
                     ]
+
+                -- , viewParserApplication existingParsers
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
                 ]
@@ -270,6 +278,24 @@ viewProblems problems =
 
 
 
+-- viewParserApplication : List DecEnc.ElementaryParser -> Html Msg
+-- viewParserApplication parser =
+--     div []
+--         [ label []
+--             [ text "Type"
+--             , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
+--                 [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
+--                 , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
+--                 , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
+--                 , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
+--                 ]
+--             ]
+--         , label []
+--             [ text "Target"
+--             , input [ placeholder "A value to parse", value formData.name, onInput (ChangeForm ChangeName) ] []
+--             ]
+--         , text "No content yet. This will be the sample application"
+--         ]
 -- FORM
 
 
