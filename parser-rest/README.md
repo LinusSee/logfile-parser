@@ -9,12 +9,6 @@ Keep in mind that this could span a single line like `log("This is in a single l
 
 ## Api
 - /api
-   - /users
-     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (a list of users). *Will be removed later on.*
-   - /sample
-     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (a single data record). *Will be removed later on.*
-   - /simple-parser
-     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns dummy data (an elementary parser). *Will be removed later on.*
    - /parsers/building-blocks/complex
      <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns a list of applied elementary parsers (e.g. "matching <some_string>").
      <br>POST:&nbsp;&nbsp;      Apply an argument to a simple parser. Creates a new applied parser.
