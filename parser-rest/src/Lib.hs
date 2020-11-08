@@ -17,7 +17,7 @@ import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
 
-import CustomParsers
+import CustomParsers (ElementaryParser, ParsingRequest(..))
 import FileDb as FileDb
 
 
@@ -31,6 +31,7 @@ type API =
         ("parsers" :> "building-blocks" :>
              (    "complex" :> Get '[JSON] [ElementaryParser]
              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] NoContent
              )
         )
 
@@ -50,10 +51,21 @@ api = Proxy
 
 server :: Server API
 server =
-       do
-          parsers <- liftIO FileDb.readAll
-          return parsers
-  :<|> (\_parser -> do
-          liftIO $ FileDb.save _parser
-          return NoContent
-        )
+       readAllElementaryParsersHandler
+  :<|> saveParserHandler
+  :<|> parserApplicationHandler
+
+
+readAllElementaryParsersHandler :: Handler [ElementaryParser]
+readAllElementaryParsersHandler = do
+  parsers <- liftIO FileDb.readAll
+  return parsers
+
+
+saveParserHandler :: ElementaryParser -> Handler NoContent
+saveParserHandler parser = do
+  liftIO $ FileDb.save parser
+  return NoContent
+
+parserApplicationHandler :: ParsingRequest -> Handler NoContent
+parserApplicationHandler _ = return NoContent

@@ -1,13 +1,22 @@
 {-# LANGUAGE OverloadedStrings #-}
-module CustomParsers (
-  ElementaryParser(..)
+{-# LANGUAGE TemplateHaskell #-}
+
+module CustomParsers
+( ElementaryParser (..)
+, ParsingRequest (..)
 ) where
 
 import Data.Aeson
+import Data.Aeson.TH
 import Data.Text (Text)
 
 type TimePattern = String
 type DatePattern = String
+
+
+
+-- MODELS
+
 
 data ElementaryParser =
     OneOf [String]
@@ -32,8 +41,8 @@ instance FromJSON ElementaryParser where
                           String "characters" -> Characters <$> o .: "value"
                           --_                   -> empty
 
--- toElementaryParser :: Text -> Text -> ElementaryParser
--- toElementaryParser "oneOf"      = OneOf
--- toElementaryParser "time"       = Time
--- toElementaryParser "date"       = Date
--- toElementaryParser "characters" = Characters
+
+data ParsingRequest =
+    ParsingRequest String ElementaryParser
+
+$(deriveJSON defaultOptions ''ParsingRequest)
