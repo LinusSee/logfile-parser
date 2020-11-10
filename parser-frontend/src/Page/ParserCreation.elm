@@ -21,8 +21,7 @@ type alias CreateParserModel =
     { requestState : HttpRequestState
     , createForm : DecEnc.ParserFormData
     , existingParsers : List DecEnc.ElementaryParser
-
-    -- , applyForm : ( String, String )
+    , parserToApply : String
     , problems : List ValidationProblem
     }
 
@@ -52,6 +51,7 @@ init session =
             , matching = ""
             , name = ""
             }
+        , parserToApply = ""
         , existingParsers = []
         , problems = []
         }
@@ -72,6 +72,7 @@ type Msg
     = GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
+    | ChoseParserToApply String
     | Reset
     | Submit DecEnc.ParserFormData
 
@@ -100,6 +101,22 @@ update msg (CreateParser session model) =
                                     , matching = ""
                                     , name = ""
                                     }
+                                , parserToApply =
+                                    case List.head data of
+                                        Just (DecEnc.OneOf name _) ->
+                                            name
+
+                                        Just (DecEnc.Time name _) ->
+                                            name
+
+                                        Just (DecEnc.Date name _) ->
+                                            name
+
+                                        Just (DecEnc.Characters name _) ->
+                                            name
+
+                                        Nothing ->
+                                            ""
                                 , existingParsers = data
                                 , problems = []
                                 }
@@ -163,6 +180,9 @@ update msg (CreateParser session model) =
                             , Cmd.none
                             )
 
+        ChoseParserToApply selection ->
+            ( CreateParser session { model | parserToApply = selection }, Cmd.none )
+
         Reset ->
             ( CreateParser session
                 { requestState = model.requestState
@@ -171,6 +191,7 @@ update msg (CreateParser session model) =
                     , matching = ""
                     , name = ""
                     }
+                , parserToApply = model.parserToApply
                 , existingParsers = model.existingParsers
                 , problems = []
                 }
@@ -242,8 +263,8 @@ view model =
                         ]
                     , ul [] (List.map viewParser existingParsers)
                     ]
-
-                -- , viewParserApplication existingParsers
+                , viewParserApplication model.parserToApply existingParsers
+                , Html.p [] [ text model.parserToApply ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
                 ]
@@ -277,25 +298,34 @@ viewProblems problems =
         ]
 
 
+viewParserApplication : String -> List DecEnc.ElementaryParser -> Html Msg
+viewParserApplication selection parsers =
+    div []
+        [ label []
+            [ text "Parser"
+            , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
+            ]
+        , text "No content yet. This will be the sample application."
+        ]
 
--- viewParserApplication : List DecEnc.ElementaryParser -> Html Msg
--- viewParserApplication parser =
---     div []
---         [ label []
---             [ text "Type"
---             , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
---                 [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
---                 , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
---                 , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
---                 , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
---                 ]
---             ]
---         , label []
---             [ text "Target"
---             , input [ placeholder "A value to parse", value formData.name, onInput (ChangeForm ChangeName) ] []
---             ]
---         , text "No content yet. This will be the sample application"
---         ]
+
+parserToOption : String -> DecEnc.ElementaryParser -> Html Msg
+parserToOption selection parser =
+    case parser of
+        DecEnc.OneOf name elements ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.Time name pattern ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.Date name pattern ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.Characters name chars ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+
+
 -- FORM
 
 
