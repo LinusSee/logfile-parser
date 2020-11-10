@@ -252,16 +252,16 @@ view model =
 viewParser : DecEnc.ElementaryParser -> Html Msg
 viewParser parser =
     case parser of
-        DecEnc.OneOf xs ->
+        DecEnc.OneOf _ xs ->
             li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
 
-        DecEnc.Time pattern ->
+        DecEnc.Time _ pattern ->
             li [] [ text pattern ]
 
-        DecEnc.Date pattern ->
+        DecEnc.Date _ pattern ->
             li [] [ text pattern ]
 
-        DecEnc.Characters s ->
+        DecEnc.Characters _ s ->
             li [] [ text s ]
 
 

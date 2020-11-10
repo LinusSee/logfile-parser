@@ -18,10 +18,10 @@ type alias DatePattern =
 
 
 type ElementaryParser
-    = OneOf (List String)
-    | Time TimePattern
-    | Date DatePattern
-    | Characters String
+    = OneOf String (List String)
+    | Time String TimePattern
+    | Date String DatePattern
+    | Characters String String
 
 
 type alias ParserFormData =
@@ -47,24 +47,28 @@ parserEncoder formData =
         "oneOf" ->
             Encode.object
                 [ ( "type", Encode.string "oneOf" )
+                , ( "name", Encode.string formData.name )
                 , ( "values", Encode.list Encode.string (toMatchingList formData.matching) )
                 ]
 
         "time" ->
             Encode.object
                 [ ( "type", Encode.string "time" )
+                , ( "name", Encode.string formData.name )
                 , ( "pattern", Encode.string formData.matching )
                 ]
 
         "date" ->
             Encode.object
                 [ ( "type", Encode.string "date" )
+                , ( "name", Encode.string formData.name )
                 , ( "pattern", Encode.string formData.matching )
                 ]
 
         "characters" ->
             Encode.object
                 [ ( "type", Encode.string "characters" )
+                , ( "name", Encode.string formData.name )
                 , ( "value", Encode.string formData.matching )
                 ]
 
@@ -72,6 +76,7 @@ parserEncoder formData =
         _ ->
             Encode.object
                 [ ( "type", Encode.string "invalidType" )
+                , ( "name", Encode.string "invalidName" )
                 , ( "value", Encode.string "invalidValue" )
                 ]
 
@@ -113,19 +118,19 @@ parserDataDecoderHelp typeName =
 
 oneOfParserDecoder : Decoder ElementaryParser
 oneOfParserDecoder =
-    Decode.map OneOf (field "values" (Decode.list string))
+    Decode.map2 OneOf (field "name" string) (field "values" (Decode.list string))
 
 
 timeParserDecoder : Decoder ElementaryParser
 timeParserDecoder =
-    Decode.map Time (field "pattern" string)
+    Decode.map2 Time (field "name" string) (field "pattern" string)
 
 
 charactersParserDecoder : Decoder ElementaryParser
 charactersParserDecoder =
-    Decode.map Characters (field "value" string)
+    Decode.map2 Characters (field "name" string) (field "value" string)
 
 
 dateParserDecoder : Decoder ElementaryParser
 dateParserDecoder =
-    Decode.map Date (field "pattern" string)
+    Decode.map2 Date (field "name" string) (field "pattern" string)

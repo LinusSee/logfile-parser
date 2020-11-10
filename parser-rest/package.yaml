@@ -28,6 +28,7 @@ dependencies:
 - wai-extra
 - warp
 - text
+- parsec
 
 library:
   source-dirs: src

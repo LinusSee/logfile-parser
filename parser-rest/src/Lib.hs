@@ -64,7 +64,7 @@ readAllElementaryParsersHandler = do
 
 saveParserHandler :: ElementaryParser -> Handler NoContent
 saveParserHandler parser = do
-  liftIO $ FileDb.save parser
+  _ <- liftIO $ FileDb.save parser
   return NoContent
 
 parserApplicationHandler :: ParsingRequest -> Handler NoContent

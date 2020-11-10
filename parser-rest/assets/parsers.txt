@@ -1,1 +1,1 @@
-[Date "a",OneOf ["HARDCODED","DATA"],OneOf ["HARDCODED","DATA"],OneOf ["HARDCODED","DATA"],OneOf ["Hello","World","!"],Date "yyyy-mm-dd",Date "yyyy-dd-mm",Date "HH:mm",Characters "Some string to match"]
+[Characters "testHaskellToString" "someString",Date "incorrectDate" "a",OneOf "sampleOneOf" ["HARDCODED","DATA"],OneOf "helloWorldOneOf" ["Hello","World","!"],Date "easySortDate" "yyyy-mm-dd",Date "weirdDate" "yyyy-dd-mm",Date "clockTime" "HH:mm",Characters "RandomString" "Some string to match"]

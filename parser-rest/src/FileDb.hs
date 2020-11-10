@@ -17,16 +17,17 @@ readAll = do
 save :: ElementaryParser -> IO ()
 save parser = do
   allParsers <- readAll
+  putStr $ show allParsers
   writeFile "assets/parsers.txt" $ show (parser:allParsers)
 
 
 sampleParsers :: [ElementaryParser]
 sampleParsers =
-  [ OneOf ["Hello", "World", "!"]
-  , Date "yyyy-mm-dd"
-  , Date "yyyy-dd-mm"
-  , Date "HH:mm"
-  , Characters "Some string to match"
+  [ OneOf "oneOfWorld" ["Hello", "World", "!"]
+  , Date "easySortDate" "yyyy-mm-dd"
+  , Date "weirdDate" "yyyy-dd-mm"
+  , Date "clockTime" "HH:mm"
+  , Characters "RandomString" "Some string to match"
   ]
 
 toParsers :: String -> [ElementaryParser]

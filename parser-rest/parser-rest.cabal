@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bf92ca908a8d20139e180b69cf9599201f94e43d75d4e78c26f8881d4af4f178
+-- hash: fd6198ff5e1c4bee7c23ad240a8267d5deb4a6065f9cab2fc4e090b381eee352
 
 name:           parser-rest
 version:        0.1.0.0
@@ -29,6 +29,7 @@ library
       CustomParsers
       FileDb
       Lib
+      LogfileParsing
   other-modules:
       Paths_parser_rest
   hs-source-dirs:
@@ -36,6 +37,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , parsec
     , servant-options
     , servant-server
     , text
@@ -55,6 +57,7 @@ executable parser-rest-exe
   build-depends:
       aeson
     , base
+    , parsec
     , parser-rest
     , servant-options
     , servant-server
@@ -79,6 +82,7 @@ test-suite parser-rest-test
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , parsec
     , parser-rest
     , servant-options
     , servant-server
