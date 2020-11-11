@@ -45,4 +45,6 @@ instance FromJSON ElementaryParser where
 data ParsingRequest =
     ParsingRequest String ElementaryParser
 
-$(deriveJSON defaultOptions ''ParsingRequest)
+instance FromJSON ParsingRequest where
+  parseJSON (Object o) =
+    ParsingRequest <$> o .: "target" <*> o.: "parser"

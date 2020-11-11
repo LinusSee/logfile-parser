@@ -19,6 +19,7 @@ import Servant
 
 import CustomParsers (ElementaryParser, ParsingRequest(..))
 import FileDb as FileDb
+import LogfileParsing as LogfileParsing
 
 
 startApp :: IO ()
@@ -31,7 +32,7 @@ type API =
         ("parsers" :> "building-blocks" :>
              (    "complex" :> Get '[JSON] [ElementaryParser]
              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] NoContent
+             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] String
              )
         )
 
@@ -67,5 +68,11 @@ saveParserHandler parser = do
   _ <- liftIO $ FileDb.save parser
   return NoContent
 
-parserApplicationHandler :: ParsingRequest -> Handler NoContent
-parserApplicationHandler _ = return NoContent
+parserApplicationHandler :: ParsingRequest -> Handler String
+parserApplicationHandler (ParsingRequest target parser) = do
+  let parsingResult = LogfileParsing.applyParser target parser
+  case parsingResult of
+    Left err ->
+      return (show err)
+    Right result ->
+      return result
