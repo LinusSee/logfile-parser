@@ -4,6 +4,7 @@
 module CustomParsers
 ( ElementaryParser (..)
 , ParsingRequest (..)
+, ParsingResponse (..)
 ) where
 
 import Data.Aeson
@@ -48,3 +49,18 @@ data ParsingRequest =
 instance FromJSON ParsingRequest where
   parseJSON (Object o) =
     ParsingRequest <$> o .: "target" <*> o.: "parser"
+
+
+data ParsingResponse =
+    OneOfResponse String
+  | TimeResponse String -- TODO: Will be some time format
+  | DateResponse String -- TODO: Will be some date format
+  | CharactersResponse String
+  | ParsingError String
+
+instance ToJSON ParsingResponse where
+  toJSON (OneOfResponse val)      = object [ "result" .= val ]
+  toJSON (TimeResponse val)       = object [ "result" .= val ]
+  toJSON (DateResponse val)       = object [ "result" .= val ]
+  toJSON (CharactersResponse val) = object [ "result" .= val ]
+  toJSON (ParsingError val) = object [ "error" .= val ]

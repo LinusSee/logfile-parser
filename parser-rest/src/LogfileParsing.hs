@@ -5,17 +5,17 @@ module LogfileParsing
 ) where
 
 import qualified Text.Parsec as Parsec
-import CustomParsers (ElementaryParser(..), ParsingRequest(..))
+import CustomParsers (ElementaryParser(..), ParsingRequest(..), ParsingResponse(..))
 
 
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyParser :: String -> ElementaryParser -> Either Parsec.ParseError String
+applyParser :: String -> ElementaryParser -> Either Parsec.ParseError ParsingResponse
 applyParser target parser =
   case parser of
     OneOf _ xs ->
-      parse applyOneOf target -- TODO: Incorrect
+      parse (applyOneOf xs) target -- TODO: Incorrect
     Time _ pattern ->
       parse applyTime target -- TODO: Incorrect
     Date _ pattern ->
@@ -23,22 +23,22 @@ applyParser target parser =
     Characters _ chars ->
       parse (applyCharacters chars) target
 
-applyOneOf :: Parsec.Parsec String () String
-applyOneOf = do
-  result <- Parsec.string "target"
-  return result
+applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResponse
+applyOneOf target = do
+  result <- Parsec.choice (map Parsec.string target)
+  return $ OneOfResponse result
 
-applyTime :: Parsec.Parsec String () String
+applyTime :: Parsec.Parsec String () ParsingResponse
 applyTime = do
   result <- Parsec.string "target"
-  return result
+  return $ TimeResponse result
 
-applyDate :: Parsec.Parsec String () String
+applyDate :: Parsec.Parsec String () ParsingResponse
 applyDate = do
   result <- Parsec.string "target"
-  return result
+  return $ DateResponse result
 
-applyCharacters :: String -> Parsec.Parsec String () String
+applyCharacters :: String -> Parsec.Parsec String () ParsingResponse
 applyCharacters target = do
   result <- Parsec.string target
-  return result
+  return $ CharactersResponse result

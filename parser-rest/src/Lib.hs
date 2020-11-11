@@ -17,7 +17,7 @@ import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
 
-import CustomParsers (ElementaryParser, ParsingRequest(..))
+import CustomParsers (ElementaryParser, ParsingRequest(..), ParsingResponse(ParsingError))
 import FileDb as FileDb
 import LogfileParsing as LogfileParsing
 
@@ -32,7 +32,7 @@ type API =
         ("parsers" :> "building-blocks" :>
              (    "complex" :> Get '[JSON] [ElementaryParser]
              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] String
+             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
              )
         )
 
@@ -68,11 +68,11 @@ saveParserHandler parser = do
   _ <- liftIO $ FileDb.save parser
   return NoContent
 
-parserApplicationHandler :: ParsingRequest -> Handler String
+parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
 parserApplicationHandler (ParsingRequest target parser) = do
   let parsingResult = LogfileParsing.applyParser target parser
   case parsingResult of
     Left err ->
-      return (show err)
+      return $ ParsingError (show err)
     Right result ->
       return result
