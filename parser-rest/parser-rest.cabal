@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fd6198ff5e1c4bee7c23ad240a8267d5deb4a6065f9cab2fc4e090b381eee352
+-- hash: f245f6294fa80d8e5ed4ec2f9e66357d8c3ee376abd3044d13d803a9826c9ecc
 
 name:           parser-rest
 version:        0.1.0.0
@@ -41,6 +41,7 @@ library
     , servant-options
     , servant-server
     , text
+    , time
     , wai
     , wai-cors
     , wai-extra
@@ -62,6 +63,7 @@ executable parser-rest-exe
     , servant-options
     , servant-server
     , text
+    , time
     , wai
     , wai-cors
     , wai-extra
@@ -87,6 +89,7 @@ test-suite parser-rest-test
     , servant-options
     , servant-server
     , text
+    , time
     , wai
     , wai-cors
     , wai-extra
