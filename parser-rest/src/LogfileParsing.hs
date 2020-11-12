@@ -18,17 +18,22 @@ applyParser target parser =
   case parser of
     OneOf _ xs ->
       parse (applyOneOf xs) target
+
     Time _ pattern ->
       parse (applyTime pattern) target
+
     Date _ pattern ->
       parse applyDate target -- TODO: Incorrect
+
     Characters _ chars ->
       parse (applyCharacters chars) target
+
 
 applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResponse
 applyOneOf target = do
   result <- Parsec.choice (map Parsec.string target)
   return $ OneOfResponse result
+
 
 applyTime :: String -> Parsec.Parsec String () ParsingResponse
 applyTime format = do
@@ -38,6 +43,7 @@ applyTime format = do
   case time of
     Just parsedTime ->
       return $ TimeResponse (show parsedTime)
+
     Nothing ->
       return $ TimeResponse (result ++ "-asString")
 
@@ -57,28 +63,32 @@ applyCharacters target = do
 timePatternToParsers :: String -> Parsec.Parsec String () String
 timePatternToParsers pattern =
   let combineTime h m = h ++ (':' : m)
+      separatorParser = Parsec.char $ head (drop 2 pattern)
   in
 
   case take 2 pattern of
-
     "HH" -> do
       hour <- hourParser
       _ <- Parsec.char $ head (drop 2 pattern)
       minute <- minuteParser
       return $ combineTime hour minute
 
-
     _ -> do
       minute <- minuteParser
-      _ <- Parsec.char $ head (drop 2 pattern)
+      _ <- separatorParser
       hour <- hourParser
       return $ combineTime hour minute
 
 
 hourParser :: Parsec.Parsec String () String
-hourParser = Parsec.choice $ (reverse (map (Parsec.try . Parsec.string . show) [2..24])) ++ [Parsec.string "1"]
+hourParser = Parsec.choice $ reverse
+    (map (Parsec.try . Parsec.string . show) [2..24])
+    ++ [Parsec.string "1"]
   --Parsec.choice $ reverse (map (Parsec.string . show) [1..24])
 
+
 minuteParser :: Parsec.Parsec String () String
-minuteParser = Parsec.choice $ (reverse (map (Parsec.try . Parsec.string . show) [1..59])) ++ [Parsec.string "1"]
+minuteParser = Parsec.choice $ reverse
+    (map (Parsec.try . Parsec.string . show) [1..59])
+    ++ [Parsec.string "1"]
   --Parsec.choice $ reverse (map (Parsec.string . show) [1..59])
