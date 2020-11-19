@@ -22,6 +22,8 @@ type alias CreateParserModel =
     , createForm : DecEnc.ParserFormData
     , existingParsers : List DecEnc.ElementaryParser
     , parserToApply : String
+    , stringToParse : String
+    , parsingResult : String
     , problems : List ValidationProblem
     }
 
@@ -52,6 +54,8 @@ init session =
             , name = ""
             }
         , parserToApply = ""
+        , stringToParse = ""
+        , parsingResult = ""
         , existingParsers = []
         , problems = []
         }
@@ -73,6 +77,9 @@ type Msg
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | ChoseParserToApply String
+    | ChangeParsingContent String
+    | ApplyParser
+    | GotParserApplicationResult (Result Http.Error String)
     | Reset
     | Submit DecEnc.ParserFormData
 
@@ -117,6 +124,8 @@ update msg (CreateParser session model) =
 
                                         Nothing ->
                                             ""
+                                , stringToParse = ""
+                                , parsingResult = ""
                                 , existingParsers = data
                                 , problems = []
                                 }
@@ -183,6 +192,22 @@ update msg (CreateParser session model) =
         ChoseParserToApply selection ->
             ( CreateParser session { model | parserToApply = selection }, Cmd.none )
 
+        ChangeParsingContent value ->
+            ( CreateParser session { model | stringToParse = value }, Cmd.none )
+
+        ApplyParser ->
+            ( CreateParser session model
+            , postApplyParser model.stringToParse (chooseParserByName model.parserToApply model.existingParsers)
+            )
+
+        GotParserApplicationResult response ->
+            case response of
+                Ok result ->
+                    ( CreateParser session { model | parsingResult = result }, Cmd.none )
+
+                Err _ ->
+                    ( CreateParser session model, Cmd.none )
+
         Reset ->
             ( CreateParser session
                 { requestState = model.requestState
@@ -192,6 +217,8 @@ update msg (CreateParser session model) =
                     , name = ""
                     }
                 , parserToApply = model.parserToApply
+                , stringToParse = ""
+                , parsingResult = ""
                 , existingParsers = model.existingParsers
                 , problems = []
                 }
@@ -209,6 +236,26 @@ update msg (CreateParser session model) =
                     ( CreateParser session { model | problems = problems }
                     , Cmd.none
                     )
+
+
+chooseParserByName : String -> List DecEnc.ElementaryParser -> Maybe DecEnc.ElementaryParser
+chooseParserByName targetName parsers =
+    let
+        matchesName parser =
+            case parser of
+                DecEnc.OneOf name _ ->
+                    targetName == name
+
+                DecEnc.Time name _ ->
+                    targetName == name
+
+                DecEnc.Date name _ ->
+                    targetName == name
+
+                DecEnc.Characters name _ ->
+                    targetName == name
+    in
+    List.head (List.filter matchesName parsers)
 
 
 
@@ -263,7 +310,8 @@ view model =
                         ]
                     , ul [] (List.map viewParser existingParsers)
                     ]
-                , viewParserApplication model.parserToApply existingParsers
+                , viewParserApplication model.parserToApply existingParsers model.stringToParse
+                , text model.parsingResult
                 , Html.p [] [ text model.parserToApply ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
@@ -298,14 +346,18 @@ viewProblems problems =
         ]
 
 
-viewParserApplication : String -> List DecEnc.ElementaryParser -> Html Msg
-viewParserApplication selection parsers =
+viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
+viewParserApplication selection parsers stringToParse =
     div []
         [ label []
             [ text "Parser"
             , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
             ]
-        , text "No content yet. This will be the sample application."
+        , label []
+            [ text "Target"
+            , input [ placeholder "String to parse", value stringToParse, onInput ChangeParsingContent ] []
+            ]
+        , button [ onClick ApplyParser ] [ text "Apply" ]
         ]
 
 
@@ -447,3 +499,21 @@ postParser formData =
         , body = Http.jsonBody (DecEnc.parserEncoder formData)
         , expect = Http.expectWhatever PostedParser
         }
+
+
+postApplyParser : String -> Maybe DecEnc.ElementaryParser -> Cmd Msg
+postApplyParser target maybeParser =
+    case maybeParser of
+        Just parser ->
+            let
+                data =
+                    { target = target, parser = parser }
+            in
+            Http.post
+                { url = "http://localhost:8080/api/parsers/building-blocks/complex/apply"
+                , body = Http.jsonBody (DecEnc.parserApplicationEncoder data)
+                , expect = Http.expectJson GotParserApplicationResult DecEnc.parserApplicationDecoder
+                }
+
+        Nothing ->
+            Cmd.none

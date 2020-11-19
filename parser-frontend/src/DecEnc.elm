@@ -31,6 +31,12 @@ type alias ParserFormData =
     }
 
 
+type alias ParserApplicationData =
+    { target : String
+    , parser : ElementaryParser
+    }
+
+
 
 -- HTTP
 -- Maybe TEMP
@@ -79,6 +85,66 @@ parserEncoder formData =
                 , ( "name", Encode.string "invalidName" )
                 , ( "value", Encode.string "invalidValue" )
                 ]
+
+
+parserApplicationEncoder : ParserApplicationData -> Encode.Value
+parserApplicationEncoder data =
+    Encode.object
+        [ ( "target", Encode.string data.target )
+        , ( "parser", elementaryParserEncoder data.parser )
+        ]
+
+
+elementaryParserEncoder : ElementaryParser -> Encode.Value
+elementaryParserEncoder parser =
+    case parser of
+        OneOf name values ->
+            oneOfEncoder name values
+
+        Time name pattern ->
+            timeEncoder name pattern
+
+        Date name pattern ->
+            dateEncoder name pattern
+
+        Characters name value ->
+            charactersEncoder name value
+
+
+oneOfEncoder : String -> List String -> Encode.Value
+oneOfEncoder name values =
+    Encode.object
+        [ ( "type", Encode.string "oneOf" )
+        , ( "values", Encode.list Encode.string values )
+        , ( "name", Encode.string name )
+        ]
+
+
+timeEncoder : String -> TimePattern -> Encode.Value
+timeEncoder name pattern =
+    Encode.object
+        [ ( "type", Encode.string "time" )
+        , ( "pattern", Encode.string pattern )
+        , ( "name", Encode.string name )
+        ]
+
+
+dateEncoder : String -> DatePattern -> Encode.Value
+dateEncoder name pattern =
+    Encode.object
+        [ ( "type", Encode.string "date" )
+        , ( "pattern", Encode.string pattern )
+        , ( "name", Encode.string name )
+        ]
+
+
+charactersEncoder : String -> String -> Encode.Value
+charactersEncoder name value =
+    Encode.object
+        [ ( "type", Encode.string "characters" )
+        , ( "value", Encode.string value )
+        , ( "name", Encode.string name )
+        ]
 
 
 parsersDataDecoder : Decoder (List ElementaryParser)
@@ -134,3 +200,8 @@ charactersParserDecoder =
 dateParserDecoder : Decoder ElementaryParser
 dateParserDecoder =
     Decode.map2 Date (field "name" string) (field "pattern" string)
+
+
+parserApplicationDecoder : Decoder String
+parserApplicationDecoder =
+    field "result" string
