@@ -17,8 +17,9 @@ import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
 
-import CustomParsers (ElementaryParser, ParsingRequest(..), ParsingResponse(ParsingError))
+import CustomParsers (ElementaryParser, LogfileParser, ParsingRequest(..), ParsingResponse(ParsingError))
 import ElementaryParserFileDb as ElemFileDb
+import LogfileParserFileDb as LogFileDb
 import LogfileParsing as LogfileParsing
 
 
@@ -29,7 +30,7 @@ startApp = do
 
 type API =
   "api" :>
-        "parsers" :> "logfile" :> ReqBody '[JSON] [ElementaryParser] :> Post '[JSON] NoContent :<|>
+        "parsers" :> "logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
         ("parsers" :> "building-blocks" :>
              (    "complex" :> Get '[JSON] [ElementaryParser]
              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
@@ -59,8 +60,9 @@ server =
   :<|> parserApplicationHandler
 
 
-saveLogfileParserHandler :: [ElementaryParser] -> Handler NoContent
-saveLogfileParserHandler _ = do
+saveLogfileParserHandler :: LogfileParser -> Handler NoContent
+saveLogfileParserHandler logfileParser = do
+  _ <- liftIO $ LogFileDb.save logfileParser
   return NoContent
 
 readAllElementaryParsersHandler :: Handler [ElementaryParser]

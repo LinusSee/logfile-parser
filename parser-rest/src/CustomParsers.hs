@@ -3,6 +3,7 @@
 
 module CustomParsers
 ( ElementaryParser (..)
+, LogfileParser (..)
 , ParsingRequest (..)
 , ParsingResponse (..)
 ) where
@@ -43,12 +44,20 @@ instance FromJSON ElementaryParser where
                           --_                   -> empty
 
 
+data LogfileParser =
+  LogfileParser String [ElementaryParser]
+  deriving (Show, Read)
+
+instance FromJSON LogfileParser where
+  parseJSON (Object o) =
+    LogfileParser <$> o .: "name" <*> o .: "parsers"
+
 data ParsingRequest =
     ParsingRequest String ElementaryParser
 
 instance FromJSON ParsingRequest where
   parseJSON (Object o) =
-    ParsingRequest <$> o .: "target" <*> o.: "parser"
+    ParsingRequest <$> o .: "target" <*> o .: "parser"
 
 
 data ParsingResponse =
