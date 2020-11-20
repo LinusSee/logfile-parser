@@ -18,7 +18,7 @@ import Network.Wai.Middleware.Servant.Options
 import Servant
 
 import CustomParsers (ElementaryParser, ParsingRequest(..), ParsingResponse(ParsingError))
-import FileDb as FileDb
+import ElementaryParserFileDb as ElemFileDb
 import LogfileParsing as LogfileParsing
 
 
@@ -29,6 +29,7 @@ startApp = do
 
 type API =
   "api" :>
+        "parsers" :> "logfile" :> ReqBody '[JSON] [ElementaryParser] :> Post '[JSON] NoContent :<|>
         ("parsers" :> "building-blocks" :>
              (    "complex" :> Get '[JSON] [ElementaryParser]
              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
@@ -52,20 +53,25 @@ api = Proxy
 
 server :: Server API
 server =
-       readAllElementaryParsersHandler
+       saveLogfileParserHandler
+  :<|> readAllElementaryParsersHandler
   :<|> saveParserHandler
   :<|> parserApplicationHandler
 
 
+saveLogfileParserHandler :: [ElementaryParser] -> Handler NoContent
+saveLogfileParserHandler _ = do
+  return NoContent
+
 readAllElementaryParsersHandler :: Handler [ElementaryParser]
 readAllElementaryParsersHandler = do
-  parsers <- liftIO FileDb.readAll
+  parsers <- liftIO ElemFileDb.readAll
   return parsers
 
 
 saveParserHandler :: ElementaryParser -> Handler NoContent
 saveParserHandler parser = do
-  _ <- liftIO $ FileDb.save parser
+  _ <- liftIO $ ElemFileDb.save parser
   return NoContent
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse

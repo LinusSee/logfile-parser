@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f245f6294fa80d8e5ed4ec2f9e66357d8c3ee376abd3044d13d803a9826c9ecc
+-- hash: 04db295b06f8fd331b21f566b3c7d9258dd54749ff462ff997734b88a8835ba2
 
 name:           parser-rest
 version:        0.1.0.0
@@ -27,7 +27,7 @@ source-repository head
 library
   exposed-modules:
       CustomParsers
-      FileDb
+      ElementaryParserFileDb
       Lib
       LogfileParsing
   other-modules:

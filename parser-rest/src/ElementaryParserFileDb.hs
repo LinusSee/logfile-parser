@@ -1,4 +1,4 @@
-module FileDb
+module ElementaryParserFileDb
   ( readAll
   , save
   ) where
