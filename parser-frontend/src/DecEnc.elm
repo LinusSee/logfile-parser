@@ -147,6 +147,14 @@ charactersEncoder name value =
         ]
 
 
+logfileParserEncoder : String -> List ElementaryParser -> Encode.Value
+logfileParserEncoder name parser =
+    Encode.object
+        [ ( "name", Encode.string name )
+        , ( "parsers", Encode.list elementaryParserEncoder parser )
+        ]
+
+
 parsersDataDecoder : Decoder (List ElementaryParser)
 parsersDataDecoder =
     Decode.list parserDataDecoder
