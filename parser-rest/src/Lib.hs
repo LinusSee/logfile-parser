@@ -30,12 +30,15 @@ startApp = do
 
 type API =
   "api" :>
-        "parsers" :> "logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
-        ("parsers" :> "building-blocks" :>
-             (    "complex" :> Get '[JSON] [ElementaryParser]
-             :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-             :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
-             )
+        -- "parsers" :> "logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
+        ("parsers" :>
+            ("logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
+            ("building-blocks" :>
+              (    "complex" :> Get '[JSON] [ElementaryParser]
+              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+              :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
+              )
+            ))
         )
 
 app :: Application

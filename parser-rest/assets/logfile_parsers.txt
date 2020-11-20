@@ -1,1 +1,1 @@
-[LogfileParser "FirstLogfileParser" []]
+[LogfileParser "FirstLogfileParser" [],LogfileParser "FirstLogfileParser" []]
