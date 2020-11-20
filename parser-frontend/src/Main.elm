@@ -38,7 +38,7 @@ main =
 type Model
     = NotFound Session
     | CreateParser ParserCreation.Model
-    | ParseLogfile Session
+    | CreateLogfileParser LogfileParsing.Model
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -52,7 +52,7 @@ init _ url key =
 
 type Msg
     = GotCreateParserMsg ParserCreation.Msg
-    | GotLogfileParsingMsg LogfileParsing.Msg
+    | GotCreateLogfileParserMsg LogfileParsing.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -67,8 +67,12 @@ update msg model =
             in
             ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
 
-        ( GotLogfileParsingMsg _, _ ) ->
-            ( model, Cmd.none )
+        ( GotCreateLogfileParserMsg parserMsg, CreateLogfileParser parserModel ) ->
+            let
+                ( retModel, retCmd ) =
+                    LogfileParsing.update parserMsg parserModel
+            in
+            ( CreateLogfileParser retModel, Cmd.map GotCreateLogfileParserMsg retCmd )
 
         ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
             case urlRequest of
@@ -83,6 +87,9 @@ update msg model =
 
         -- Handle cases that should never happen
         ( GotCreateParserMsg _, _ ) ->
+            ( model, Cmd.none )
+
+        ( GotCreateLogfileParserMsg _, _ ) ->
             ( model, Cmd.none )
 
         ( ClickedLink _, _ ) ->
@@ -133,7 +140,16 @@ changeRouteTo maybeRoute model =
                     ( CreateParser retModel, Cmd.map GotCreateParserMsg retCmd )
 
         Just ParseLogfileRoute ->
-            ( ParseLogfile session, Cmd.none )
+            case model of
+                CreateLogfileParser _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    let
+                        ( retModel, retCmd ) =
+                            LogfileParsing.init session
+                    in
+                    ( CreateLogfileParser retModel, Cmd.map GotCreateLogfileParserMsg retCmd )
 
 
 toSession : Model -> Session
@@ -145,7 +161,7 @@ toSession model =
         CreateParser (ParserCreation.CreateParser session _) ->
             session
 
-        ParseLogfile session ->
+        CreateLogfileParser (LogfileParsing.CreateLogfileParser session _) ->
             session
 
 
@@ -173,7 +189,7 @@ view model =
             , body = [ Html.map GotCreateParserMsg (ParserCreation.view parserModel) ]
             }
 
-        ParseLogfile _ ->
+        CreateLogfileParser (LogfileParsing.CreateLogfileParser session parserModel) ->
             { title = "Logfile Parsing"
-            , body = [ Html.map GotLogfileParsingMsg LogfileParsing.viewParseLogfile ]
+            , body = [ Html.map GotCreateLogfileParserMsg (LogfileParsing.view parserModel) ]
             }
