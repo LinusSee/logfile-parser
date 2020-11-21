@@ -38,6 +38,21 @@ applyParser target parser =
       parse (applyCharacters chars) target
 
 
+chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResponse
+chooseParser parser =
+  case parser of
+    OneOf _ xs ->
+      applyOneOf xs
+
+    Time _ pattern ->
+      applyTime pattern
+
+    Date _ pattern ->
+      applyDate pattern
+
+    Characters _ chars ->
+      applyCharacters chars
+
 applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResponse
 applyLogfileParser target (LogfileParser name parsers) =
   parse (applyListOfParsers parsers) target
@@ -45,8 +60,17 @@ applyLogfileParser target (LogfileParser name parsers) =
 
 applyListOfParsers :: [ElementaryParser] -> Parsec.Parsec String () LogfileParsingResponse
 applyListOfParsers parsers = do
-  result <- Parsec.choice (map Parsec.string ["some", "values"])
+  -- result <- Parsec.choice (map Parsec.string ["some", "values"])
+  result <- runThroughList parsers
   return $ LogfileParsingResponse result
+
+runThroughList :: [ ElementaryParser ] -> Parsec.Parsec String () [ParsingResponse]
+runThroughList [] = do
+  return [ParsingError "<Reached the end>"]
+runThroughList (x:xs) = do
+  result <- chooseParser x
+  next <- runThroughList xs
+  return (result : next)
 
 applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResponse
 applyOneOf target = do

@@ -86,7 +86,7 @@ instance FromJSON LogfileParsingRequest where
 
 
 data LogfileParsingResponse =
-    LogfileParsingResponse String
+    LogfileParsingResponse [ParsingResponse]
   | LogfileParsingError String
 
 instance ToJSON LogfileParsingResponse where
