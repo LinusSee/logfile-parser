@@ -5,6 +5,7 @@
 module Lib
     ( startApp
     , app
+    , server
     ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -17,7 +18,14 @@ import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
 
-import CustomParsers (ElementaryParser, LogfileParser, ParsingRequest(..), ParsingResponse(ParsingError))
+import CustomParsers
+  ( ElementaryParser
+  , LogfileParser
+  , ParsingRequest (..)
+  , ParsingResponse(ParsingError)
+  , LogfileParsingRequest (..)
+  , LogfileParsingResponse(LogfileParsingError)
+  )
 import ElementaryParserFileDb as ElemFileDb
 import LogfileParserFileDb as LogFileDb
 import LogfileParsing as LogfileParsing
@@ -30,16 +38,24 @@ startApp = do
 
 type API =
   "api" :>
-        -- "parsers" :> "logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
-        ("parsers" :>
-            ("logfile" :> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent :<|>
-            ("building-blocks" :>
-              (    "complex" :> Get '[JSON] [ElementaryParser]
-              :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-              :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
-              )
-            ))
+      ( "parsers" :>
+        (
+            ( "logfile" :>
+                (
+                     ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
+                :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
+                )
+            )
+            :<|>
+            ( "building-blocks" :>
+                (    "complex" :> Get '[JSON] [ElementaryParser]
+                :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+                :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
+                )
+            )
         )
+      )
+
 
 app :: Application
 app = logStdoutDev
@@ -57,7 +73,9 @@ api = Proxy
 
 server :: Server API
 server =
-       saveLogfileParserHandler
+  (    saveLogfileParserHandler
+  :<|> logfileParserApplicationHandler
+  )
   :<|> readAllElementaryParsersHandler
   :<|> saveParserHandler
   :<|> parserApplicationHandler
@@ -67,6 +85,17 @@ saveLogfileParserHandler :: LogfileParser -> Handler NoContent
 saveLogfileParserHandler logfileParser = do
   _ <- liftIO $ LogFileDb.save logfileParser
   return NoContent
+
+
+logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
+logfileParserApplicationHandler (LogfileParsingRequest target parser) = do
+  let parsingResult = LogfileParsing.applyLogfileParser target parser
+  case parsingResult of
+    Left err ->
+      return $ LogfileParsingError (show err)
+    Right result ->
+      return result
+
 
 readAllElementaryParsersHandler :: Handler [ElementaryParser]
 readAllElementaryParsersHandler = do
@@ -78,6 +107,7 @@ saveParserHandler :: ElementaryParser -> Handler NoContent
 saveParserHandler parser = do
   _ <- liftIO $ ElemFileDb.save parser
   return NoContent
+
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
 parserApplicationHandler (ParsingRequest target parser) = do

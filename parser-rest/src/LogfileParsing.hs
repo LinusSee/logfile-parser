@@ -2,13 +2,21 @@
 
 module LogfileParsing
 ( applyParser
+, applyLogfileParser
 ) where
 
 import qualified Text.Parsec as Parsec
 import Control.Monad.IO.Class (liftIO)
 import Data.List
 import Data.Time
-import CustomParsers (ElementaryParser(..), ParsingRequest(..), ParsingResponse(..))
+import CustomParsers
+  ( ElementaryParser (..)
+  , LogfileParser (..)
+  , ParsingRequest (..)
+  , ParsingResponse (..)
+  , LogfileParsingRequest (..)
+  , LogfileParsingResponse (..)
+  )
 
 
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
@@ -29,6 +37,16 @@ applyParser target parser =
     Characters _ chars ->
       parse (applyCharacters chars) target
 
+
+applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResponse
+applyLogfileParser target (LogfileParser name parsers) =
+  parse (applyListOfParsers parsers) target
+
+
+applyListOfParsers :: [ElementaryParser] -> Parsec.Parsec String () LogfileParsingResponse
+applyListOfParsers parsers = do
+  result <- Parsec.choice (map Parsec.string ["some", "values"])
+  return $ LogfileParsingResponse result
 
 applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResponse
 applyOneOf target = do

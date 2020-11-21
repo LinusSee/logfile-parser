@@ -6,6 +6,8 @@ module CustomParsers
 , LogfileParser (..)
 , ParsingRequest (..)
 , ParsingResponse (..)
+, LogfileParsingRequest (..)
+, LogfileParsingResponse (..)
 ) where
 
 import Data.Aeson
@@ -73,3 +75,19 @@ instance ToJSON ParsingResponse where
   toJSON (DateResponse val)       = object [ "result" .= val ]
   toJSON (CharactersResponse val) = object [ "result" .= val ]
   toJSON (ParsingError val) = object [ "error" .= val ]
+
+
+data LogfileParsingRequest =
+  LogfileParsingRequest String LogfileParser
+
+instance FromJSON LogfileParsingRequest where
+  parseJSON (Object o) =
+    LogfileParsingRequest <$> o .: "target" <*> o .: "parser"
+
+
+data LogfileParsingResponse =
+    LogfileParsingResponse String
+  | LogfileParsingError String
+
+instance ToJSON LogfileParsingResponse where
+  toJSON (LogfileParsingResponse val) = object [ "result" .= val ]
