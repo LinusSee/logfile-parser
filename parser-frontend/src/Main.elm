@@ -9,7 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
-import Page.LogfileParsing as LogfileParsing
+import Page.LogfileParserCreation as LogfileParserCreation
 import Page.ParserCreation as ParserCreation
 import Session exposing (Session)
 import Url
@@ -38,7 +38,7 @@ main =
 type Model
     = NotFound Session
     | CreateParser ParserCreation.Model
-    | CreateLogfileParser LogfileParsing.Model
+    | CreateLogfileParser LogfileParserCreation.Model
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
@@ -52,7 +52,7 @@ init _ url key =
 
 type Msg
     = GotCreateParserMsg ParserCreation.Msg
-    | GotCreateLogfileParserMsg LogfileParsing.Msg
+    | GotCreateLogfileParserMsg LogfileParserCreation.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
 
@@ -70,7 +70,7 @@ update msg model =
         ( GotCreateLogfileParserMsg parserMsg, CreateLogfileParser parserModel ) ->
             let
                 ( retModel, retCmd ) =
-                    LogfileParsing.update parserMsg parserModel
+                    LogfileParserCreation.update parserMsg parserModel
             in
             ( CreateLogfileParser retModel, Cmd.map GotCreateLogfileParserMsg retCmd )
 
@@ -147,7 +147,7 @@ changeRouteTo maybeRoute model =
                 _ ->
                     let
                         ( retModel, retCmd ) =
-                            LogfileParsing.init session
+                            LogfileParserCreation.init session
                     in
                     ( CreateLogfileParser retModel, Cmd.map GotCreateLogfileParserMsg retCmd )
 
@@ -161,7 +161,7 @@ toSession model =
         CreateParser (ParserCreation.CreateParser session _) ->
             session
 
-        CreateLogfileParser (LogfileParsing.CreateLogfileParser session _) ->
+        CreateLogfileParser (LogfileParserCreation.CreateLogfileParser session _) ->
             session
 
 
@@ -189,7 +189,7 @@ view model =
             , body = [ Html.map GotCreateParserMsg (ParserCreation.view parserModel) ]
             }
 
-        CreateLogfileParser (LogfileParsing.CreateLogfileParser session parserModel) ->
+        CreateLogfileParser (LogfileParserCreation.CreateLogfileParser session parserModel) ->
             { title = "Logfile Parsing"
-            , body = [ Html.map GotCreateLogfileParserMsg (LogfileParsing.view parserModel) ]
+            , body = [ Html.map GotCreateLogfileParserMsg (LogfileParserCreation.view parserModel) ]
             }

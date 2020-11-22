@@ -1,4 +1,4 @@
-module Page.LogfileParsing exposing (..)
+module Page.LogfileParserCreation exposing (..)
 
 import DecEnc
 import Html exposing (Html, button, div, h2, input, label, li, option, select, text, ul)
