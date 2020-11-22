@@ -1,7 +1,7 @@
 module Page.LogfileParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, button, div, h2, input, label, li, option, select, text, ul)
+import Html exposing (Html, button, div, h2, input, label, li, option, select, text, textarea, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -23,6 +23,7 @@ type alias CreateLogfileParserModel =
     , displayDropdown : Bool
     , parserName : String
     , selectedParser : String
+    , stringToParse : String
     }
 
 
@@ -42,6 +43,7 @@ init session =
         , displayDropdown = True
         , parserName = ""
         , selectedParser = ""
+        , stringToParse = ""
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
@@ -59,6 +61,8 @@ type Msg
     | ChangeParserName String
     | SelectParserToAdd String
     | AddSelectedParser
+    | ApplyParser
+    | ChangeParsingContent String
     | PostedLogfileParser (Result Http.Error ())
     | Submit
 
@@ -96,6 +100,7 @@ update msg (CreateLogfileParser session model) =
 
                                         Nothing ->
                                             ""
+                                , stringToParse = ""
                                 }
                             , Cmd.none
                             )
@@ -135,6 +140,12 @@ update msg (CreateLogfileParser session model) =
 
                 Nothing ->
                     ( CreateLogfileParser session model, Cmd.none )
+
+        ChangeParsingContent newValue ->
+            ( CreateLogfileParser session { model | stringToParse = newValue }, Cmd.none )
+
+        ApplyParser ->
+            ( CreateLogfileParser session model, Cmd.none )
 
         PostedLogfileParser response ->
             case response of
@@ -193,6 +204,7 @@ view model =
                     , viewParserSelection model.selectedParser model.existingParsers
                     ]
                 , button [ onClick Submit ] [ text "Submit" ]
+                , viewParserApplication model.parserName model.chosenParsers model.stringToParse
                 ]
 
 
@@ -221,6 +233,17 @@ viewParser parser =
 
         DecEnc.Characters _ s ->
             li [] [ text s ]
+
+
+viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
+viewParserApplication name parsers stringToParse =
+    div []
+        [ label []
+            [ text "Target"
+            , textarea [ placeholder "String to parse", value stringToParse, onInput ChangeParsingContent ] []
+            ]
+        , button [ onClick ApplyParser ] [ text "Apply" ]
+        ]
 
 
 parserToOption : String -> DecEnc.ElementaryParser -> Html Msg
