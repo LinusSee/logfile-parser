@@ -37,6 +37,18 @@ type alias ParserApplicationData =
     }
 
 
+type alias LogfileParser =
+    { name : String
+    , parsers : List ElementaryParser
+    }
+
+
+type alias LogfileParserApplicationData =
+    { target : String
+    , parser : LogfileParser
+    }
+
+
 
 -- HTTP
 -- Maybe TEMP
@@ -147,11 +159,19 @@ charactersEncoder name value =
         ]
 
 
-logfileParserEncoder : String -> List ElementaryParser -> Encode.Value
-logfileParserEncoder name parser =
+logfileParserEncoder : LogfileParser -> Encode.Value
+logfileParserEncoder parser =
     Encode.object
-        [ ( "name", Encode.string name )
-        , ( "parsers", Encode.list elementaryParserEncoder parser )
+        [ ( "name", Encode.string parser.name )
+        , ( "parsers", Encode.list elementaryParserEncoder parser.parsers )
+        ]
+
+
+logfileParserApplicationEncoder : LogfileParserApplicationData -> Encode.Value
+logfileParserApplicationEncoder data =
+    Encode.object
+        [ ( "target", Encode.string data.target )
+        , ( "parser", logfileParserEncoder data.parser )
         ]
 
 
@@ -213,3 +233,8 @@ dateParserDecoder =
 parserApplicationDecoder : Decoder String
 parserApplicationDecoder =
     field "result" string
+
+
+logfileParserApplicationDecoder : Decoder (List String)
+logfileParserApplicationDecoder =
+    field "result" (Decode.list parserApplicationDecoder)

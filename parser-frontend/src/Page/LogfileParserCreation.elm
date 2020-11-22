@@ -24,6 +24,7 @@ type alias CreateLogfileParserModel =
     , parserName : String
     , selectedParser : String
     , stringToParse : String
+    , parsingResult : List String
     }
 
 
@@ -44,6 +45,7 @@ init session =
         , parserName = ""
         , selectedParser = ""
         , stringToParse = ""
+        , parsingResult = []
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
@@ -64,6 +66,7 @@ type Msg
     | ApplyParser
     | ChangeParsingContent String
     | PostedLogfileParser (Result Http.Error ())
+    | GotParserApplicationResult (Result Http.Error (List String))
     | Submit
 
 
@@ -101,6 +104,7 @@ update msg (CreateLogfileParser session model) =
                                         Nothing ->
                                             ""
                                 , stringToParse = ""
+                                , parsingResult = []
                                 }
                             , Cmd.none
                             )
@@ -145,7 +149,10 @@ update msg (CreateLogfileParser session model) =
             ( CreateLogfileParser session { model | stringToParse = newValue }, Cmd.none )
 
         ApplyParser ->
-            ( CreateLogfileParser session model, Cmd.none )
+            ( CreateLogfileParser session model
+            , postApplyParser model.stringToParse
+                { name = model.parserName, parsers = model.chosenParsers }
+            )
 
         PostedLogfileParser response ->
             case response of
@@ -155,8 +162,18 @@ update msg (CreateLogfileParser session model) =
                 Err error ->
                     Debug.log (Debug.toString error) ( CreateLogfileParser session { model | requestState = Failure }, Cmd.none )
 
+        GotParserApplicationResult response ->
+            case response of
+                Ok data ->
+                    ( CreateLogfileParser session { model | parsingResult = data }, Cmd.none )
+
+                Err error ->
+                    Debug.log (Debug.toString error) ( CreateLogfileParser session model, Cmd.none )
+
         Submit ->
-            ( CreateLogfileParser session model, postParser model.parserName model.chosenParsers )
+            ( CreateLogfileParser session model
+            , postParser { name = model.parserName, parsers = model.chosenParsers }
+            )
 
 
 chooseParserByName : String -> List DecEnc.ElementaryParser -> Maybe DecEnc.ElementaryParser
@@ -204,7 +221,7 @@ view model =
                     , viewParserSelection model.selectedParser model.existingParsers
                     ]
                 , button [ onClick Submit ] [ text "Submit" ]
-                , viewParserApplication model.parserName model.chosenParsers model.stringToParse
+                , viewParserApplication model.stringToParse
                 ]
 
 
@@ -235,8 +252,8 @@ viewParser parser =
             li [] [ text s ]
 
 
-viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
-viewParserApplication name parsers stringToParse =
+viewParserApplication : String -> Html Msg
+viewParserApplication stringToParse =
     div []
         [ label []
             [ text "Target"
@@ -266,10 +283,23 @@ parserToOption selection parser =
 -- HTTP
 
 
-postParser : String -> List DecEnc.ElementaryParser -> Cmd Msg
-postParser name logfileParser =
+postParser : DecEnc.LogfileParser -> Cmd Msg
+postParser parser =
     Http.post
         { url = "http://localhost:8080/api/parsers/logfile"
-        , body = Http.jsonBody (DecEnc.logfileParserEncoder name logfileParser)
+        , body = Http.jsonBody (DecEnc.logfileParserEncoder parser)
         , expect = Http.expectWhatever PostedLogfileParser
+        }
+
+
+postApplyParser : String -> DecEnc.LogfileParser -> Cmd Msg
+postApplyParser target parser =
+    let
+        data =
+            { target = target, parser = parser }
+    in
+    Http.post
+        { url = "http://localhost:8080/api/parsers/logfile/apply"
+        , body = Http.jsonBody (DecEnc.logfileParserApplicationEncoder data)
+        , expect = Http.expectJson GotParserApplicationResult DecEnc.logfileParserApplicationDecoder
         }

@@ -7,6 +7,7 @@ module LogfileParsing
 
 import qualified Text.Parsec as Parsec
 import Control.Monad.IO.Class (liftIO)
+import Data.Char
 import Data.List
 import Data.Time
 import CustomParsers
@@ -80,7 +81,7 @@ applyOneOf target = do
 
 applyTime :: String -> Parsec.Parsec String () ParsingResponse
 applyTime format = do
-  result <- timePatternToParsers format
+  result <- timePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let time = parseTimeM False defaultTimeLocale "%H:%M" result :: Maybe TimeOfDay
   case time of
@@ -93,7 +94,7 @@ applyTime format = do
 
 applyDate :: String -> Parsec.Parsec String () ParsingResponse
 applyDate format = do
-  result <- datePatternToParsers format
+  result <- datePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let day = parseTimeM False defaultTimeLocale "%Y%m%d" result :: Maybe Day
   case day of
