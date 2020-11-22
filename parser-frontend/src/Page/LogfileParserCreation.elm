@@ -222,6 +222,11 @@ view model =
                     ]
                 , button [ onClick Submit ] [ text "Submit" ]
                 , viewParserApplication model.stringToParse
+                , div
+                    []
+                    [ text "Current result:"
+                    , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
+                    ]
                 ]
 
 
