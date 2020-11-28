@@ -67,7 +67,7 @@ applyListOfParsers parsers = do
 
 runThroughList :: [ ElementaryParser ] -> Parsec.Parsec String () [ParsingResponse]
 runThroughList [] = do
-  return [ParsingError "<Reached the end>"]
+  return []
 runThroughList (x:xs) = do
   result <- chooseParser x
   next <- runThroughList xs
