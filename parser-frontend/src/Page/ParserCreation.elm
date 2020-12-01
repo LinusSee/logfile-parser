@@ -314,7 +314,8 @@ view model =
                 , text model.parsingResult
                 , Html.p [] [ text model.parserToApply ]
                 , a [ href "https://wikipedia.org" ] [ text "External link" ]
-                , a [ href "http://localhost:8081/parse-logfile" ] [ text "Internal link" ]
+                , a [ href "http://localhost:8081/parse-logfile" ] [ text "Parse logfile" ]
+                , a [ href "http://localhost:8081/apply-logfile" ] [ text "Apply parser" ]
                 ]
 
 

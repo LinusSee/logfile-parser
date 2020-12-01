@@ -9,6 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
+import Page.LogfileParserApplication as LogfileParserApplication
 import Page.LogfileParserCreation as LogfileParserCreation
 import Page.ParserCreation as ParserCreation
 import Session exposing (Session)
@@ -37,6 +38,7 @@ main =
 
 type Model
     = NotFound Session
+    | ApplyLogfileParser LogfileParserApplication.Model
     | CreateParser ParserCreation.Model
     | CreateLogfileParser LogfileParserCreation.Model
 
@@ -51,7 +53,8 @@ init _ url key =
 
 
 type Msg
-    = GotCreateParserMsg ParserCreation.Msg
+    = GotApplyLogfileParserMsg LogfileParserApplication.Msg
+    | GotCreateParserMsg ParserCreation.Msg
     | GotCreateLogfileParserMsg LogfileParserCreation.Msg
     | ClickedLink Browser.UrlRequest
     | ChangedUrl Url.Url
@@ -60,6 +63,13 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model ) of
+        ( GotApplyLogfileParserMsg applyMsg, ApplyLogfileParser applyModel ) ->
+            let
+                ( retModel, retCmd ) =
+                    LogfileParserApplication.update applyMsg applyModel
+            in
+            ( ApplyLogfileParser retModel, Cmd.map GotApplyLogfileParserMsg retCmd )
+
         ( GotCreateParserMsg parserMsg, CreateParser parserModel ) ->
             let
                 ( retModel, retCmd ) =
@@ -86,6 +96,9 @@ update msg model =
             changeRouteTo (Parser.parse routeParser url) model
 
         -- Handle cases that should never happen
+        ( GotApplyLogfileParserMsg _, _ ) ->
+            ( model, Cmd.none )
+
         ( GotCreateParserMsg _, _ ) ->
             ( model, Cmd.none )
 
@@ -105,14 +118,16 @@ update msg model =
 
 
 type Route
-    = CreateParserRoute
+    = ApplyParserRoute
+    | CreateParserRoute
     | ParseLogfileRoute
 
 
 routeParser : Parser (Route -> a) a
 routeParser =
     Parser.oneOf
-        [ Parser.map CreateParserRoute Parser.top
+        [ Parser.map ApplyParserRoute (s "apply-logfile")
+        , Parser.map CreateParserRoute Parser.top
         , Parser.map ParseLogfileRoute (s "parse-logfile")
         ]
 
@@ -126,6 +141,18 @@ changeRouteTo maybeRoute model =
     case maybeRoute of
         Nothing ->
             ( NotFound session, Cmd.none )
+
+        Just ApplyParserRoute ->
+            case model of
+                ApplyLogfileParser _ ->
+                    ( model, Cmd.none )
+
+                _ ->
+                    let
+                        ( retModel, retCmd ) =
+                            LogfileParserApplication.init session
+                    in
+                    ( ApplyLogfileParser retModel, Cmd.map GotApplyLogfileParserMsg retCmd )
 
         Just CreateParserRoute ->
             case model of
@@ -158,6 +185,9 @@ toSession model =
         NotFound session ->
             session
 
+        ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session _) ->
+            session
+
         CreateParser (ParserCreation.CreateParser session _) ->
             session
 
@@ -183,6 +213,11 @@ view model =
     case model of
         NotFound _ ->
             Debug.todo "not found"
+
+        ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session applyModel) ->
+            { title = "Apply logfile parser"
+            , body = [ Html.map GotApplyLogfileParserMsg (LogfileParserApplication.view applyModel) ]
+            }
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
             { title = "It works?!"
