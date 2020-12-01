@@ -20,7 +20,7 @@ import Servant
 
 import CustomParsers
   ( ElementaryParser
-  , LogfileParser
+  , LogfileParser (..)
   , ParsingRequest (..)
   , ParsingResponse(ParsingError)
   , LogfileParsingRequest (..)
@@ -42,7 +42,8 @@ type API =
         (
             ( "logfile" :>
                 (
-                     ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
+                     Get '[JSON] [String]
+                :<|> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
                 )
             )
@@ -73,12 +74,20 @@ api = Proxy
 
 server :: Server API
 server =
-  (    saveLogfileParserHandler
+  (    getLogfileParserNames
+  :<|> saveLogfileParserHandler
   :<|> logfileParserApplicationHandler
   )
   :<|> readAllElementaryParsersHandler
   :<|> saveParserHandler
   :<|> parserApplicationHandler
+
+
+getLogfileParserNames :: Handler [String]
+getLogfileParserNames = do
+  parsers <- liftIO LogFileDb.readAll
+  return $ map extractName parsers
+  where extractName ( LogfileParser name _ ) = name
 
 
 saveLogfileParserHandler :: LogfileParser -> Handler NoContent
