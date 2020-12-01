@@ -91,3 +91,4 @@ data LogfileParsingResponse =
 
 instance ToJSON LogfileParsingResponse where
   toJSON (LogfileParsingResponse val) = object [ "result" .= val ]
+  toJSON (LogfileParsingError err) = object [ "error" .= err ]

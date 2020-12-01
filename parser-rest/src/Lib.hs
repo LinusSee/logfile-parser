@@ -44,6 +44,7 @@ type API =
                 (
                      Get '[JSON] [String]
                 :<|> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
+                :<|> "apply1" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
                 )
             )
@@ -76,6 +77,7 @@ server :: Server API
 server =
   (    getLogfileParserNames
   :<|> saveLogfileParserHandler
+  :<|> applyLogfileParserByName
   :<|> logfileParserApplicationHandler
   )
   :<|> readAllElementaryParsersHandler
@@ -94,6 +96,23 @@ saveLogfileParserHandler :: LogfileParser -> Handler NoContent
 saveLogfileParserHandler logfileParser = do
   _ <- liftIO $ LogFileDb.save logfileParser
   return NoContent
+
+
+applyLogfileParserByName :: String -> Maybe String -> Handler LogfileParsingResponse
+applyLogfileParserByName parserName maybeTarget =
+  case maybeTarget of
+    Just target -> do
+      parsers <- liftIO LogFileDb.readAll
+      let parser = head $ filter byName parsers
+      let parsingResult = LogfileParsing.applyLogfileParser target parser
+      case parsingResult of
+        Left err ->
+          return $ LogfileParsingError (show err)
+        Right result ->
+          return result
+    Nothing ->
+      return $ LogfileParsingError "Missing query parameter 'target'"
+  where byName (LogfileParser name _ ) = name == parserName
 
 
 logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
