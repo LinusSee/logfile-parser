@@ -1,9 +1,9 @@
 module Page.LogfileParserApplication exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, div, h2, label, option, select, text)
+import Html exposing (Html, a, button, div, h2, label, option, p, select, text, textarea)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
 
@@ -54,7 +54,10 @@ init session =
 type Msg
     = NoMsgYet
     | SelectLogfileParser String
+    | ChangeStringToParse String
+    | ApplyParser
     | GotLogfileParserNames (Result Http.Error (List String))
+    | GotParsingResult (Result Http.Error (List String))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -68,6 +71,19 @@ update msg (ApplyLogfileParser session model) =
             , Cmd.none
             )
 
+        ChangeStringToParse newString ->
+            ( ApplyLogfileParser session { model | stringToParse = newString }
+            , Cmd.none
+            )
+
+        ApplyParser ->
+            ( ApplyLogfileParser session model
+            , Http.get
+                { url = "http://localhost:8080/api/parsers/logfile/apply1/StandardParser?target=2000-10-1111:30"
+                , expect = Http.expectJson GotParsingResult DecEnc.logfileParserApplicationDecoder
+                }
+            )
+
         GotLogfileParserNames response ->
             case response of
                 Ok data ->
@@ -78,6 +94,23 @@ update msg (ApplyLogfileParser session model) =
                         , chosenParser = model.chosenParser
                         , stringToParse = model.stringToParse
                         , parsingResult = model.parsingResult
+                        }
+                    , Cmd.none
+                    )
+
+                Err error ->
+                    Debug.log (Debug.toString error) ( ApplyLogfileParser session model, Cmd.none )
+
+        GotParsingResult response ->
+            case response of
+                Ok data ->
+                    ( ApplyLogfileParser
+                        session
+                        { requestState = Success
+                        , existingParsers = model.existingParsers
+                        , chosenParser = model.chosenParser
+                        , stringToParse = model.stringToParse
+                        , parsingResult = data
                         }
                     , Cmd.none
                     )
@@ -105,7 +138,9 @@ view model =
                 , div []
                     [ viewLogfileParserDropdown model.chosenParser model.existingParsers
                     , text model.chosenParser
+                    , viewParserApplication model.stringToParse
                     ]
+                , p [] [ text ("ParsingResult: (" ++ String.join ", " model.parsingResult ++ ")") ]
                 , a [ href "http://localhost:8081/parse-logfile" ] [ text "Parse logfile" ]
                 , a [ href "http://localhost:8081/" ] [ text "Create parser" ]
                 ]
@@ -118,4 +153,14 @@ viewLogfileParserDropdown selection parserNames =
         , select
             [ value selection, onInput SelectLogfileParser ]
             (List.map (\name -> option [ value name, selected (selection == name) ] [ text name ]) parserNames)
+        ]
+
+
+viewParserApplication : String -> Html Msg
+viewParserApplication stringToParse =
+    div []
+        [ label []
+            [ textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
+            ]
+        , button [ onClick ApplyParser ] [ text "Apply" ]
         ]
