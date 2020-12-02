@@ -84,7 +84,23 @@ update msg model =
             in
             ( CreateLogfileParser retModel, Cmd.map GotCreateLogfileParserMsg retCmd )
 
-        ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session parserModel) ) ->
+        ( ClickedLink urlRequest, CreateParser (ParserCreation.CreateParser session _) ) ->
+            case urlRequest of
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl session.key (Url.toString url) )
+
+        ( ClickedLink urlRequest, CreateLogfileParser (LogfileParserCreation.CreateLogfileParser session _) ) ->
+            case urlRequest of
+                Browser.External href ->
+                    ( model, Nav.load href )
+
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl session.key (Url.toString url) )
+
+        ( ClickedLink urlRequest, ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session _) ) ->
             case urlRequest of
                 Browser.External href ->
                     ( model, Nav.load href )
