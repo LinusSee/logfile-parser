@@ -93,7 +93,7 @@ update msg model =
                     ( model, Nav.pushUrl session.key (Url.toString url) )
 
         ( ChangedUrl url, _ ) ->
-            changeRouteTo (Parser.parse routeParser url) model
+            Debug.log "Change route!" (changeRouteTo (Parser.parse routeParser url) model)
 
         -- Handle cases that should never happen
         ( GotApplyLogfileParserMsg _, _ ) ->
@@ -135,6 +135,9 @@ routeParser =
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
 changeRouteTo maybeRoute model =
     let
+        myDebug =
+            Debug.log (Debug.toString model) "Some return val"
+
         session =
             toSession model
     in

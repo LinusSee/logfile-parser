@@ -1,7 +1,7 @@
 module Page.LogfileParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, button, div, h2, input, label, li, option, select, text, textarea, ul)
+import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, textarea, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -227,6 +227,8 @@ view model =
                     [ text "Current result:"
                     , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
                     ]
+                , a [ href "http://localhost:8081/" ] [ text "Create parser" ]
+                , a [ href "http://localhost:8081/apply-logfile" ] [ text "Apply parser" ]
                 ]
 
 

@@ -238,3 +238,8 @@ parserApplicationDecoder =
 logfileParserApplicationDecoder : Decoder (List String)
 logfileParserApplicationDecoder =
     field "result" (Decode.list parserApplicationDecoder)
+
+
+logfileParserNames : Decoder (List String)
+logfileParserNames =
+    Decode.list string
