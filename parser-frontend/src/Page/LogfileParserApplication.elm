@@ -96,7 +96,13 @@ update msg (ApplyLogfileParser session model) =
                         session
                         { requestState = Success
                         , existingParsers = data
-                        , chosenParser = model.chosenParser
+                        , chosenParser =
+                            case List.head data of
+                                Just firstName ->
+                                    firstName
+
+                                Nothing ->
+                                    model.chosenParser
                         , stringToParse = model.stringToParse
                         , parsingResult = model.parsingResult
                         }
