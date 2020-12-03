@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
+import Url.Builder as UrlBuilder
 
 
 
@@ -79,7 +80,11 @@ update msg (ApplyLogfileParser session model) =
         ApplyParser ->
             ( ApplyLogfileParser session model
             , Http.get
-                { url = "http://localhost:8080/api/parsers/logfile/apply1/StandardParser?target=2000-10-1111:30"
+                { url =
+                    UrlBuilder.crossOrigin
+                        "http://localhost:8080/api/parsers/logfile/apply1"
+                        [ model.chosenParser ]
+                        [ UrlBuilder.string "target" model.stringToParse ]
                 , expect = Http.expectJson GotParsingResult DecEnc.logfileParserApplicationDecoder
                 }
             )
