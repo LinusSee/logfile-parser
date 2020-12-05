@@ -8,10 +8,18 @@ Keep in mind that this could span a single line like `log("This is in a single l
 3. Apply a parser created in step one repeatedly to a file until there is no input left to parse.
 
 ## Api
-- /api
-   - /parsers/building-blocks/complex
-     <br>GET:&nbsp;&nbsp;&nbsp;&nbsp; Returns a list of applied elementary parsers (e.g. "matching <some_string>").
-     <br>POST:&nbsp;&nbsp;      Apply an argument to a simple parser. Creates a new applied parser.
+- /api/parsers
+    - /logfile
+      <br>**GET:**&nbsp;&nbsp;&nbsp; Returns a list of all logfile parser names (a name can be used to apply a specific parser)
+      <br>**POST:** Create the logfile parser send in the body
+      - /apply/:parserName?target=foobar
+        <br> **GET:**&nbsp;&nbsp;&nbsp; Send a `parserName` and a `target` to apply the logfileParser saved under the name `parserName` to the specified target
+        <br> **POST:** Send a full logfile parser and target string in the body to apply the parser to a target
+    - /building-blocks/complex
+     <br>**GET:**&nbsp;&nbsp;&nbsp;&nbsp; Returns a list of applied elementary parsers (e.g. "matching <some_string>").
+     <br>**POST:**&nbsp;&nbsp;      Apply an argument to a simple parser. Creates a new applied parser.
+     - /apply
+        <br>**POST:** Send an applied parser and a target string and return the result of applying that parser to the target
 
 ## Creating a logline parser
 A logline parser is supposed to parse what is written by a single `log()` command. Let's look at two examples.
