@@ -1,0 +1,213 @@
+{
+	"info": {
+		"_postman_id": "8d790e1a-55a4-4930-a532-ddecbd90ede6",
+		"name": "parser-rest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "elementary-parsers",
+			"item": [
+				{
+					"name": "Get all elementary parsers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create applied elementary parser",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"type\": \"characters\",\r\n    \"name\": \"postmanParser\",\r\n\t\"value\": \"postman\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply elementary parser to target string",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"target\": \"2020:13:11\",\r\n    \"parser\": {\r\n        \"pattern\": \"YYYY:DD:MM\",\r\n        \"type\": \"date\",\r\n        \"name\": \"standardDate\"\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex/apply",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex",
+								"apply"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		},
+		{
+			"name": "logfile-parsers",
+			"item": [
+				{
+					"name": "Get all logfile parser names",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/logfile/",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"logfile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create logfile parser",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"name\": \"DateTimeParser\",\r\n    \"parsers\": [ \r\n            {\r\n                \"type\":\"date\",\r\n                \"pattern\":\"YYYY-DD-MM\",\r\n                \"name\":\"weirdDate\"\r\n            },\r\n            {\r\n                \"type\":\"time\",\r\n                \"pattern\":\"HH:MM\",\r\n                \"name\":\"clockTime\"\r\n            }\r\n        ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/parsers/logfile/",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"logfile",
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply logfile parser by name to target string",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/logfile/apply/DateTimeParser?target=2000-10-1111:30",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"logfile",
+								"apply",
+								"DateTimeParser"
+							],
+							"query": [
+								{
+									"key": "target",
+									"value": "2000-10-1111:30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply logfile parser to target string",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"target\": \"2000-10-1111:30\",\r\n    \"parser\": {\r\n        \"name\":\"NewParser\",\r\n        \"parsers\": [ \r\n            {\r\n                \"type\":\"date\",\r\n                \"pattern\":\"YYYY-DD-MM\",\r\n                \"name\":\"weirdDate\"\r\n            },\r\n            {\r\n                \"type\":\"time\",\r\n                \"pattern\":\"HH:MM\",\r\n                \"name\":\"clockTime\"\r\n            }\r\n        ]\r\n    }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8080/api/parsers/logfile/apply",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"logfile",
+								"apply"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"protocolProfileBehavior": {}
+		}
+	],
+	"protocolProfileBehavior": {}
+}
