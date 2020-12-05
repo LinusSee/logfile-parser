@@ -7,7 +7,7 @@ For example you could choose the `OneOf` parser that you apply to the input `'DE
 
 Currently the page looks like this.
 
-![Image of the full creat parser page](.//full_page.png)
+![Image of the full create parser page](./full_page.PNG)
 
 Now let's look at the different parts of the page.
 
@@ -18,20 +18,20 @@ You select a type of parser (via the dropdown) and the value or values it should
 <br>
 First if we wish to create a loglevel parser as described in the first section, we would do so as follows:
 <br>
-![Image of an example of how to create a loglevel parser](./create_loglevel_parser.png)
+![Image of an example of how to create a loglevel parser](./create_loglevel_parser.PNG)
 
 And if we wanted to create a parser matching a time format like this 'HH-MM' we could do so like this:
 <br>
-![Image of an example of how to create a time parser](./create_time_parser.png)
+![Image of an example of how to create a time parser](./create_time_parser.PNG)
 
 The second section is for debugging purposes and lists the matching fields of all currently created parsers.
-![Image of an example of how to create a loglevel parser](./current_matching_fields.png)
+![Image of an example of how to create a loglevel parser](./current_matching_fields.PNG)
 
 ## Test existing parsers
 Since it would be helpful to test if a created parser actually works, this section allows you to select an existing parser by name via the dropdown. You can then provide a target string which the parser will attempt to parse. The result is then displayed as a string below the input fields.
 
 For example with out previously created time parser.
-![Image of how to test our previously created time parser](./match_time.png)
+![Image of how to test our previously created time parser](./match_time.PNG)
 
 If we provide a string that is too long, it still works, as long as it can match the start.
-![Image of how to test our previously created time parser](./match_time_with_longer_string.png)
+![Image of how to test our previously created time parser](./match_time_with_longer_string.PNG)
