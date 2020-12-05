@@ -25,6 +25,7 @@ And if we wanted to create a parser matching a time format like this 'HH-MM' we 
 ![Image of an example of how to create a time parser](./create_time_parser.PNG)
 
 The second section is for debugging purposes and lists the matching fields of all currently created parsers.
+<br>
 ![Image of an example of how to create a loglevel parser](./current_matching_fields.PNG)
 
 ## Test existing parsers
