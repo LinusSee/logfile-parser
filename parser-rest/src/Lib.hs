@@ -44,7 +44,7 @@ type API =
                 (
                      Get '[JSON] [String]
                 :<|> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
-                :<|> "apply1" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
+                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
                 )
             )
