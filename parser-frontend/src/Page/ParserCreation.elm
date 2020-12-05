@@ -350,7 +350,8 @@ viewProblems problems =
 viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
 viewParserApplication selection parsers stringToParse =
     div []
-        [ label []
+        [ h2 [] [ text "Test existing parsers" ]
+        , label []
             [ text "Parser"
             , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
             ]
