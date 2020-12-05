@@ -82,7 +82,7 @@ update msg (ApplyLogfileParser session model) =
             , Http.get
                 { url =
                     UrlBuilder.crossOrigin
-                        "http://localhost:8080/api/parsers/logfile/apply1"
+                        "http://localhost:8080/api/parsers/logfile/apply"
                         [ model.chosenParser ]
                         [ UrlBuilder.string "target" model.stringToParse ]
                 , expect = Http.expectJson GotParsingResult DecEnc.logfileParserApplicationDecoder
