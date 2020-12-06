@@ -1,0 +1,22 @@
+.page {
+  display: grid;
+  grid-template-columns: 15% 68% 16%;
+}
+
+.page__navbar {
+  grid-row: 1;
+  grid-column: 1/4;
+}
+
+.page__sidebar-left {
+  display: none;
+}
+
+.page__center {
+  padding: 10px 15px 10px;
+  grid-column: 1/4;
+}
+
+.page_sidebar-right {
+  display: none;
+}

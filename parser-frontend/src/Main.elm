@@ -229,21 +229,42 @@ subscriptions model =
 
 view : Model -> Browser.Document Msg
 view model =
+    let
+        { title, centerContent } =
+            viewCenter model
+    in
+    { title = title
+    , body = [ viewPageLayout centerContent ]
+    }
+
+
+viewPageLayout : Html Msg -> Html Msg
+viewPageLayout center =
+    div [ class "page" ]
+        [ div [ class "page__navbar" ] []
+        , div [ class "page__sidebar-left" ] []
+        , div [ class "page__center" ] [ center ]
+        , div [ class "page_sidebar-right" ] []
+        ]
+
+
+viewCenter : Model -> { title : String, centerContent : Html Msg }
+viewCenter model =
     case model of
         NotFound _ ->
             Debug.todo "not found"
 
         ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session applyModel) ->
             { title = "Apply logfile parser"
-            , body = [ Html.map GotApplyLogfileParserMsg (LogfileParserApplication.view applyModel) ]
+            , centerContent = Html.map GotApplyLogfileParserMsg (LogfileParserApplication.view applyModel)
             }
 
         CreateParser (ParserCreation.CreateParser session parserModel) ->
             { title = "It works?!"
-            , body = [ Html.map GotCreateParserMsg (ParserCreation.view parserModel) ]
+            , centerContent = Html.map GotCreateParserMsg (ParserCreation.view parserModel)
             }
 
         CreateLogfileParser (LogfileParserCreation.CreateLogfileParser session parserModel) ->
             { title = "Logfile Parsing"
-            , body = [ Html.map GotCreateLogfileParserMsg (LogfileParserCreation.view parserModel) ]
+            , centerContent = Html.map GotCreateLogfileParserMsg (LogfileParserCreation.view parserModel)
             }
