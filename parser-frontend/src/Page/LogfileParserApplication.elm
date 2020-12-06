@@ -152,8 +152,6 @@ view model =
                     , viewParserApplication model.stringToParse
                     ]
                 , p [] [ text ("ParsingResult: (" ++ String.join ", " model.parsingResult ++ ")") ]
-                , a [ href "http://localhost:8081/parse-logfile" ] [ text "Parse logfile" ]
-                , a [ href "http://localhost:8081/" ] [ text "Create parser" ]
                 ]
 
 

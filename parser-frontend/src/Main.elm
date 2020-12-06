@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Browser.Navigation as Nav
 import DecEnc
-import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, ul)
+import Html exposing (Html, a, button, div, h2, input, label, li, nav, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -241,11 +241,23 @@ view model =
 viewPageLayout : Html Msg -> Html Msg
 viewPageLayout center =
     div [ class "page" ]
-        [ div [ class "page__navbar" ] []
+        [ div [ class "page__navbar" ] [ viewNavbar ]
         , div [ class "page__sidebar-left" ] []
         , div [ class "page__center" ] [ center ]
         , div [ class "page_sidebar-right" ] []
         ]
+
+
+viewNavbar : Html Msg
+viewNavbar =
+    nav [ class "navbar", class "navbar--desktop" ]
+        (List.map (\( url, desc ) -> a [ href url, class "navbar__link" ] [ text desc ])
+            [ ( "https://wikipedia.org", "Wikipedia" )
+            , ( "http://localhost:8081/", "Create Parser" )
+            , ( "http://localhost:8081/parse-logfile", "Create Logfile Parser" )
+            , ( "http://localhost:8081/apply-logfile", "Apply Parser" )
+            ]
+        )
 
 
 viewCenter : Model -> { title : String, centerContent : Html Msg }

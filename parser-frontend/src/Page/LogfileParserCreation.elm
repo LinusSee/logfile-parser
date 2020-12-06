@@ -227,8 +227,6 @@ view model =
                     [ text "Current result:"
                     , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
                     ]
-                , a [ href "http://localhost:8081/" ] [ text "Create parser" ]
-                , a [ href "http://localhost:8081/apply-logfile" ] [ text "Apply parser" ]
                 ]
 
 
