@@ -345,7 +345,7 @@ viewProblems : List ValidationProblem -> Html Msg
 viewProblems problems =
     case problems of
         [] ->
-            ul [ class "problem-list" ] []
+            ul [] []
 
         _ ->
             ul [ class "problem-list" ]

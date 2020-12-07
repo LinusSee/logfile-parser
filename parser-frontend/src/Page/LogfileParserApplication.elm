@@ -1,7 +1,7 @@
 module Page.LogfileParserApplication exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, button, div, h2, label, option, p, select, text, textarea)
+import Html exposing (Html, a, article, button, div, h2, label, option, p, select, text, textarea)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -144,32 +144,30 @@ view model =
             div [] [ text "Loading..." ]
 
         Success ->
-            div []
-                [ h2 [] [ text "Apply an existing parser to a logfile" ]
-                , div []
-                    [ viewLogfileParserDropdown model.chosenParser model.existingParsers
-                    , text model.chosenParser
-                    , viewParserApplication model.stringToParse
-                    ]
-                , p [] [ text ("ParsingResult: (" ++ String.join ", " model.parsingResult ++ ")") ]
-                ]
+            article [ class "article" ]
+                ([ h2 [ class "header2--centered" ] [ text "Apply an existing parser to a logfile" ] ]
+                    ++ [ viewLogfileParserDropdown model.chosenParser model.existingParsers ]
+                    ++ viewParserApplication model.stringToParse
+                    ++ [ p [ class "text--centered" ] [ text ("ParsingResult: (" ++ String.join ", " model.parsingResult ++ ")") ] ]
+                )
 
 
 viewLogfileParserDropdown : String -> List String -> Html Msg
 viewLogfileParserDropdown selection parserNames =
-    div []
-        [ label [] [ text "Logfile Parser" ]
+    div [ class "input-group", class "input-group--centered-content" ]
+        [ label [ for "parserSelect" ] [ text "Parser" ]
         , select
-            [ value selection, onInput SelectLogfileParser ]
+            [ id "parserSelect", value selection, onInput SelectLogfileParser ]
             (List.map (\name -> option [ value name, selected (selection == name) ] [ text name ]) parserNames)
         ]
 
 
-viewParserApplication : String -> Html Msg
+viewParserApplication : String -> List (Html Msg)
 viewParserApplication stringToParse =
-    div []
-        [ label []
-            [ textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
-            ]
-        , button [ onClick ApplyParser ] [ text "Apply" ]
+    [ div [ class "input-group", class "input-group--centered-content" ]
+        [ label [] [ text "Target string" ]
+        , textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
         ]
+    , div [ class "button-group button-group--centered-content" ]
+        [ button [ onClick ApplyParser, class "standard-button standard-button--long" ] [ text "Apply" ] ]
+    ]
