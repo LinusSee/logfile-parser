@@ -283,36 +283,43 @@ view model =
                 [ div []
                     [ h2 [] [ text "Create specialized parsers" ]
                     , viewProblems model.problems
-                    , div []
-                        [ label []
-                            [ text "Type"
-                            , select [ value formData.patternType, onInput (ChangeForm ChangePatternType) ]
-                                [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
-                                , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
-                                , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
-                                , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
-                                ]
-                            ]
-                        , label []
-                            [ text "Matching"
-                            , input [ placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
+                    , div [ class "input-group" ]
+                        [ label [ for "typeSelect" ] [ text "Type" ]
+                        , select [ id "typeSelect", value formData.patternType, onInput (ChangeForm ChangePatternType) ]
+                            [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
+                            , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
+                            , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
+                            , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
                             ]
                         ]
-                    , div []
-                        [ label []
-                            [ text "Name"
-                            , input [ placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
-                            ]
+                    , div [ class "input-group" ]
+                        [ label [ for "matchingInput" ] [ text "Matching" ]
+                        , input [ id "matchingInput", placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
                         ]
-                    , div []
-                        [ button [ onClick Reset ] [ text "Reset" ]
-                        , button [ onClick (Submit formData) ] [ text "Submit" ]
+                    , div [ class "input-group" ]
+                        [ label [ for "parserNameInput" ] [ text "Name" ]
+                        , input [ id "parserNameInput", placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+                        ]
+                    , div [ class "button-group" ]
+                        [ button
+                            [ onClick Reset
+                            , class "standard-button"
+                            , class "standard-button--spacing"
+                            , class "standard-button--long"
+                            ]
+                            [ text "Reset" ]
+                        , button
+                            [ onClick (Submit formData)
+                            , class "standard-button"
+                            , class "standard-button--spacing"
+                            , class "standard-button--long"
+                            ]
+                            [ text "Submit" ]
                         ]
                     , ul [] (List.map viewParser existingParsers)
                     ]
                 , viewParserApplication model.parserToApply existingParsers model.stringToParse
                 , text model.parsingResult
-                , Html.p [] [ text model.parserToApply ]
                 ]
 
 
@@ -348,15 +355,15 @@ viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html
 viewParserApplication selection parsers stringToParse =
     div []
         [ h2 [] [ text "Test existing parsers" ]
-        , label []
-            [ text "Parser"
+        , div [ class "input-group" ]
+            [ label [] [ text "Parser" ]
             , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
             ]
-        , label []
-            [ text "Target"
+        , div [ class "input-group" ]
+            [ label [] [ text "Target" ]
             , input [ placeholder "String to parse", value stringToParse, onInput ChangeParsingContent ] []
             ]
-        , button [ onClick ApplyParser ] [ text "Apply" ]
+        , button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ]
         ]
 
 

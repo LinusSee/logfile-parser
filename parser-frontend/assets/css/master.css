@@ -14,6 +14,16 @@ body {
   box-sizing: border-box;
 }
 
+label {
+  display: inline-block;
+  min-width: 100px;
+}
+
+select, input {
+  padding: 5px 10px;
+  min-width: 200px;
+}
+
 
 
 /*
@@ -70,4 +80,34 @@ body {
 .page_sidebar-right {
   display: block;
   padding: 10px 15px 10px;
+}
+
+
+
+/*
+  Classes (TODO: Refactor name if there are clearer groups)
+*/
+.input-group { /* A line (prob a <div> of input fields, maybe find a better name here)*/
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.button-group { /* A line (prob a <div> of buttons, maybe find a better name here)*/
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.standard-button {
+  background-color: #3f51b5;
+  border: none;
+  padding: 7px 14px;
+}
+
+.standard-button--spacing {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+
+.standard-button--long {
+  min-width: 90px;
 }
