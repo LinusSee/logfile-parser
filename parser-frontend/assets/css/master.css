@@ -87,9 +87,19 @@ select, input {
 /*
   Classes (TODO: Refactor name if there are clearer groups)
 */
+.article {
+  margin-top: 50px;
+  margin-bottom: 30px;
+}
+
 .input-group { /* A line (prob a <div> of input fields, maybe find a better name here)*/
   padding-top: 12px;
   padding-bottom: 12px;
+}
+
+.input-group--centered-content {
+  display: flex;
+  justify-content: center;
 }
 
 .button-group { /* A line (prob a <div> of buttons, maybe find a better name here)*/
@@ -97,10 +107,16 @@ select, input {
   padding-bottom: 12px;
 }
 
+.button-group--centered-content {
+  display: flex;
+  justify-content: center;
+}
+
 .standard-button {
   background-color: #3f51b5;
+  /* color: white; */
   border: none;
-  padding: 7px 14px;
+  padding: 8px 14px;
 }
 
 .standard-button--spacing {
@@ -110,4 +126,23 @@ select, input {
 
 .standard-button--long {
   min-width: 90px;
+}
+
+.header2--centered {
+  text-align: center;
+}
+
+.problem-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.problem-list__element {
+  list-style: none;
+  background-color: #ffe5e5;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  width: 500px;
 }

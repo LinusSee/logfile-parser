@@ -1,7 +1,7 @@
 module Page.ParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, ul)
+import Html exposing (Html, a, article, button, div, h2, input, label, li, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -280,10 +280,10 @@ view model =
                     model.existingParsers
             in
             div []
-                [ div []
-                    [ h2 [] [ text "Create specialized parsers" ]
+                [ article [ class "article" ]
+                    [ h2 [ class "header2--centered" ] [ text "Create specialized parsers" ]
                     , viewProblems model.problems
-                    , div [ class "input-group" ]
+                    , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "typeSelect" ] [ text "Type" ]
                         , select [ id "typeSelect", value formData.patternType, onInput (ChangeForm ChangePatternType) ]
                             [ option [ value "oneOf", selected (formData.patternType == "oneOf") ] [ text "One Of" ]
@@ -292,15 +292,15 @@ view model =
                             , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
                             ]
                         ]
-                    , div [ class "input-group" ]
+                    , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "matchingInput" ] [ text "Matching" ]
                         , input [ id "matchingInput", placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
                         ]
-                    , div [ class "input-group" ]
+                    , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
                         , input [ id "parserNameInput", placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
                         ]
-                    , div [ class "button-group" ]
+                    , div [ class "button-group", class "button-group--centered-content" ]
                         [ button
                             [ onClick Reset
                             , class "standard-button"
@@ -316,54 +316,61 @@ view model =
                             ]
                             [ text "Submit" ]
                         ]
-                    , ul [] (List.map viewParser existingParsers)
+
+                    -- , ul [] (List.map viewParser existingParsers)
                     ]
                 , viewParserApplication model.parserToApply existingParsers model.stringToParse
                 , text model.parsingResult
                 ]
 
 
-viewParser : DecEnc.ElementaryParser -> Html Msg
-viewParser parser =
-    case parser of
-        DecEnc.OneOf _ xs ->
-            li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
 
-        DecEnc.Time _ pattern ->
-            li [] [ text pattern ]
-
-        DecEnc.Date _ pattern ->
-            li [] [ text pattern ]
-
-        DecEnc.Characters _ s ->
-            li [] [ text s ]
+-- viewParser : DecEnc.ElementaryParser -> Html Msg
+-- viewParser parser =
+--     case parser of
+--         DecEnc.OneOf _ xs ->
+--             li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
+--
+--         DecEnc.Time _ pattern ->
+--             li [] [ text pattern ]
+--
+--         DecEnc.Date _ pattern ->
+--             li [] [ text pattern ]
+--
+--         DecEnc.Characters _ s ->
+--             li [] [ text s ]
 
 
 viewProblems : List ValidationProblem -> Html Msg
 viewProblems problems =
-    div []
-        [ case problems of
-            [] ->
-                text "Successful validaton"
+    case problems of
+        [] ->
+            ul [ class "problem-list" ] []
 
-            _ ->
-                ul [] (List.map (\(InvalidEntry _ problem) -> li [] [ text problem ]) problems)
-        ]
+        _ ->
+            ul [ class "problem-list" ]
+                (List.map
+                    (\(InvalidEntry _ problem) ->
+                        li [ class "problem-list__element" ] [ text problem ]
+                    )
+                    problems
+                )
 
 
 viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
 viewParserApplication selection parsers stringToParse =
-    div []
-        [ h2 [] [ text "Test existing parsers" ]
-        , div [ class "input-group" ]
+    article [ class "article" ]
+        [ h2 [ class "header2--centered" ] [ text "Test existing parsers" ]
+        , div [ class "input-group", class "input-group--centered-content" ]
             [ label [] [ text "Parser" ]
             , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
             ]
-        , div [ class "input-group" ]
+        , div [ class "input-group", class "input-group--centered-content" ]
             [ label [] [ text "Target" ]
             , input [ placeholder "String to parse", value stringToParse, onInput ChangeParsingContent ] []
             ]
-        , button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ]
+        , div [ class "button-group", class "button-group--centered-content" ]
+            [ button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ] ]
         ]
 
 
