@@ -151,3 +151,15 @@ input, select, textarea {
   margin-bottom: 10px;
   width: 500px;
 }
+
+
+/* TODO: not happy with that, refactor */
+.results {
+  width: 50%;
+  margin: auto;
+}
+
+.parser-list {
+  width: 50%;
+  margin: auto;
+}

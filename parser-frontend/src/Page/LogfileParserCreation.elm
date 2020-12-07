@@ -1,7 +1,7 @@
 module Page.LogfileParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, button, div, h2, input, label, li, option, select, text, textarea, ul)
+import Html exposing (Html, a, article, button, div, h2, input, label, li, option, select, text, textarea, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -211,33 +211,28 @@ view model =
 
         Success ->
             div []
-                [ h2 [] [ text "Combine parsers to create a logfile parser" ]
-                , div []
-                    [ label []
-                        [ text "Choose your parser name"
-                        , input [ placeholder "Parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
+                [ div [ class "article" ]
+                    [ h2 [ class "header2--centered" ] [ text "Combine parsers to create a logfile parser" ]
+                    , div [ class "input-group", class "input-group--centered-content" ]
+                        [ label [ for "parserNameInput" ] [ text "Name" ]
+                        , input [ id "parserNameInput", placeholder "Parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
                         ]
-                    , ul [] (List.map viewParser model.chosenParsers)
                     , viewParserSelection model.selectedParser model.existingParsers
+                    , div [ class "button-group", class "button-group--centered-content" ]
+                        [ button [ onClick Submit, class "standard-button" ] [ text "Submit" ]
+                        ]
+                    , ul [ class "parser-list" ] (List.map viewParser model.chosenParsers)
                     ]
-                , button [ onClick Submit ] [ text "Submit" ]
-                , viewParserApplication model.stringToParse
-                , div
-                    []
-                    [ text "Current result:"
-                    , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
-                    ]
+                , viewParserApplication model
                 ]
 
 
 viewParserSelection : String -> List DecEnc.ElementaryParser -> Html Msg
 viewParserSelection selection parsers =
-    div []
-        [ label []
-            [ text "Parser"
-            , select [ value selection, onInput SelectParserToAdd ] (List.map (parserToOption selection) parsers)
-            ]
-        , button [ onClick AddSelectedParser ] [ text "Apply" ]
+    div [ class "input-group", class "input-group--centered-content" ]
+        [ label [] [ text "Parser" ]
+        , select [ value selection, onInput SelectParserToAdd ] (List.map (parserToOption selection) parsers)
+        , button [ onClick AddSelectedParser, class "standard-button" ] [ text "Apply" ]
         ]
 
 
@@ -257,14 +252,25 @@ viewParser parser =
             li [] [ text s ]
 
 
-viewParserApplication : String -> Html Msg
-viewParserApplication stringToParse =
-    div []
-        [ label []
-            [ text "Target"
-            , textarea [ placeholder "String to parse", value stringToParse, onInput ChangeParsingContent ] []
+viewParserApplication : CreateLogfileParserModel -> Html Msg
+viewParserApplication model =
+    article [ class "article" ]
+        [ h2 [ class "header2--centered" ] [ text "Test current parser" ]
+        , div [ class "input-group", class "input-group--centered-content" ]
+            [ label [] [ text "Target" ]
+            , textarea [ placeholder "String to parse", value model.stringToParse, onInput ChangeParsingContent ] []
             ]
-        , button [ onClick ApplyParser ] [ text "Apply" ]
+        , div [ class "button-group", class "button-group--centered-content" ]
+            [ button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ]
+            ]
+        , div [ class "results" ]
+            [ if model.parsingResult == [] then
+                text ""
+
+              else
+                text "Current result:"
+            , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
+            ]
         ]
 
 
