@@ -56,7 +56,14 @@ type alias LogfileParserApplicationData =
 
 toMatchingList : String -> List String
 toMatchingList matching =
-    [ "HARDCODED", "DATA" ]
+    let
+        inputList =
+            String.split "," matching
+
+        cleanupElement element =
+            String.trim element |> String.slice 1 -1
+    in
+    List.map cleanupElement inputList
 
 
 parserEncoder : ParserFormData -> Encode.Value
