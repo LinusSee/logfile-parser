@@ -1,7 +1,7 @@
 module Page.ParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, article, button, div, h2, input, label, li, option, select, text, ul)
+import Html exposing (Html, a, article, button, div, h2, input, label, li, option, p, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -320,7 +320,7 @@ view model =
                     -- , ul [] (List.map viewParser existingParsers)
                     ]
                 , viewParserApplication model.parserToApply existingParsers model.stringToParse
-                , text model.parsingResult
+                , p [ class "text--centered" ] [ text model.parsingResult ]
                 ]
 
 
