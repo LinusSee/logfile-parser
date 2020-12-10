@@ -294,7 +294,7 @@ view model =
                         ]
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "matchingInput" ] [ text "Matching" ]
-                        , input [ id "matchingInput", placeholder "'a', 'b', 'c'", value formData.matching, onInput (ChangeForm ChangeMatching) ] []
+                        , input [ id "matchingInput", placeholder (matchingPlaceholder formData.patternType), value formData.matching, onInput (ChangeForm ChangeMatching) ] []
                         ]
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
@@ -388,6 +388,22 @@ parserToOption selection parser =
 
         DecEnc.Characters name chars ->
             option [ value name, selected (selection == name) ] [ text name ]
+
+
+matchingPlaceholder : String -> String
+matchingPlaceholder selection =
+    case selection of
+        "oneOf" ->
+            "'a', 'b', 'c'"
+
+        "time" ->
+            "HH:MM"
+
+        "date" ->
+            "YYYY-MM-DD"
+
+        _ ->
+            "an arbitrary string"
 
 
 
