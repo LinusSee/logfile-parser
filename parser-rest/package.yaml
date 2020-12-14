@@ -32,7 +32,11 @@ dependencies:
 - time
 
 library:
-  source-dirs: src
+  source-dirs:
+    - src/business-logic
+    - src/database/access
+    - src/models
+    - src/rest
 
 executables:
   parser-rest-exe:
