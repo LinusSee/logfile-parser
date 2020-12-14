@@ -19,12 +19,12 @@ import Network.Wai.Middleware.Servant.Options
 import Servant
 
 import CustomParsers
-  ( ElementaryParser
+  ( ElementaryParser (..)
   , LogfileParser (..)
   , ParsingRequest (..)
-  , ParsingResponse(ParsingError)
+  , ParsingResponse (ParsingError)
   , LogfileParsingRequest (..)
-  , LogfileParsingResponse(LogfileParsingError)
+  , LogfileParsingResponse (LogfileParsingError)
   )
 import ElementaryParserFileDb as ElemFileDb
 import LogfileParserFileDb as LogFileDb
@@ -49,10 +49,11 @@ type API =
                 )
             )
             :<|>
-            ( "building-blocks" :>
-                (    "complex" :> Get '[JSON] [ElementaryParser]
-                :<|> "complex" :> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
-                :<|> "complex" :> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
+            ( "building-blocks" :> "complex" :>
+                (    Get '[JSON] [ElementaryParser]
+                :<|> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] ParsingResponse
+                :<|> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
                 )
             )
         )
@@ -82,6 +83,7 @@ server =
   )
   :<|> readAllElementaryParsersHandler
   :<|> saveParserHandler
+  :<|> applyParserByName
   :<|> parserApplicationHandler
 
 
@@ -135,6 +137,26 @@ saveParserHandler :: ElementaryParser -> Handler NoContent
 saveParserHandler parser = do
   _ <- liftIO $ ElemFileDb.save parser
   return NoContent
+
+
+applyParserByName :: String -> Maybe String -> Handler ParsingResponse
+applyParserByName parserName maybeTarget =
+  case maybeTarget of
+    Just target -> do
+      parsers <- liftIO ElemFileDb.readAll
+      let parser = head $ filter byName parsers
+      let parsingResult = LogfileParsing.applyParser target parser
+      case parsingResult of
+        Left err ->
+          return $ ParsingError (show err)
+        Right result ->
+          return result
+    Nothing ->
+      return $ ParsingError "Missing query parameter 'target'"
+  where byName (OneOf name _ ) = name == parserName
+        byName (Time name _ ) = name == parserName
+        byName (Date name _ ) = name == parserName
+        byName (Characters name _ ) = name == parserName
 
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse

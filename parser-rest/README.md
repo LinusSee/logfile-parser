@@ -14,10 +14,13 @@ Keep in mind that this could span a single line like `log("This is in a single l
       <br>**POST:** Create the logfile parser send in the body
       - /apply/:parserName?target=foobar
         <br> **GET:**&nbsp;&nbsp;&nbsp; Send a `parserName` and a `target` to apply the logfileParser saved under the name `parserName` to the specified target
+      - /apply
         <br> **POST:** Send a full logfile parser and target string in the body to apply the parser to a target
     - /building-blocks/complex
      <br>**GET:**&nbsp;&nbsp;&nbsp;&nbsp; Returns a list of applied elementary parsers (e.g. "matching <some_string>").
      <br>**POST:**&nbsp;&nbsp;      Apply an argument to a simple parser. Creates a new applied parser.
+     - /apply/:parserName?target=foobar
+       <br> **GET:**&nbsp;&nbsp;&nbsp; Send a `parserName` and a `target` to apply the parser saved under the name `parserName` to the specified target
      - /apply
         <br>**POST:** Send an applied parser and a target string and return the result of applying that parser to the target
 

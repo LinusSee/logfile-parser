@@ -60,6 +60,35 @@
 					"response": []
 				},
 				{
+					"name": "Apply parser by name to target string",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex/apply/Time Parser?target=11-30",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex",
+								"apply",
+								"Time Parser"
+							],
+							"query": [
+								{
+									"key": "target",
+									"value": "11-30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Apply elementary parser to target string",
 					"request": {
 						"method": "POST",

@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Session exposing (Session)
+import Url.Builder as UrlBuilder
 import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
 
 
@@ -197,7 +198,7 @@ update msg (CreateParser session model) =
 
         ApplyParser ->
             ( CreateParser session model
-            , postApplyParser model.stringToParse (chooseParserByName model.parserToApply model.existingParsers)
+            , getApplyParser model
             )
 
         GotParserApplicationResult response ->
@@ -322,23 +323,6 @@ view model =
                 , viewParserApplication model.parserToApply existingParsers model.stringToParse
                 , p [ class "text--centered" ] [ text model.parsingResult ]
                 ]
-
-
-
--- viewParser : DecEnc.ElementaryParser -> Html Msg
--- viewParser parser =
---     case parser of
---         DecEnc.OneOf _ xs ->
---             li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
---
---         DecEnc.Time _ pattern ->
---             li [] [ text pattern ]
---
---         DecEnc.Date _ pattern ->
---             li [] [ text pattern ]
---
---         DecEnc.Characters _ s ->
---             li [] [ text s ]
 
 
 viewProblems : List ValidationProblem -> Html Msg
@@ -500,24 +484,6 @@ isValidTime model =
 
 
 
--- oneOfMatchingToProblems : String -> List ValidationProblem
--- oneOfMatchingToProblems input =
---     let
---         inputList =
---             String.split "," input
---
---         validElement element =
---             let
---                 trimmedElement =
---                     String.trim element
---             in
---             String.startsWith "\"" trimmedElement && String.endsWith "\"" trimmedElement
---     in
---     if List.member True (List.map validElement inputList) then
---         [ InvalidEntry Matching "Each element must be a string enclosed by \"" ]
---
---     else
---         []
 -- HTTP
 
 
@@ -530,19 +496,13 @@ postParser formData =
         }
 
 
-postApplyParser : String -> Maybe DecEnc.ElementaryParser -> Cmd Msg
-postApplyParser target maybeParser =
-    case maybeParser of
-        Just parser ->
-            let
-                data =
-                    { target = target, parser = parser }
-            in
-            Http.post
-                { url = "http://localhost:8080/api/parsers/building-blocks/complex/apply"
-                , body = Http.jsonBody (DecEnc.parserApplicationEncoder data)
-                , expect = Http.expectJson GotParserApplicationResult DecEnc.parserApplicationDecoder
-                }
-
-        Nothing ->
-            Cmd.none
+getApplyParser : CreateParserModel -> Cmd Msg
+getApplyParser model =
+    Http.get
+        { url =
+            UrlBuilder.crossOrigin
+                "http://localhost:8080/api/parsers/building-blocks/complex/apply"
+                [ model.parserToApply ]
+                [ UrlBuilder.string "target" model.stringToParse ]
+        , expect = Http.expectJson GotParserApplicationResult DecEnc.parserApplicationDecoder
+        }
