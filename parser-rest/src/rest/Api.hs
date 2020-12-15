@@ -136,27 +136,15 @@ applyParserByName :: String -> Maybe String -> Handler ParsingResponse
 applyParserByName parserName maybeTarget =
   case maybeTarget of
     Just target -> do
-      parsers <- liftIO ElemFileDb.readAll
-      let parser = head $ filter byName parsers
-      let parsingResult = ElementaryParsing.applyParser target parser
-      case parsingResult of
-        Left err ->
-          return $ ParsingError (show err)
-        Right result ->
-          return result
+      response <- liftIO $ Orchestration.applyElementaryParserByName parserName target
+      return response
+
     Nothing ->
       return $ ParsingError "Missing query parameter 'target'"
-  where byName (OneOf name _ ) = name == parserName
-        byName (Time name _ ) = name == parserName
-        byName (Date name _ ) = name == parserName
-        byName (Characters name _ ) = name == parserName
+
 
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
-parserApplicationHandler (ParsingRequest target parser) = do
-  let parsingResult = ElementaryParsing.applyParser target parser
-  case parsingResult of
-    Left err ->
-      return $ ParsingError (show err)
-    Right result ->
-      return result
+parserApplicationHandler request = do
+  response <- liftIO $ Orchestration.applyElementaryParser request
+  return response
