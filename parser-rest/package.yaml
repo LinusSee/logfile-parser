@@ -36,6 +36,7 @@ library:
     - src/business-logic
     - src/database/access
     - src/models
+    - src/orchestration
     - src/rest
 
 executables:

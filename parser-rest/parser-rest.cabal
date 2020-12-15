@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e1e82e038496eedc15e0d116116fedca9e970547b4e91b06c439c581684a088c
+-- hash: 126594dbac926519c41fa7ecd0512bd0d2a73e6afb9c673504a7c44563f9ff21
 
 name:           parser-rest
 version:        0.1.0.0
@@ -26,10 +26,12 @@ source-repository head
 
 library
   exposed-modules:
+      ElementaryParsing
       LogfileParsing
       ElementaryParserFileDb
       LogfileParserFileDb
       CustomParsers
+      ParsingOrchestration
       Api
   other-modules:
       Paths_parser_rest
@@ -37,6 +39,7 @@ library
       src/business-logic
       src/database/access
       src/models
+      src/orchestration
       src/rest
   build-depends:
       aeson

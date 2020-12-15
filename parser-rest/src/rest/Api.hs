@@ -28,9 +28,11 @@ import CustomParsers
   , LogfileParsingRequest (..)
   , LogfileParsingResponse (LogfileParsingError)
   )
-import ElementaryParserFileDb as ElemFileDb
-import LogfileParserFileDb as LogFileDb
-import LogfileParsing as LogfileParsing
+import qualified ElementaryParserFileDb as ElemFileDb
+import qualified LogfileParserFileDb as LogFileDb
+import qualified LogfileParsing as LogfileParsing
+import qualified ElementaryParsing as ElementaryParsing
+import qualified ParsingOrchestration as Orchestration
 
 
 startApp :: IO ()
@@ -106,27 +108,16 @@ applyLogfileParserByName :: String -> Maybe String -> Handler LogfileParsingResp
 applyLogfileParserByName parserName maybeTarget =
   case maybeTarget of
     Just target -> do
-      parsers <- liftIO LogFileDb.readAll
-      let parser = head $ filter byName parsers
-      let parsingResult = LogfileParsing.applyLogfileParser target parser
-      case parsingResult of
-        Left err ->
-          return $ LogfileParsingError (show err)
-        Right result ->
-          return result
+      response <- liftIO $ Orchestration.applyLogfileParserByName parserName target
+      return response
     Nothing ->
       return $ LogfileParsingError "Missing query parameter 'target'"
-  where byName (LogfileParser name _ ) = name == parserName
 
 
 logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
-logfileParserApplicationHandler (LogfileParsingRequest target parser) = do
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
-  case parsingResult of
-    Left err ->
-      return $ LogfileParsingError (show err)
-    Right result ->
-      return result
+logfileParserApplicationHandler request = do
+  response <- liftIO $ Orchestration.applyLogfileParser request
+  return response
 
 
 readAllElementaryParsersHandler :: Handler [ElementaryParser]
@@ -147,7 +138,7 @@ applyParserByName parserName maybeTarget =
     Just target -> do
       parsers <- liftIO ElemFileDb.readAll
       let parser = head $ filter byName parsers
-      let parsingResult = LogfileParsing.applyParser target parser
+      let parsingResult = ElementaryParsing.applyParser target parser
       case parsingResult of
         Left err ->
           return $ ParsingError (show err)
@@ -163,7 +154,7 @@ applyParserByName parserName maybeTarget =
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
 parserApplicationHandler (ParsingRequest target parser) = do
-  let parsingResult = LogfileParsing.applyParser target parser
+  let parsingResult = ElementaryParsing.applyParser target parser
   case parsingResult of
     Left err ->
       return $ ParsingError (show err)
