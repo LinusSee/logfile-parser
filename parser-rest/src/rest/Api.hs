@@ -21,17 +21,13 @@ import Network.Wai.Middleware.Servant.Options
 import Servant
 
 import CustomParsers
-  ( ElementaryParser (..)
-  , LogfileParser (..)
-  , ParsingRequest (..)
+  ( ElementaryParser
+  , LogfileParser
+  , ParsingRequest
   , ParsingResponse (ParsingError)
-  , LogfileParsingRequest (..)
+  , LogfileParsingRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
-import qualified ElementaryParserFileDb as ElemFileDb
-import qualified LogfileParserFileDb as LogFileDb
-import qualified LogfileParsing as LogfileParsing
-import qualified ElementaryParsing as ElementaryParsing
 import qualified ParsingOrchestration as Orchestration
 
 
@@ -93,14 +89,15 @@ server =
 
 getLogfileParserNames :: Handler [String]
 getLogfileParserNames = do
-  parsers <- liftIO LogFileDb.readAll
-  return $ map extractName parsers
-  where extractName ( LogfileParser name _ ) = name
+  response <- liftIO $ Orchestration.existingLogfileParserNames
+
+  return response
 
 
 saveLogfileParserHandler :: LogfileParser -> Handler NoContent
 saveLogfileParserHandler logfileParser = do
-  _ <- liftIO $ LogFileDb.save logfileParser
+  _ <- liftIO $ Orchestration.createLogfileParser logfileParser
+
   return NoContent
 
 
@@ -110,6 +107,7 @@ applyLogfileParserByName parserName maybeTarget =
     Just target -> do
       response <- liftIO $ Orchestration.applyLogfileParserByName parserName target
       return response
+
     Nothing ->
       return $ LogfileParsingError "Missing query parameter 'target'"
 
@@ -117,18 +115,21 @@ applyLogfileParserByName parserName maybeTarget =
 logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
 logfileParserApplicationHandler request = do
   response <- liftIO $ Orchestration.applyLogfileParser request
+
   return response
 
 
 readAllElementaryParsersHandler :: Handler [ElementaryParser]
 readAllElementaryParsersHandler = do
-  parsers <- liftIO ElemFileDb.readAll
-  return parsers
+  response <- liftIO $ Orchestration.existingElementaryParsers
+
+  return response
 
 
 saveParserHandler :: ElementaryParser -> Handler NoContent
 saveParserHandler parser = do
-  _ <- liftIO $ ElemFileDb.save parser
+  _ <- liftIO $ Orchestration.createElementaryParser parser
+
   return NoContent
 
 

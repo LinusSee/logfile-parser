@@ -1,5 +1,9 @@
 module ParsingOrchestration
-( applyElementaryParser
+( existingLogfileParserNames
+, createLogfileParser
+, existingElementaryParsers
+, createElementaryParser
+, applyElementaryParser
 , applyElementaryParserByName
 , applyLogfileParser
 , applyLogfileParserByName
@@ -19,6 +23,28 @@ import qualified LogfileParsing as LogfileParsing
 import qualified LogfileParserFileDb as LogFileDb
 
 
+
+existingLogfileParserNames :: IO [String]
+existingLogfileParserNames = do
+  parsers <- LogFileDb.readAll
+
+  return $ map extractName parsers
+
+  where extractName ( LogfileParser name _ ) = name
+
+
+createLogfileParser :: LogfileParser -> IO ()
+createLogfileParser logfileParser = LogFileDb.save logfileParser
+
+
+existingElementaryParsers :: IO [ElementaryParser]
+existingElementaryParsers = ElemFileDb.readAll
+
+
+createElementaryParser :: ElementaryParser -> IO ()
+createElementaryParser elementaryParser = ElemFileDb.save elementaryParser
+
+
 -- TODO: Rename into stuff like -> processParsingRequest
 -- TODO: Is it possible to get rid of IO? of course... just use let or where...
 applyElementaryParser :: ParsingRequest -> IO ParsingResponse
@@ -28,7 +54,7 @@ applyElementaryParser ( ParsingRequest target parser ) = do
   case parsingResult of
     Left err ->
       return $ ParsingError (show err)
-      
+
     Right result ->
       return result
 
