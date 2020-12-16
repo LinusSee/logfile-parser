@@ -3,9 +3,7 @@ module ElementaryParserFileDb
   , save
   ) where
 
-import System.IO
-
-import CustomParsers
+import CustomParsers ( ElementaryParser )
 
 
 

@@ -6,25 +6,19 @@ module LogfileParsing
 ) where
 
 import qualified Text.Parsec as Parsec
-import Control.Monad.IO.Class (liftIO)
-import Data.Char
-import Data.List
-import Data.Time
+
 import CustomParsers
-  ( ElementaryParser (..)
+  ( ElementaryParser
   , LogfileParser (..)
-  , ParsingRequest (..)
-  , ParsingResponse (..)
-  , LogfileParsingRequest (..)
+  , ParsingResponse
   , LogfileParsingResponse (..)
   )
 
 import ElementaryParsing as ElementaryParsing
 
 
+
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
-
-
 
 
 applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResponse

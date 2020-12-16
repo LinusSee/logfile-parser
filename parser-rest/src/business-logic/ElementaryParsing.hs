@@ -7,18 +7,15 @@ module ElementaryParsing
 ) where
 
 import qualified Text.Parsec as Parsec
-import Control.Monad.IO.Class (liftIO)
 import Data.Char
 import Data.List
 import Data.Time
 import CustomParsers
   ( ElementaryParser (..)
-  , LogfileParser (..)
-  , ParsingRequest (..)
   , ParsingResponse (..)
-  , LogfileParsingRequest (..)
-  , LogfileParsingResponse (..)
   )
+
+
 
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
@@ -88,10 +85,6 @@ applyDate format = do
 
     Nothing ->
       return $ DateResponse (result ++ "-asString")
-
-
-  -- result <- Parsec.string "target"
-  -- return $ DateResponse result
 
 
 applyCharacters :: String -> Parsec.Parsec String () ParsingResponse
