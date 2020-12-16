@@ -114,7 +114,7 @@ applyLogfileParserByName parserName maybeTarget =
 
 logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
 logfileParserApplicationHandler request = do
-  response <- liftIO $ Orchestration.applyLogfileParser request
+  let response = Orchestration.applyLogfileParser request
 
   return response
 
@@ -147,5 +147,6 @@ applyParserByName parserName maybeTarget =
 
 parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
 parserApplicationHandler request = do
-  response <- liftIO $ Orchestration.applyElementaryParser request
+  let response = Orchestration.applyElementaryParser request
+
   return response

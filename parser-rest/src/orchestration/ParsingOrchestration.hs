@@ -45,18 +45,16 @@ createElementaryParser :: ElementaryParser -> IO ()
 createElementaryParser elementaryParser = ElemFileDb.save elementaryParser
 
 
--- TODO: Rename into stuff like -> processParsingRequest
--- TODO: Is it possible to get rid of IO? of course... just use let or where...
-applyElementaryParser :: ParsingRequest -> IO ParsingResponse
+applyElementaryParser :: ParsingRequest -> ParsingResponse
 applyElementaryParser ( ParsingRequest target parser ) = do
-  let parsingResult = ElementaryParsing.applyParser target parser
-
   case parsingResult of
     Left err ->
-      return $ ParsingError (show err)
+      ParsingError (show err)
 
     Right result ->
-      return result
+      result
+
+    where parsingResult = ElementaryParsing.applyParser target parser
 
 
 applyElementaryParserByName :: String -> String -> IO ParsingResponse
@@ -78,16 +76,16 @@ applyElementaryParserByName parserName target = do
           byName (Characters name _ ) = name == parserName
 
 
-applyLogfileParser :: LogfileParsingRequest -> IO LogfileParsingResponse
+applyLogfileParser :: LogfileParsingRequest -> LogfileParsingResponse
 applyLogfileParser ( LogfileParsingRequest target parser ) = do
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
-
   case parsingResult of
     Left err ->
-      return $ LogfileParsingError (show err)
+      LogfileParsingError (show err)
 
     Right result ->
-      return $ result
+      result
+
+  where parsingResult = LogfileParsing.applyLogfileParser target parser
 
 
 applyLogfileParserByName :: String -> String -> IO LogfileParsingResponse
