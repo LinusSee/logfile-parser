@@ -8,7 +8,7 @@ module LogfileParsing
 import qualified Text.Parsec as Parsec
 
 import CustomParsers
-  ( ElementaryParser
+  ( ElementaryParser (..)
   , LogfileParser (..)
   , ParsingResponse (..)
   , LogfileParsingResponse (..)
@@ -37,6 +37,11 @@ runThroughList [] = do
   return []
 runThroughList (x:xs) = do
   result <- ElementaryParsing.chooseParser x
-  let namedResult = ParsingResponse "dummyName" result
+  let namedResult = ParsingResponse (extractName x) result
   next <- runThroughList xs
   return (namedResult : next)
+
+  where extractName (OneOf name _ ) = name
+        extractName (Time name _ ) = name
+        extractName (Date name _ ) = name
+        extractName (Characters name _ ) = name

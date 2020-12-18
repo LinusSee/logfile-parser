@@ -50,12 +50,16 @@ applyElementaryParser :: ParsingRequest -> ParsingResponse
 applyElementaryParser ( ParsingRequest target parser ) = do
   case parsingResult of
     Left err ->
-      ParsingResponse "dummyError" (ParsingError (show err))
+      ParsingResponse (extractName parser) (ParsingError (show err))
 
     Right result ->
-      ParsingResponse "dummyName" result
+      ParsingResponse (extractName parser) result
 
     where parsingResult = ElementaryParsing.applyParser target parser
+          extractName (OneOf name _ ) = name
+          extractName (Time name _ ) = name
+          extractName (Date name _ ) = name
+          extractName (Characters name _ ) = name
 
 
 applyElementaryParserByName :: String -> String -> IO ParsingResponse
@@ -66,10 +70,10 @@ applyElementaryParserByName parserName target = do
 
   case parsingResult of
     Left err ->
-      return $ ParsingResponse "dummyError" (ParsingError (show err))
+      return $ ParsingResponse parserName (ParsingError (show err))
 
     Right result ->
-      return $ ParsingResponse "dummyName" result
+      return $ ParsingResponse parserName result
 
     where byName (OneOf name _ ) = name == parserName
           byName (Time name _ ) = name == parserName
