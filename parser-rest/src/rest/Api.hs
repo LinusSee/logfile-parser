@@ -23,8 +23,9 @@ import Servant
 import CustomParsers
   ( ElementaryParser
   , LogfileParser
+  , ParsingResult (ParsingError)
   , ParsingRequest
-  , ParsingResponse (ParsingError)
+  , ParsingResponse (ParsingResponse)
   , LogfileParsingRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
@@ -141,7 +142,7 @@ applyParserByName parserName maybeTarget =
       return response
 
     Nothing ->
-      return $ ParsingError "Missing query parameter 'target'"
+      return $ ParsingResponse "dummyError" (ParsingError "Missing query parameter 'target'")
 
 
 

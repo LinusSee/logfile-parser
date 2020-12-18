@@ -4,6 +4,7 @@
 module CustomParsers
 ( ElementaryParser (..)
 , LogfileParser (..)
+, ParsingResult (..)
 , ParsingRequest (..)
 , ParsingResponse (..)
 , LogfileParsingRequest (..)
@@ -46,6 +47,14 @@ instance FromJSON ElementaryParser where
                           --_                   -> empty
 
 
+data ParsingResult =
+    OneOfResult String
+  | TimeResult String
+  | DateResult String
+  | CharactersResult String
+  | ParsingError String
+
+
 data LogfileParser =
   LogfileParser String [ElementaryParser]
   deriving (Show, Read)
@@ -63,18 +72,20 @@ instance FromJSON ParsingRequest where
 
 
 data ParsingResponse =
-    OneOfResponse String
-  | TimeResponse String -- TODO: Will be some time format
-  | DateResponse String -- TODO: Will be some date format
-  | CharactersResponse String
-  | ParsingError String
+  ParsingResponse String ParsingResult
+
+  --   OneOfResponse String
+  -- | TimeResponse String -- TODO: Will be some time format
+  -- | DateResponse String -- TODO: Will be some date format
+  -- | CharactersResponse String
+  -- | ParsingError String
 
 instance ToJSON ParsingResponse where
-  toJSON (OneOfResponse val)      = object [ "result" .= val ]
-  toJSON (TimeResponse val)       = object [ "result" .= val ]
-  toJSON (DateResponse val)       = object [ "result" .= val ]
-  toJSON (CharactersResponse val) = object [ "result" .= val ]
-  toJSON (ParsingError val) = object [ "error" .= val ]
+  toJSON (ParsingResponse name (OneOfResult val))      = object [ "name" .= name, "result" .= val ]
+  toJSON (ParsingResponse name (TimeResult val))       = object [ "name" .= name, "result" .= val ]
+  toJSON (ParsingResponse name (DateResult val))       = object [ "name" .= name, "result" .= val ]
+  toJSON (ParsingResponse name (CharactersResult val)) = object [ "name" .= name, "result" .= val ]
+  toJSON (ParsingResponse name (ParsingError val))     = object [ "name" .= name, "error" .= val  ]
 
 
 data LogfileParsingRequest =

@@ -10,7 +10,7 @@ import qualified Text.Parsec as Parsec
 import CustomParsers
   ( ElementaryParser
   , LogfileParser (..)
-  , ParsingResponse
+  , ParsingResponse (..)
   , LogfileParsingResponse (..)
   )
 
@@ -37,5 +37,6 @@ runThroughList [] = do
   return []
 runThroughList (x:xs) = do
   result <- ElementaryParsing.chooseParser x
+  let namedResult = ParsingResponse "dummyName" result
   next <- runThroughList xs
-  return (result : next)
+  return (namedResult : next)

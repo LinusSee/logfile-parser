@@ -11,6 +11,7 @@ module ParsingOrchestration
 
 import CustomParsers
   ( ElementaryParser (..)
+  , ParsingResult (..)
   , ParsingRequest (..)
   , ParsingResponse (..)
   , LogfileParser (..)
@@ -49,10 +50,10 @@ applyElementaryParser :: ParsingRequest -> ParsingResponse
 applyElementaryParser ( ParsingRequest target parser ) = do
   case parsingResult of
     Left err ->
-      ParsingError (show err)
+      ParsingResponse "dummyError" (ParsingError (show err))
 
     Right result ->
-      result
+      ParsingResponse "dummyName" result
 
     where parsingResult = ElementaryParsing.applyParser target parser
 
@@ -65,10 +66,10 @@ applyElementaryParserByName parserName target = do
 
   case parsingResult of
     Left err ->
-      return $ ParsingError (show err)
+      return $ ParsingResponse "dummyError" (ParsingError (show err))
 
     Right result ->
-      return result
+      return $ ParsingResponse "dummyName" result
 
     where byName (OneOf name _ ) = name == parserName
           byName (Time name _ ) = name == parserName

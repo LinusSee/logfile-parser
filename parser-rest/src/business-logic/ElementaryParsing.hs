@@ -12,7 +12,7 @@ import Data.List
 import Data.Time
 import CustomParsers
   ( ElementaryParser (..)
-  , ParsingResponse (..)
+  , ParsingResult (..)
   )
 
 
@@ -20,7 +20,7 @@ import CustomParsers
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyParser :: String -> ElementaryParser -> Either Parsec.ParseError ParsingResponse
+applyParser :: String -> ElementaryParser -> Either Parsec.ParseError ParsingResult
 applyParser target parser =
   case parser of
     OneOf _ xs ->
@@ -36,7 +36,7 @@ applyParser target parser =
       parse (applyCharacters chars) target
 
 
-chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResponse
+chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResult
 chooseParser parser =
   case parser of
     OneOf _ xs ->
@@ -55,42 +55,42 @@ chooseParser parser =
 
 
 
-applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResponse
+applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResult
 applyOneOf target = do
   result <- Parsec.choice (map Parsec.string target)
-  return $ OneOfResponse result
+  return $ OneOfResult result
 
 
-applyTime :: String -> Parsec.Parsec String () ParsingResponse
+applyTime :: String -> Parsec.Parsec String () ParsingResult
 applyTime format = do
   result <- timePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let time = parseTimeM False defaultTimeLocale "%H:%M" result :: Maybe TimeOfDay
   case time of
     Just parsedTime ->
-      return $ TimeResponse (show parsedTime)
+      return $ TimeResult (show parsedTime)
 
     Nothing ->
-      return $ TimeResponse (result ++ "-asString")
+      return $ TimeResult (result ++ "-asString")
 
 
-applyDate :: String -> Parsec.Parsec String () ParsingResponse
+applyDate :: String -> Parsec.Parsec String () ParsingResult
 applyDate format = do
   result <- datePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let day = parseTimeM False defaultTimeLocale "%Y%m%d" result :: Maybe Day
   case day of
     Just parsedDay ->
-      return $ DateResponse (show parsedDay)
+      return $ DateResult (show parsedDay)
 
     Nothing ->
-      return $ DateResponse (result ++ "-asString")
+      return $ DateResult (result ++ "-asString")
 
 
-applyCharacters :: String -> Parsec.Parsec String () ParsingResponse
+applyCharacters :: String -> Parsec.Parsec String () ParsingResult
 applyCharacters target = do
   result <- Parsec.string target
-  return $ CharactersResponse result
+  return $ CharactersResult result
 
 
 datePatternToParsers :: String -> Parsec.Parsec String () String
