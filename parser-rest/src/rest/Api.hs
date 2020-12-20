@@ -23,6 +23,7 @@ import Servant
 import CustomParsers
   ( ElementaryParser
   , LogfileParser
+  , CreateLogfileParserRequest
   , ParsingResult (ParsingError)
   , ParsingRequest
   , ParsingResponse (ParsingResponse)
@@ -44,7 +45,7 @@ type API =
             ( "logfile" :>
                 (
                      Get '[JSON] [String]
-                :<|> ReqBody '[JSON] LogfileParser :> Post '[JSON] NoContent
+                :<|> ReqBody '[JSON] CreateLogfileParserRequest :> Post '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
                 )
@@ -95,7 +96,7 @@ getLogfileParserNames = do
   return response
 
 
-saveLogfileParserHandler :: LogfileParser -> Handler NoContent
+saveLogfileParserHandler :: CreateLogfileParserRequest -> Handler NoContent
 saveLogfileParserHandler logfileParser = do
   _ <- liftIO $ Orchestration.createLogfileParser logfileParser
 

@@ -26,18 +26,18 @@ applyLogfileParser target (LogfileParser name parsers) =
   parse (applyListOfParsers parsers) target
 
 
-applyListOfParsers :: [ElementaryParser] -> Parsec.Parsec String () LogfileParsingResponse
+applyListOfParsers :: [(String, ElementaryParser)] -> Parsec.Parsec String () LogfileParsingResponse
 applyListOfParsers parsers = do
   result <- runThroughList parsers
   return $ LogfileParsingResponse result
 
 
-runThroughList :: [ ElementaryParser ] -> Parsec.Parsec String () [ParsingResponse]
+runThroughList :: [ (String, ElementaryParser) ] -> Parsec.Parsec String () [ParsingResponse]
 runThroughList [] = do
   return []
-runThroughList (x:xs) = do
-  result <- ElementaryParsing.chooseParser x
-  let namedResult = ParsingResponse (extractName x) result
+runThroughList ((resultName, parser):xs) = do
+  result <- ElementaryParsing.chooseParser parser
+  let namedResult = ParsingResponse resultName result
   next <- runThroughList xs
   return (namedResult : next)
 

@@ -17,6 +17,8 @@ import CustomParsers
   , LogfileParser (..)
   , LogfileParsingRequest (..)
   , LogfileParsingResponse (..)
+  , CreateLogfileParserRequest (..)
+  , NamedParser (..)
   )
 import qualified ElementaryParsing as ElementaryParsing
 import qualified ElementaryParserFileDb as ElemFileDb
@@ -34,8 +36,11 @@ existingLogfileParserNames = do
   where extractName ( LogfileParser name _ ) = name
 
 
-createLogfileParser :: LogfileParser -> IO ()
-createLogfileParser logfileParser = LogFileDb.save logfileParser
+createLogfileParser :: CreateLogfileParserRequest -> IO ()
+createLogfileParser (CreateLogfileParserRequest name parsers) = LogFileDb.save logfileParser
+  where logfileParser = LogfileParser name mappedParsers
+        mapParser ( NamedParser name parser ) = (name, parser)
+        mappedParsers = map mapParser parsers
 
 
 existingElementaryParsers :: IO [ElementaryParser]

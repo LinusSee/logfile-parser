@@ -9,6 +9,8 @@ module CustomParsers
 , ParsingResponse (..)
 , LogfileParsingRequest (..)
 , LogfileParsingResponse (..)
+, CreateLogfileParserRequest (..)
+, NamedParser (..)
 ) where
 
 import Data.Aeson
@@ -56,12 +58,28 @@ data ParsingResult =
 
 
 data LogfileParser =
-  LogfileParser String [ElementaryParser]
+  LogfileParser String [(String, ElementaryParser)]
   deriving (Show, Read)
 
 instance FromJSON LogfileParser where
   parseJSON (Object o) =
     LogfileParser <$> o .: "name" <*> o .: "parsers"
+
+
+data CreateLogfileParserRequest =
+  CreateLogfileParserRequest String [ NamedParser ]
+
+instance FromJSON CreateLogfileParserRequest where
+  parseJSON (Object o) =
+    CreateLogfileParserRequest <$> o .: "name" <*> o .: "parsers"
+
+
+data NamedParser = NamedParser String ElementaryParser
+
+instance FromJSON NamedParser where
+  parseJSON (Object o) =
+    NamedParser <$> o .: "name" <*> o .: "parser"
+
 
 data ParsingRequest =
     ParsingRequest String ElementaryParser
