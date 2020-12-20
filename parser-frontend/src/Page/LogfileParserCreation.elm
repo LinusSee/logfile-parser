@@ -19,10 +19,11 @@ type Model
 type alias CreateLogfileParserModel =
     { requestState : HttpRequestState
     , existingParsers : List DecEnc.ElementaryParser
-    , chosenParsers : List DecEnc.ElementaryParser
+    , chosenParsers : List ( String, DecEnc.ElementaryParser )
     , displayDropdown : Bool
     , parserName : String
     , selectedParser : String
+    , nameForSelectedParser : String
     , stringToParse : String
     , parsingResult : List String
     }
@@ -44,6 +45,7 @@ init session =
         , displayDropdown = True
         , parserName = ""
         , selectedParser = ""
+        , nameForSelectedParser = ""
         , stringToParse = ""
         , parsingResult = []
         }
@@ -62,6 +64,7 @@ type Msg
     = GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
     | ChangeParserName String
     | SelectParserToAdd String
+    | ChangeNameForSelectedParser String
     | AddSelectedParser
     | ApplyParser
     | ChangeParsingContent String
@@ -103,6 +106,7 @@ update msg (CreateLogfileParser session model) =
 
                                         Nothing ->
                                             ""
+                                , nameForSelectedParser = ""
                                 , stringToParse = ""
                                 , parsingResult = []
                                 }
@@ -129,6 +133,13 @@ update msg (CreateLogfileParser session model) =
             , Cmd.none
             )
 
+        ChangeNameForSelectedParser selectedName ->
+            ( CreateLogfileParser
+                session
+                { model | nameForSelectedParser = selectedName }
+            , Cmd.none
+            )
+
         AddSelectedParser ->
             let
                 maybeChosenParser =
@@ -136,9 +147,17 @@ update msg (CreateLogfileParser session model) =
             in
             case maybeChosenParser of
                 Just chosenParser ->
-                    ( CreateLogfileParser
-                        session
-                        { model | chosenParsers = chosenParser :: model.chosenParsers }
+                    ( CreateLogfileParser session
+                        { requestState = model.requestState
+                        , existingParsers = model.existingParsers
+                        , chosenParsers = ( model.nameForSelectedParser, chosenParser ) :: model.chosenParsers
+                        , displayDropdown = model.displayDropdown
+                        , parserName = model.parserName
+                        , selectedParser = model.selectedParser
+                        , nameForSelectedParser = ""
+                        , stringToParse = model.stringToParse
+                        , parsingResult = model.parsingResult
+                        }
                     , Cmd.none
                     )
 
@@ -215,7 +234,12 @@ view model =
                     [ h2 [ class "header2--centered" ] [ text "Combine parsers to create a logfile parser" ]
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
-                        , input [ id "parserNameInput", placeholder "Parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
+                        , input [ id "parserNameInput", placeholder "Selected parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
+                        ]
+                    , div [ class "input-group", class "input-group--centered-content" ]
+                        [ label [ for "selectedParserName" ] [ text "ColumnName" ]
+                        , input [ id "selectedParserName", placeholder "Name of the parsed value", value model.nameForSelectedParser, onInput ChangeNameForSelectedParser ]
+                            [ text model.nameForSelectedParser ]
                         ]
                     , viewParserSelection model.selectedParser model.existingParsers
                     , div [ class "button-group", class "button-group--centered-content" ]
@@ -236,20 +260,20 @@ viewParserSelection selection parsers =
         ]
 
 
-viewParser : DecEnc.ElementaryParser -> Html Msg
-viewParser parser =
+viewParser : ( String, DecEnc.ElementaryParser ) -> Html Msg
+viewParser ( name, parser ) =
     case parser of
         DecEnc.OneOf _ xs ->
-            li [] [ text ("[ " ++ String.join ", " xs ++ " ]") ]
+            li [] [ text (name ++ ": [ " ++ String.join ", " xs ++ " ]") ]
 
         DecEnc.Time _ pattern ->
-            li [] [ text pattern ]
+            li [] [ text (name ++ ": " ++ pattern) ]
 
         DecEnc.Date _ pattern ->
-            li [] [ text pattern ]
+            li [] [ text (name ++ ": " ++ pattern) ]
 
         DecEnc.Characters _ s ->
-            li [] [ text s ]
+            li [] [ text (name ++ ": " ++ s) ]
 
 
 viewParserApplication : CreateLogfileParserModel -> Html Msg
