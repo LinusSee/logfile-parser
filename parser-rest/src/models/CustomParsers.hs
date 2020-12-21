@@ -107,7 +107,7 @@ instance ToJSON ParsingResponse where
 
 
 data LogfileParsingRequest =
-  LogfileParsingRequest String LogfileParser
+  LogfileParsingRequest String CreateLogfileParserRequest
 
 instance FromJSON LogfileParsingRequest where
   parseJSON (Object o) =

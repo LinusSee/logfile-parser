@@ -1,7 +1,7 @@
 module Page.LogfileParserCreation exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, article, button, div, h2, input, label, li, option, select, text, textarea, ul)
+import Html exposing (Html, a, article, button, div, h2, input, label, li, option, p, select, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http

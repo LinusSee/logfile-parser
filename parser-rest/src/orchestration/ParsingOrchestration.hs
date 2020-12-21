@@ -87,7 +87,7 @@ applyElementaryParserByName parserName target = do
 
 
 applyLogfileParser :: LogfileParsingRequest -> LogfileParsingResponse
-applyLogfileParser ( LogfileParsingRequest target parser ) = do
+applyLogfileParser ( LogfileParsingRequest target (CreateLogfileParserRequest name parsers) ) = do
   case parsingResult of
     Left err ->
       LogfileParsingError (show err)
@@ -95,7 +95,10 @@ applyLogfileParser ( LogfileParsingRequest target parser ) = do
     Right result ->
       result
 
-  where parsingResult = LogfileParsing.applyLogfileParser target parser
+  where logfileParser = LogfileParser name mappedParsers
+        mapParser ( NamedParser name parser ) = (name, parser)
+        mappedParsers = map mapParser parsers
+        parsingResult = LogfileParsing.applyLogfileParser target logfileParser
 
 
 applyLogfileParserByName :: String -> String -> IO LogfileParsingResponse
