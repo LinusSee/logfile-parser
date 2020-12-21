@@ -1,7 +1,7 @@
 module Page.LogfileParserApplication exposing (..)
 
 import DecEnc
-import Html exposing (Html, a, article, button, div, h2, label, option, p, select, text, textarea)
+import Html exposing (Html, a, article, button, div, h2, label, option, p, select, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -181,5 +181,19 @@ viewParsingResult model =
             p [ class "text--centered" ] [ text "No result to display" ]
 
         _ ->
-            p [ class "text--centered" ] [ text (String.join ", " (List.map (\( name, val ) -> val) model.parsingResult)) ]
+            let
+                headers =
+                    List.map Tuple.first model.parsingResult
+
+                content =
+                    List.map Tuple.second model.parsingResult
+            in
+            table []
+                [ thead []
+                    [ tr [] (List.map (\header -> th [] [ text header ]) headers)
+                    ]
+                , tbody []
+                    [ tr [] (List.map (\fieldVal -> td [] [ text fieldVal ]) content)
+                    ]
+                ]
     ]

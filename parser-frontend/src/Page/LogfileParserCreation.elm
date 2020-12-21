@@ -288,12 +288,27 @@ viewParserApplication model =
             [ button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ]
             ]
         , div [ class "results" ]
-            [ if model.parsingResult == [] then
-                text ""
+            [ h2 [ class "header2--centered" ] [ text "Parsing result" ]
+            , case model.parsingResult of
+                [] ->
+                    p [ class "text--centered" ] [ text "No result to display" ]
 
-              else
-                text "Current result:"
-            , ul [] (List.map (\s -> li [] [ text s ]) (List.map (\( name, val ) -> val) model.parsingResult))
+                _ ->
+                    let
+                        headers =
+                            List.map Tuple.first model.parsingResult
+
+                        content =
+                            List.map Tuple.second model.parsingResult
+                    in
+                    table []
+                        [ thead []
+                            [ tr [] (List.map (\header -> th [] [ text header ]) headers)
+                            ]
+                        , tbody []
+                            [ tr [] (List.map (\fieldVal -> td [] [ text fieldVal ]) content)
+                            ]
+                        ]
             ]
         ]
 
