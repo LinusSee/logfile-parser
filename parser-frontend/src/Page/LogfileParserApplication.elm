@@ -22,7 +22,7 @@ type alias ApplyLogfileParserModel =
     , existingParsers : List String
     , chosenParser : String
     , stringToParse : String
-    , parsingResult : List String
+    , parsingResult : List ( String, String )
     }
 
 
@@ -58,7 +58,7 @@ type Msg
     | ChangeStringToParse String
     | ApplyParser
     | GotLogfileParserNames (Result Http.Error (List String))
-    | GotParsingResult (Result Http.Error (List String))
+    | GotParsingResult (Result Http.Error (List ( String, String )))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -148,7 +148,7 @@ view model =
                 ([ h2 [ class "header2--centered" ] [ text "Apply an existing parser to a logfile" ] ]
                     ++ [ viewLogfileParserDropdown model.chosenParser model.existingParsers ]
                     ++ viewParserApplication model.stringToParse
-                    ++ [ p [ class "text--centered" ] [ text ("ParsingResult: (" ++ String.join ", " model.parsingResult ++ ")") ] ]
+                    ++ viewParsingResult model
                 )
 
 
@@ -170,4 +170,16 @@ viewParserApplication stringToParse =
         ]
     , div [ class "button-group button-group--centered-content" ]
         [ button [ onClick ApplyParser, class "standard-button standard-button--long" ] [ text "Apply" ] ]
+    ]
+
+
+viewParsingResult : ApplyLogfileParserModel -> List (Html Msg)
+viewParsingResult model =
+    [ h2 [ class "header2--centered" ] [ text "Parsing result" ]
+    , case model.parsingResult of
+        [] ->
+            p [ class "text--centered" ] [ text "No result to display" ]
+
+        _ ->
+            p [ class "text--centered" ] [ text (String.join ", " (List.map (\( name, val ) -> val) model.parsingResult)) ]
     ]

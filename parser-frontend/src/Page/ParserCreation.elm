@@ -24,7 +24,7 @@ type alias CreateParserModel =
     , existingParsers : List DecEnc.ElementaryParser
     , parserToApply : String
     , stringToParse : String
-    , parsingResult : String
+    , parsingResult : ( String, String )
     , problems : List ValidationProblem
     }
 
@@ -56,7 +56,7 @@ init session =
             }
         , parserToApply = ""
         , stringToParse = ""
-        , parsingResult = ""
+        , parsingResult = ( "", "" )
         , existingParsers = []
         , problems = []
         }
@@ -80,7 +80,7 @@ type Msg
     | ChoseParserToApply String
     | ChangeParsingContent String
     | ApplyParser
-    | GotParserApplicationResult (Result Http.Error String)
+    | GotParserApplicationResult (Result Http.Error ( String, String ))
     | Reset
     | Submit DecEnc.ParserFormData
 
@@ -126,7 +126,7 @@ update msg (CreateParser session model) =
                                         Nothing ->
                                             ""
                                 , stringToParse = ""
-                                , parsingResult = ""
+                                , parsingResult = ( "", "" )
                                 , existingParsers = data
                                 , problems = []
                                 }
@@ -219,7 +219,7 @@ update msg (CreateParser session model) =
                     }
                 , parserToApply = model.parserToApply
                 , stringToParse = ""
-                , parsingResult = ""
+                , parsingResult = ( "", "" )
                 , existingParsers = model.existingParsers
                 , problems = []
                 }
@@ -321,7 +321,7 @@ view model =
                     -- , ul [] (List.map viewParser existingParsers)
                     ]
                 , viewParserApplication model.parserToApply existingParsers model.stringToParse
-                , p [ class "text--centered" ] [ text model.parsingResult ]
+                , p [ class "text--centered" ] [ text (Tuple.second model.parsingResult) ]
                 ]
 
 

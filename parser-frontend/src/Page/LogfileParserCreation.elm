@@ -25,7 +25,7 @@ type alias CreateLogfileParserModel =
     , selectedParser : String
     , nameForSelectedParser : String
     , stringToParse : String
-    , parsingResult : List String
+    , parsingResult : List ( String, String )
     }
 
 
@@ -69,7 +69,7 @@ type Msg
     | ApplyParser
     | ChangeParsingContent String
     | PostedLogfileParser (Result Http.Error ())
-    | GotParserApplicationResult (Result Http.Error (List String))
+    | GotParserApplicationResult (Result Http.Error (List ( String, String )))
     | Submit
 
 
@@ -293,7 +293,7 @@ viewParserApplication model =
 
               else
                 text "Current result:"
-            , ul [] (List.map (\s -> li [] [ text s ]) model.parsingResult)
+            , ul [] (List.map (\s -> li [] [ text s ]) (List.map (\( name, val ) -> val) model.parsingResult))
             ]
         ]
 

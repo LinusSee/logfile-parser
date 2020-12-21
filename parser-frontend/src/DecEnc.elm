@@ -245,12 +245,14 @@ dateParserDecoder =
     Decode.map2 Date (field "name" string) (field "pattern" string)
 
 
-parserApplicationDecoder : Decoder String
+parserApplicationDecoder : Decoder ( String, String )
 parserApplicationDecoder =
-    field "result" string
+    Decode.map2 Tuple.pair
+        (field "name" string)
+        (field "result" string)
 
 
-logfileParserApplicationDecoder : Decoder (List String)
+logfileParserApplicationDecoder : Decoder (List ( String, String ))
 logfileParserApplicationDecoder =
     field "result" (Decode.list parserApplicationDecoder)
 
