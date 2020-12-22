@@ -35,6 +35,18 @@ applyParser target parser =
     Characters _ chars ->
       parse (applyCharacters chars) target
 
+    MatchUntilIncluded _ chars ->
+      parse (applyMatchUntilIncluded chars) target
+
+    MatchUntilExcluded _ chars ->
+      parse (applyMatchUntilExcluded chars) target
+
+    MatchFor _ count ->
+      parse (applyMatchFor count) target
+
+    MatchUntilEnd _ ->
+      parse applyMatchUntilEnd target
+
 
 chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResult
 chooseParser parser =
@@ -50,6 +62,18 @@ chooseParser parser =
 
     Characters _ chars ->
       applyCharacters chars
+
+    MatchUntilIncluded _ chars ->
+      applyMatchUntilIncluded chars
+
+    MatchUntilExcluded _ chars ->
+      applyMatchUntilExcluded chars
+
+    MatchFor _ count ->
+      applyMatchFor count
+
+    MatchUntilEnd _ ->
+      applyMatchUntilEnd
 
 
 
@@ -91,6 +115,48 @@ applyCharacters :: String -> Parsec.Parsec String () ParsingResult
 applyCharacters target = do
   result <- Parsec.string target
   return $ CharactersResult result
+
+
+applyMatchUntilIncluded :: String -> Parsec.Parsec String () ParsingResult
+applyMatchUntilIncluded value = do
+  untilIncluded <- Parsec.manyTill Parsec.letter (Parsec.string value)
+  included <- Parsec.string value
+  let result = untilIncluded ++ included
+
+  return $ MatchUntilIncludedResult result
+
+
+applyMatchUntilExcluded :: String -> Parsec.Parsec String () ParsingResult
+applyMatchUntilExcluded value = do
+  result <- Parsec.manyTill Parsec.letter (Parsec.string value)
+
+  return $ MatchUntilExcludedResult result
+
+
+applyMatchFor :: Int -> Parsec.Parsec String () ParsingResult
+applyMatchFor count = do
+  result <- Parsec.count count Parsec.letter
+
+  return $ MatchForResult result
+
+
+applyMatchUntilEnd :: Parsec.Parsec String () ParsingResult
+applyMatchUntilEnd = do
+  result <- Parsec.manyTill Parsec.letter eolParser
+
+  return $ MatchUntilEndResult result
+
+
+newlineParser :: Parsec.Parsec String () ()
+newlineParser = do
+  Parsec.choice [Parsec.string "\n", Parsec.string "\r\n"]
+  return ()
+
+
+eolParser :: Parsec.Parsec String () ()
+eolParser = do
+  Parsec.choice [newlineParser, Parsec.eof]
+  return ()
 
 
 datePatternToParsers :: String -> Parsec.Parsec String () String

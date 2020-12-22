@@ -65,6 +65,10 @@ applyElementaryParser ( ParsingRequest target parser ) = do
           extractName (Time name _ ) = name
           extractName (Date name _ ) = name
           extractName (Characters name _ ) = name
+          extractName (MatchUntilIncluded name _ ) = name
+          extractName (MatchUntilExcluded name _ ) = name
+          extractName (MatchFor name _ ) = name
+          extractName (MatchUntilEnd name ) = name
 
 
 applyElementaryParserByName :: String -> String -> IO ParsingResponse
@@ -84,6 +88,10 @@ applyElementaryParserByName parserName target = do
           byName (Time name _ ) = name == parserName
           byName (Date name _ ) = name == parserName
           byName (Characters name _ ) = name == parserName
+          byName (MatchUntilIncluded name _ ) = name == parserName
+          byName (MatchUntilExcluded name _ ) = name == parserName
+          byName (MatchFor name _ ) = name == parserName
+          byName (MatchUntilEnd name ) = name == parserName
 
 
 applyLogfileParser :: LogfileParsingRequest -> LogfileParsingResponse
