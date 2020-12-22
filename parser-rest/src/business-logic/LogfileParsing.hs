@@ -22,14 +22,35 @@ parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
 applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResponse
-applyLogfileParser target (LogfileParser name parsers) =
-  parse (applyListOfParsers parsers) target
+applyLogfileParser target (LogfileParser _ parsers) =
+  parse (fileParser parsers) target
 
 
-applyListOfParsers :: [(String, ElementaryParser)] -> Parsec.Parsec String () LogfileParsingResponse
+fileParser :: [(String, ElementaryParser)] -> Parsec.Parsec String () LogfileParsingResponse
+fileParser parsers = do
+  result <- Parsec.manyTill (applyListOfParsers parsers) Parsec.eof
+
+  return $ LogfileParsingResponse result
+
+
+newlineParser :: Parsec.Parsec String () ()
+newlineParser = do
+  Parsec.choice [Parsec.string "\n", Parsec.string "\r\n"]
+  return ()
+
+
+eolParser :: Parsec.Parsec String () ()
+eolParser = do
+  Parsec.choice [newlineParser, Parsec.eof]
+  return ()
+
+
+applyListOfParsers :: [(String, ElementaryParser)] -> Parsec.Parsec String () [ParsingResponse]
 applyListOfParsers parsers = do
   result <- runThroughList parsers
-  return $ LogfileParsingResponse result
+  _ <- eolParser
+
+  return result
 
 
 runThroughList :: [ (String, ElementaryParser) ] -> Parsec.Parsec String () [ParsingResponse]

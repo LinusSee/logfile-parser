@@ -22,7 +22,7 @@ type alias ApplyLogfileParserModel =
     , existingParsers : List String
     , chosenParser : String
     , stringToParse : String
-    , parsingResult : List ( String, String )
+    , parsingResult : List (List ( String, String ))
     }
 
 
@@ -58,7 +58,7 @@ type Msg
     | ChangeStringToParse String
     | ApplyParser
     | GotLogfileParserNames (Result Http.Error (List String))
-    | GotParsingResult (Result Http.Error (List ( String, String )))
+    | GotParsingResult (Result Http.Error (List (List ( String, String ))))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -176,24 +176,23 @@ viewParserApplication stringToParse =
 viewParsingResult : ApplyLogfileParserModel -> List (Html Msg)
 viewParsingResult model =
     [ h2 [ class "header2--centered" ] [ text "Parsing result" ]
-    , case model.parsingResult of
-        [] ->
+    , case List.head model.parsingResult of
+        Nothing ->
             p [ class "text--centered" ] [ text "No result to display" ]
 
-        _ ->
+        Just firstElement ->
             let
                 headers =
-                    List.map Tuple.first model.parsingResult
+                    List.map Tuple.first firstElement
 
                 content =
-                    List.map Tuple.second model.parsingResult
+                    List.map (List.map Tuple.second) model.parsingResult
             in
             table []
                 [ thead []
                     [ tr [] (List.map (\header -> th [] [ text header ]) headers)
                     ]
                 , tbody []
-                    [ tr [] (List.map (\fieldVal -> td [] [ text fieldVal ]) content)
-                    ]
+                    (List.map (\row -> tr [] (List.map (\element -> td [] [ text element ]) row)) content)
                 ]
     ]

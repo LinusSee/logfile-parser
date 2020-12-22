@@ -252,9 +252,9 @@ parserApplicationDecoder =
         (field "result" string)
 
 
-logfileParserApplicationDecoder : Decoder (List ( String, String ))
+logfileParserApplicationDecoder : Decoder (List (List ( String, String )))
 logfileParserApplicationDecoder =
-    field "result" (Decode.list parserApplicationDecoder)
+    field "result" (Decode.list (Decode.list parserApplicationDecoder))
 
 
 logfileParserNames : Decoder (List String)

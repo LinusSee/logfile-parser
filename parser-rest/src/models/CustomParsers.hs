@@ -115,7 +115,7 @@ instance FromJSON LogfileParsingRequest where
 
 
 data LogfileParsingResponse =
-    LogfileParsingResponse [ParsingResponse]
+    LogfileParsingResponse [[ParsingResponse]]
   | LogfileParsingError String
 
 instance ToJSON LogfileParsingResponse where
