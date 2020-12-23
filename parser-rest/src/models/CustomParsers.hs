@@ -44,7 +44,7 @@ instance ToJSON ElementaryParser where
   toJSON (Characters n s)         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
   toJSON (MatchUntilIncluded n s) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
   toJSON (MatchUntilExcluded n s) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
-  toJSON (MatchFor n i)           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "value" .= i ]
+  toJSON (MatchFor n i)           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
   toJSON (MatchUntilEnd _)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
 
 instance FromJSON ElementaryParser where
@@ -56,7 +56,7 @@ instance FromJSON ElementaryParser where
                           String "characters" -> Characters <$> o .: "name" <*> o .: "value"
                           String "matchUntilIncluded" -> MatchUntilIncluded <$> o.: "name" <*> o .: "value"
                           String "matchUntilExcluded" -> MatchUntilExcluded <$> o.: "name" <*> o .: "value"
-                          String "matchFor" -> MatchFor <$> o.: "name" <*> o .: "value"
+                          String "matchFor" -> MatchFor <$> o.: "name" <*> o .: "count"
                           String "matchUntilEnd" -> MatchUntilEnd <$> pure "matchUntilEnd"
                           --_                   -> empty
 

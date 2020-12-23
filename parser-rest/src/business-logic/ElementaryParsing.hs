@@ -119,7 +119,7 @@ applyCharacters target = do
 
 applyMatchUntilIncluded :: String -> Parsec.Parsec String () ParsingResult
 applyMatchUntilIncluded value = do
-  untilIncluded <- Parsec.manyTill Parsec.letter (Parsec.string value)
+  untilIncluded <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead (Parsec.string value))
   included <- Parsec.string value
   let result = untilIncluded ++ included
 
@@ -128,21 +128,21 @@ applyMatchUntilIncluded value = do
 
 applyMatchUntilExcluded :: String -> Parsec.Parsec String () ParsingResult
 applyMatchUntilExcluded value = do
-  result <- Parsec.manyTill Parsec.letter (Parsec.string value)
+  result <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead (Parsec.string value))
 
   return $ MatchUntilExcludedResult result
 
 
 applyMatchFor :: Int -> Parsec.Parsec String () ParsingResult
 applyMatchFor count = do
-  result <- Parsec.count count Parsec.letter
+  result <- Parsec.count count Parsec.anyChar
 
   return $ MatchForResult result
 
 
 applyMatchUntilEnd :: Parsec.Parsec String () ParsingResult
 applyMatchUntilEnd = do
-  result <- Parsec.manyTill Parsec.letter eolParser
+  result <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead eolParser)
 
   return $ MatchUntilEndResult result
 

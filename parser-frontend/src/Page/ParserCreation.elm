@@ -123,6 +123,18 @@ update msg (CreateParser session model) =
                                         Just (DecEnc.Characters name _) ->
                                             name
 
+                                        Just (DecEnc.MatchUntilIncluded name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchUntilExcluded name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchFor name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchUntilEnd name) ->
+                                            name
+
                                         Nothing ->
                                             ""
                                 , stringToParse = ""
@@ -255,6 +267,18 @@ chooseParserByName targetName parsers =
 
                 DecEnc.Characters name _ ->
                     targetName == name
+
+                DecEnc.MatchUntilIncluded name _ ->
+                    targetName == name
+
+                DecEnc.MatchUntilExcluded name _ ->
+                    targetName == name
+
+                DecEnc.MatchFor name _ ->
+                    targetName == name
+
+                DecEnc.MatchUntilEnd name ->
+                    targetName == name
     in
     List.head (List.filter matchesName parsers)
 
@@ -291,6 +315,9 @@ view model =
                             , option [ value "date", selected (formData.patternType == "date") ] [ text "Date" ]
                             , option [ value "time", selected (formData.patternType == "time") ] [ text "Time" ]
                             , option [ value "characters", selected (formData.patternType == "characters") ] [ text "String" ]
+                            , option [ value "matchUntilIncluded", selected (formData.patternType == "matchUntilIncluded") ] [ text "Match Until Included" ]
+                            , option [ value "matchUntilExcluded", selected (formData.patternType == "matchUntilExcluded") ] [ text "Match Until Excluded" ]
+                            , option [ value "matchFor", selected (formData.patternType == "matchFor") ] [ text "Match For" ]
                             ]
                         ]
                     , div [ class "input-group", class "input-group--centered-content" ]
@@ -373,6 +400,18 @@ parserToOption selection parser =
         DecEnc.Characters name chars ->
             option [ value name, selected (selection == name) ] [ text name ]
 
+        DecEnc.MatchUntilIncluded name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchUntilExcluded name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchFor name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchUntilEnd name ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
 
 matchingPlaceholder : String -> String
 matchingPlaceholder selection =
@@ -435,6 +474,15 @@ matchingValidator patternType =
 
         "characters" ->
             ifBlank .matching (InvalidEntry Matching "Characters matching pattern musn't be empty.")
+
+        "matchUntilIncluded" ->
+            ifBlank .matching (InvalidEntry Matching "MatchUntilIncluded matching pattern musn't be empty.")
+
+        "matchUntilExcluded" ->
+            ifBlank .matching (InvalidEntry Matching "MatchUntilExcluded matching pattern musn't be empty.")
+
+        "matchFor" ->
+            ifBlank .matching (InvalidEntry Matching "MatchFor matching pattern musn't be empty.")
 
         _ ->
             Debug.todo "Should never happen"

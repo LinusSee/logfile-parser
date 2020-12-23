@@ -61,12 +61,3 @@ runThroughList ((resultName, parser):xs) = do
   let namedResult = ParsingResponse resultName result
   next <- runThroughList xs
   return (namedResult : next)
-
-  where extractName (OneOf name _ ) = name
-        extractName (Time name _ ) = name
-        extractName (Date name _ ) = name
-        extractName (Characters name _ ) = name
-        extractName (MatchUntilIncluded name _ ) = name
-        extractName (MatchUntilExcluded name _ ) = name
-        extractName (MatchFor name _ ) = name
-        extractName (MatchUntilEnd name ) = name

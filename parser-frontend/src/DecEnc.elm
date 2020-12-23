@@ -22,6 +22,10 @@ type ElementaryParser
     | Time String TimePattern
     | Date String DatePattern
     | Characters String String
+    | MatchUntilIncluded String String
+    | MatchUntilExcluded String String
+    | MatchFor String Int
+    | MatchUntilEnd String
 
 
 type alias ParserFormData =
@@ -70,32 +74,25 @@ parserEncoder : ParserFormData -> Encode.Value
 parserEncoder formData =
     case formData.patternType of
         "oneOf" ->
-            Encode.object
-                [ ( "type", Encode.string "oneOf" )
-                , ( "name", Encode.string formData.name )
-                , ( "values", Encode.list Encode.string (toMatchingList formData.matching) )
-                ]
+            oneOfEncoder formData.name (toMatchingList formData.matching)
 
         "time" ->
-            Encode.object
-                [ ( "type", Encode.string "time" )
-                , ( "name", Encode.string formData.name )
-                , ( "pattern", Encode.string formData.matching )
-                ]
+            timeEncoder formData.name formData.matching
 
         "date" ->
-            Encode.object
-                [ ( "type", Encode.string "date" )
-                , ( "name", Encode.string formData.name )
-                , ( "pattern", Encode.string formData.matching )
-                ]
+            dateEncoder formData.name formData.matching
 
         "characters" ->
-            Encode.object
-                [ ( "type", Encode.string "characters" )
-                , ( "name", Encode.string formData.name )
-                , ( "value", Encode.string formData.matching )
-                ]
+            charactersEncoder formData.name formData.matching
+
+        "matchUntilIncluded" ->
+            matchUntilIncludedEncoder formData.name formData.matching
+
+        "matchUntilExcluded" ->
+            matchUntilExcludedEncoder formData.name formData.matching
+
+        "matchFor" ->
+            matchForEncoder formData.name formData.matching
 
         -- TEMP: Need to find out how to solve this
         _ ->
@@ -128,6 +125,18 @@ elementaryParserEncoder parser =
 
         Characters name value ->
             charactersEncoder name value
+
+        MatchUntilIncluded name value ->
+            matchUntilIncludedEncoder name value
+
+        MatchUntilExcluded name value ->
+            matchUntilExcludedEncoder name value
+
+        MatchFor name number ->
+            matchForEncoder name number
+
+        MatchUntilEnd name ->
+            matchUntilEndEncoder name
 
 
 oneOfEncoder : String -> List String -> Encode.Value
@@ -162,6 +171,41 @@ charactersEncoder name value =
     Encode.object
         [ ( "type", Encode.string "characters" )
         , ( "value", Encode.string value )
+        , ( "name", Encode.string name )
+        ]
+
+
+matchUntilIncludedEncoder : String -> String -> Encode.Value
+matchUntilIncludedEncoder name value =
+    Encode.object
+        [ ( "type", Encode.string "matchUntilIncluded" )
+        , ( "value", Encode.string value )
+        , ( "name", Encode.string name )
+        ]
+
+
+matchUntilExcludedEncoder : String -> String -> Encode.Value
+matchUntilExcludedEncoder name value =
+    Encode.object
+        [ ( "type", Encode.string "matchUntilExcluded" )
+        , ( "value", Encode.string value )
+        , ( "name", Encode.string name )
+        ]
+
+
+matchForEncoder : String -> Int -> Encode.Value
+matchForEncoder name value =
+    Encode.object
+        [ ( "type", Encode.string "matchFor" )
+        , ( "count", Encode.int value )
+        , ( "name", Encode.string name )
+        ]
+
+
+matchUntilEndEncoder : String -> Encode.Value
+matchUntilEndEncoder name =
+    Encode.object
+        [ ( "type", Encode.string "matchUntilEnd" )
         , ( "name", Encode.string name )
         ]
 
@@ -216,13 +260,28 @@ parserDataDecoderHelp typeName =
         "characters" ->
             charactersParserDecoder
 
+        "matchUntilIncluded" ->
+            matchUntilIncludedParserDecoder
+
+        "matchUntilExcluded" ->
+            matchUntilExcludedParserDecoder
+
+        "matchFor" ->
+            matchForParserDecoder
+
+        "matchUntilEnd" ->
+            matchUntilEndParserDecoder
+
         _ ->
             Decode.fail <|
                 "Trying to decode parser but found incorrect type."
                     ++ "Type was "
                     ++ typeName
                     ++ "but expected one of "
-                    ++ "[ \"oneOf\", \"time\", \"date\", \"characters\" ]"
+                    ++ "[ "
+                    ++ "\"oneOf\", \"time\", \"date\", \"characters\""
+                    ++ ""
+                    ++ " ]"
 
 
 oneOfParserDecoder : Decoder ElementaryParser
@@ -235,14 +294,34 @@ timeParserDecoder =
     Decode.map2 Time (field "name" string) (field "pattern" string)
 
 
+dateParserDecoder : Decoder ElementaryParser
+dateParserDecoder =
+    Decode.map2 Date (field "name" string) (field "pattern" string)
+
+
 charactersParserDecoder : Decoder ElementaryParser
 charactersParserDecoder =
     Decode.map2 Characters (field "name" string) (field "value" string)
 
 
-dateParserDecoder : Decoder ElementaryParser
-dateParserDecoder =
-    Decode.map2 Date (field "name" string) (field "pattern" string)
+matchUntilIncludedParserDecoder : Decoder ElementaryParser
+matchUntilIncludedParserDecoder =
+    Decode.map2 MatchUntilIncluded (field "name" string) (field "value" string)
+
+
+matchUntilExcludedParserDecoder : Decoder ElementaryParser
+matchUntilExcludedParserDecoder =
+    Decode.map2 MatchUntilExcluded (field "name" string) (field "value" string)
+
+
+matchForParserDecoder : Decoder ElementaryParser
+matchForParserDecoder =
+    Decode.map2 MatchFor (field "name" string) (field "count" int)
+
+
+matchUntilEndParserDecoder : Decoder ElementaryParser
+matchUntilEndParserDecoder =
+    Decode.map MatchUntilEnd (field "name" string)
 
 
 parserApplicationDecoder : Decoder ( String, String )

@@ -104,6 +104,18 @@ update msg (CreateLogfileParser session model) =
                                         Just (DecEnc.Characters name _) ->
                                             name
 
+                                        Just (DecEnc.MatchUntilIncluded name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchUntilExcluded name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchFor name _) ->
+                                            name
+
+                                        Just (DecEnc.MatchUntilEnd name) ->
+                                            name
+
                                         Nothing ->
                                             ""
                                 , nameForSelectedParser = ""
@@ -211,6 +223,18 @@ chooseParserByName targetName parsers =
 
                 DecEnc.Characters name _ ->
                     targetName == name
+
+                DecEnc.MatchUntilIncluded name _ ->
+                    targetName == name
+
+                DecEnc.MatchUntilExcluded name _ ->
+                    targetName == name
+
+                DecEnc.MatchFor name _ ->
+                    targetName == name
+
+                DecEnc.MatchUntilEnd name ->
+                    targetName == name
     in
     List.head (List.filter matchesName parsers)
 
@@ -275,6 +299,18 @@ viewParser ( name, parser ) =
         DecEnc.Characters _ s ->
             li [] [ text (name ++ ": " ++ s) ]
 
+        DecEnc.MatchUntilIncluded _ s ->
+            li [] [ text (name ++ ": " ++ s) ]
+
+        DecEnc.MatchUntilExcluded _ s ->
+            li [] [ text (name ++ ": " ++ s) ]
+
+        DecEnc.MatchFor _ number ->
+            li [] [ text (name ++ ": " ++ String.fromInt number) ]
+
+        DecEnc.MatchUntilEnd _ ->
+            li [] [ text name ]
+
 
 viewParserApplication : CreateLogfileParserModel -> Html Msg
 viewParserApplication model =
@@ -315,16 +351,28 @@ viewParserApplication model =
 parserToOption : String -> DecEnc.ElementaryParser -> Html Msg
 parserToOption selection parser =
     case parser of
-        DecEnc.OneOf name elements ->
+        DecEnc.OneOf name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Time name pattern ->
+        DecEnc.Time name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Date name pattern ->
+        DecEnc.Date name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Characters name chars ->
+        DecEnc.Characters name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchUntilIncluded name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchUntilExcluded name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchFor name _ ->
+            option [ value name, selected (selection == name) ] [ text name ]
+
+        DecEnc.MatchUntilEnd name ->
             option [ value name, selected (selection == name) ] [ text name ]
 
 
