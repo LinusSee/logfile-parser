@@ -1,0 +1,353 @@
+swagger: "2.0"
+info:
+  description: "This is a logfile-parser creation server. It allows you to use existing parsers, tell them what values they should match (e.g. a date pattern) and then combine them so they are able to match a single line in a logfile. These parsers will then be executed until the entire logfile has been parsed."
+  version: "1.0.0"
+  title: "Logfile Parsing"
+host: "localhost:8080"
+basePath: "/api"
+tags:
+- name: "building-blocks"
+  description: "Everything need to create elementary parsers"
+  externalDocs:
+    description: "Find out more"
+    url: "https://github.com/LinusSee/logfile-parser"
+- name: "logfile"
+  description: "Combine elementary parsers into logfile parsers"
+  externalDocs:
+    description: "Find out more"
+    url: "https://github.com/LinusSee/logfile-parser"
+schemes:
+- "http"
+
+
+
+
+paths:
+  /parsers/building-blocks/complex:
+    get:
+      tags:
+      - "building-blocks"
+      summary: "Retrieve all existing elementary parsers"
+      description: ""
+      operationId: "getElementaryParsers"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "List of existing parsers"
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/ElementaryParser'
+              
+     
+              
+    post:
+      tags:
+      - "building-blocks"
+      summary: "Create a new elementary parser"
+      description: ""
+      operationId: "createElementaryParser"
+      consumes:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Elementary parser that will be created"
+        required: true
+        schema:
+          $ref: "#/definitions/ElementaryParser"
+      responses:
+        "204":
+          description: "Successful creation"
+        "400":
+          description: "Incorrect data format in body"
+        
+        
+        
+  /parsers/building-blocks/complex/apply/{parserName}:
+    get:
+      tags:
+      - "building-blocks"
+      summary: "Applies the parsers with the specified name"
+      description: "Applies an existing parser, specified by its name, to a target string"
+      operationId: "applyElementaryParserByName"
+      produces:
+      - "application/json"
+      parameters:
+      - name: parserName
+        description: "The name of the elementary parser to apply"
+        in: path
+        type: string
+        required: true
+      - name: "target"
+        in: "query"
+        description: "The target value that will be parsed"
+        required: true
+        type: "string"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+              $ref: "#/definitions/ElementaryParser"
+        
+        
+        
+  /parsers/building-blocks/complex/apply:
+    post:
+      tags:
+      - "building-blocks"
+      summary: "Send the parser to apply to a target string"
+      description: "Send a fully defined parser and the target string to parse. This does not require the parser to exist in the backend and will not create one. It is a stateless, idempotent operation."
+      operationId: "applyElementaryParser"
+      
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "Target string and the parser to apply it"
+        required: true
+        schema: 
+          $ref: "#/definitions/ElementaryParser"
+          
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ElementaryParser"
+        "400":
+          description: "Incorrect data format in body"
+      
+      
+      
+      
+  /parsers/logfile:
+    get:
+      tags:
+      - "logfile"
+      summary: "Get the names of all existing logfile parsers"
+      operationId: "getLogfileParserNames"
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ElementaryParser"
+            
+            
+    post:
+      tags:
+      - "logfile"
+      summary: "Creates a logfile parser"
+      operationId: "createLogfileParser"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Logfile parser that will be created"
+        required: true
+        schema:
+          $ref: "#/definitions/ElementaryParser"
+          
+      responses:
+        "204":
+          description: "Successful creation"
+        "400":
+          description: "Incorrect data format in body"
+  
+  
+  
+  /parsers/logfile/apply/{parserName}:
+    get:
+      tags:
+      - "logfile"
+      summary: "Deletes a pet"
+      description: ""
+      operationId: "applyLogfileParserByName"
+      produces:
+      - "application/xml"
+      - "application/json"
+      
+      parameters:
+      - name: "parserName"
+        in: "path"
+        description: "Name of the logfile parser to apply"
+        required: true
+        type: "string"
+      - name: "target"
+        in: "query"
+        description: "Target string that will be parsed"
+        required: true
+        type: "string"
+        
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ElementaryParser"
+          
+          
+          
+  /parsers/logfile/apply:
+    post:
+      tags:
+      - "logfile"
+      summary: "Send the logfile parser to apply to a target string"
+      description: "Send a fully defined logfile parser and the target string to parse. This does not require the parser to exist in the backend and will not create one. It is a stateless, idempotent operation."
+      operationId: "applyLogfileParser"
+      
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      
+      parameters:
+      - name: "body"
+        in: "body"
+        description: "Target string and the parser to apply it"
+        required: true
+        schema: 
+          $ref: "#/definitions/ElementaryParser"
+          
+      responses:
+        "200":
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/ElementaryParser"
+        "400":
+          description: "Incorrect data format in body"
+            
+            
+            
+            
+definitions:
+  Order:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      petId:
+        type: "integer"
+        format: "int64"
+      quantity:
+        type: "integer"
+        format: "int32"
+      shipDate:
+        type: "string"
+        format: "date-time"
+      status:
+        type: "string"
+        description: "Order Status"
+        enum:
+        - "placed"
+        - "approved"
+        - "delivered"
+      complete:
+        type: "boolean"
+        default: false
+    xml:
+      name: "Order"
+  Category:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+    xml:
+      name: "Category"
+  User:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      username:
+        type: "string"
+      firstName:
+        type: "string"
+      lastName:
+        type: "string"
+      email:
+        type: "string"
+      password:
+        type: "string"
+      phone:
+        type: "string"
+      userStatus:
+        type: "integer"
+        format: "int32"
+        description: "User Status"
+    xml:
+      name: "User"
+  Tag:
+    type: "object"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+    xml:
+      name: "Tag"
+  ElementaryParser:
+    type: "object"
+    required:
+    - "name"
+    - "photoUrls"
+    properties:
+      id:
+        type: "integer"
+        format: "int64"
+      category:
+        $ref: "#/definitions/Category"
+      name:
+        type: "string"
+        example: "doggie"
+      photoUrls:
+        type: "array"
+        xml:
+          name: "photoUrl"
+          wrapped: true
+        items:
+          type: "string"
+      tags:
+        type: "array"
+        xml:
+          name: "tag"
+          wrapped: true
+        items:
+          $ref: "#/definitions/Tag"
+      status:
+        type: "string"
+        description: "pet status in the store"
+        enum:
+        - "available"
+        - "pending"
+        - "sold"
+    xml:
+      name: "Pet"
+  ApiResponse:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      type:
+        type: "string"
+      message:
+        type: "string"
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
