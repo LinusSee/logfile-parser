@@ -30,13 +30,14 @@ import CustomParsers
   , LogfileParsingRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
+import qualified FileDbConfig as DbConfig
 import qualified ParsingOrchestration as Orchestration
 
 
-startApp :: IO ()
-startApp = do
+startApp :: DbConfig.FileDbConfig -> IO ()
+startApp dbConfig = do
   let port = 8080
-  run port $ app
+  run port $ app dbConfig
 
 type API =
   "api" :>
@@ -62,11 +63,11 @@ type API =
       )
 
 
-app :: Application
-app = logStdoutDev
+app :: DbConfig.FileDbConfig -> Application
+app dbConfig = logStdoutDev
     $ cors (const $ Just policy)
     $ provideOptions api
-    $ serve api server
+    $ serve api (server dbConfig)
   where
     policy = simpleCorsResourcePolicy
               { corsRequestHeaders = [ "content-type"]}
@@ -76,38 +77,38 @@ api :: Proxy API
 api = Proxy
 
 
-server :: Server API
-server =
-  (    getLogfileParserNames
-  :<|> saveLogfileParserHandler
-  :<|> applyLogfileParserByName
+server :: DbConfig.FileDbConfig -> Server API
+server dbConfig =
+  (    getLogfileParserNames dbConfig
+  :<|> saveLogfileParserHandler dbConfig
+  :<|> applyLogfileParserByName dbConfig
   :<|> logfileParserApplicationHandler
   )
-  :<|> readAllElementaryParsersHandler
-  :<|> saveParserHandler
-  :<|> applyParserByName
+  :<|> readAllElementaryParsersHandler dbConfig
+  :<|> saveParserHandler dbConfig
+  :<|> applyParserByName dbConfig
   :<|> parserApplicationHandler
 
 
-getLogfileParserNames :: Handler [String]
-getLogfileParserNames = do
-  response <- liftIO $ Orchestration.existingLogfileParserNames
+getLogfileParserNames ::  DbConfig.FileDbConfig -> Handler [String]
+getLogfileParserNames dbConfig = do
+  response <- liftIO $ Orchestration.existingLogfileParserNames dbConfig
 
   return response
 
 
-saveLogfileParserHandler :: CreateLogfileParserRequest -> Handler NoContent
-saveLogfileParserHandler logfileParser = do
-  _ <- liftIO $ Orchestration.createLogfileParser logfileParser
+saveLogfileParserHandler ::  DbConfig.FileDbConfig -> CreateLogfileParserRequest -> Handler NoContent
+saveLogfileParserHandler dbConfig logfileParser = do
+  _ <- liftIO $ Orchestration.createLogfileParser dbConfig logfileParser
 
   return NoContent
 
 
-applyLogfileParserByName :: String -> Maybe String -> Handler LogfileParsingResponse
-applyLogfileParserByName parserName maybeTarget =
+applyLogfileParserByName ::  DbConfig.FileDbConfig -> String -> Maybe String -> Handler LogfileParsingResponse
+applyLogfileParserByName dbConfig parserName maybeTarget =
   case maybeTarget of
     Just target -> do
-      response <- liftIO $ Orchestration.applyLogfileParserByName parserName target
+      response <- liftIO $ Orchestration.applyLogfileParserByName dbConfig parserName target
       return response
 
     Nothing ->
@@ -121,25 +122,25 @@ logfileParserApplicationHandler request = do
   return response
 
 
-readAllElementaryParsersHandler :: Handler [ElementaryParser]
-readAllElementaryParsersHandler = do
-  response <- liftIO $ Orchestration.existingElementaryParsers
+readAllElementaryParsersHandler ::  DbConfig.FileDbConfig -> Handler [ElementaryParser]
+readAllElementaryParsersHandler dbConfig = do
+  response <- liftIO $ Orchestration.existingElementaryParsers dbConfig
 
   return response
 
 
-saveParserHandler :: ElementaryParser -> Handler NoContent
-saveParserHandler parser = do
-  _ <- liftIO $ Orchestration.createElementaryParser parser
+saveParserHandler ::  DbConfig.FileDbConfig -> ElementaryParser -> Handler NoContent
+saveParserHandler dbConfig parser = do
+  _ <- liftIO $ Orchestration.createElementaryParser dbConfig parser
 
   return NoContent
 
 
-applyParserByName :: String -> Maybe String -> Handler ParsingResponse
-applyParserByName parserName maybeTarget =
+applyParserByName ::  DbConfig.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
+applyParserByName dbConfig parserName maybeTarget =
   case maybeTarget of
     Just target -> do
-      response <- liftIO $ Orchestration.applyElementaryParserByName parserName target
+      response <- liftIO $ Orchestration.applyElementaryParserByName dbConfig parserName target
       return response
 
     Nothing ->
