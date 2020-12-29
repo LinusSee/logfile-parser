@@ -8,7 +8,7 @@ import qualified FileDbConfig as DbConfig
 
 main :: IO ()
 main = do
-  configFile <- TIO.readFile "assets/project-environment.ini"
+  configFile <- TIO.readFile "assets/config/project-environment.ini"
 
   let maybeConfig = DbConfig.fileDbConfig configFile
     in case maybeConfig of
