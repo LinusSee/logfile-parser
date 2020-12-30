@@ -45,3 +45,43 @@ Example 2:
 </catalog>
 ```
 Both of those could be logged by a simple command, but one is single line and one is multiline. A logline parser should parse both of them in a single iteration. This means that every time the parser is finished we start again at a completely new message, logged by a different `log()` command.
+
+
+## How to build it
+### For development
+During development all you need to run the project is execute the `stack build` command and then the `stack exec parser-rest-exe` command.
+<br>
+This will host a server on port `8080`, which is configured in the `assets/project-environment.ini` file. For testing purposes feel free to use the [postman collection](./assets/postman).
+
+### For production
+During production I wanted to run the app behind a proxy server, following this [yesod tutorial](https://www.yesodweb.com/book/deploying-your-webapp), which works just as well for `haskell-servant`.
+<br>
+To achieve this with minimum effort, I added a config file for production (`assets/project-environtment.ini`) where the port is configured to be `4321`.
+<br>
+The nginx server will then listen to port `8080` and pass all calls on to our app listening on port `4321` using this config.
+```
+server {
+		listen			8080;
+		server_name localhost;
+		location / {
+			proxy_pass http://127.0.0.1:4321; # Reverse proxy for parser-rest
+		}
+	}
+```
+
+While this is all well and good, first we need to build our app and run it.
+For this I wrote a script `build_for_production.cmd`.
+<br>
+It starts with `stack clean` and `stack build` and then copies the resulting `.exe` as well as all necessary assets and config files into an archive called `parser-rest.zip`. During this process the project config `project-environment.prod.ini` is renamed to `project-environment.ini` so the correct config is provided to our production `.exe`.
+
+So our steps are:
+1. stack clean
+2. stack build
+3. copy all assets and configs
+4. rename project-environment.prod.ini to project-environment.ini
+5. zip it so the result is a standalone archive
+6. copy the archive wherever you want and run it
+
+If I understood the [yesod tutorial](https://www.yesodweb.com/book/deploying-your-webapp) correctly, all you have to do is run the exe. Since `servant`, like `yesod`, uses warp and warp is highly efficient, it is suitable for production.
+<br>
+Our proxy will then reroute the calls to our app. Of course just clicking on the exe is not a great way to run it in production, we would normally use some kind of server process, e.g. via `systemd/systemctl`.
