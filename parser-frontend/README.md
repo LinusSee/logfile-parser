@@ -17,17 +17,18 @@ into nginx's `html` folder and used the following config to run it.
 server {
     listen       80;
     server_name  localhost;
+    index index.html;
+    root html;
 
     location / {
-      root   html;
-      index  index.html index.htm;
+      try_files $uri $uri/ /index.html;
     }
 
     # redirect server error pages to the static page /50x.html
     #
     error_page   500 502 503 504  /50x.html;
     location = /50x.html {
-       root   html;
+      root   html;
     }
-  }
+}
 ```
