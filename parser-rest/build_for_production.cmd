@@ -31,6 +31,13 @@ xcopy /E /H /I /Y .\assets\file_db .\%exePath%\assets\file_db
 
 
 ::
+:: Switch config to production
+::
+rename .\%exePath%\assets\config\project-environment.ini project-environment.dev.ini
+rename .\%exePath%\assets\config\project-environment.prod.ini project-environment.ini
+
+
+::
 :: Zip assets and exe
 ::
 7z a .\%exePath%\parser-rest.zip .\%exePath%\assets .\%exePath%\parser-rest-exe .\%exePath%\parser-rest-exe.exe

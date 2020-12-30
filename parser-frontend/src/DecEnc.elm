@@ -92,7 +92,16 @@ parserEncoder formData =
             matchUntilExcludedEncoder formData.name formData.matching
 
         "matchFor" ->
-            matchForEncoder formData.name formData.matching
+            case String.toInt formData.matching of
+                Just number ->
+                    matchForEncoder formData.name number
+
+                Nothing ->
+                    Encode.object
+                        [ ( "type", Encode.string "invalidType" )
+                        , ( "name", Encode.string "invalidName" )
+                        , ( "value", Encode.string "invalidValue" )
+                        ]
 
         -- TEMP: Need to find out how to solve this
         _ ->

@@ -30,14 +30,14 @@ import CustomParsers
   , LogfileParsingRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
-import qualified FileDbConfig as DbConfig
+import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 
 
-startApp :: DbConfig.FileDbConfig -> IO ()
-startApp dbConfig = do
-  let port = 8080
-  run port $ app dbConfig
+startApp :: Configs.Config -> IO ()
+startApp (Configs.Config fileDbConfig apiConfig) = do
+  let port = Configs.port apiConfig
+  run port $ app fileDbConfig
 
 type API =
   "api" :>
@@ -63,7 +63,7 @@ type API =
       )
 
 
-app :: DbConfig.FileDbConfig -> Application
+app :: Configs.FileDbConfig -> Application
 app dbConfig = logStdoutDev
     $ cors (const $ Just policy)
     $ provideOptions api
@@ -77,7 +77,7 @@ api :: Proxy API
 api = Proxy
 
 
-server :: DbConfig.FileDbConfig -> Server API
+server :: Configs.FileDbConfig -> Server API
 server dbConfig =
   (    getLogfileParserNames dbConfig
   :<|> saveLogfileParserHandler dbConfig
@@ -90,21 +90,21 @@ server dbConfig =
   :<|> parserApplicationHandler
 
 
-getLogfileParserNames ::  DbConfig.FileDbConfig -> Handler [String]
+getLogfileParserNames ::  Configs.FileDbConfig -> Handler [String]
 getLogfileParserNames dbConfig = do
   response <- liftIO $ Orchestration.existingLogfileParserNames dbConfig
 
   return response
 
 
-saveLogfileParserHandler ::  DbConfig.FileDbConfig -> CreateLogfileParserRequest -> Handler NoContent
+saveLogfileParserHandler ::  Configs.FileDbConfig -> CreateLogfileParserRequest -> Handler NoContent
 saveLogfileParserHandler dbConfig logfileParser = do
   _ <- liftIO $ Orchestration.createLogfileParser dbConfig logfileParser
 
   return NoContent
 
 
-applyLogfileParserByName ::  DbConfig.FileDbConfig -> String -> Maybe String -> Handler LogfileParsingResponse
+applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler LogfileParsingResponse
 applyLogfileParserByName dbConfig parserName maybeTarget =
   case maybeTarget of
     Just target -> do
@@ -122,21 +122,21 @@ logfileParserApplicationHandler request = do
   return response
 
 
-readAllElementaryParsersHandler ::  DbConfig.FileDbConfig -> Handler [ElementaryParser]
+readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [ElementaryParser]
 readAllElementaryParsersHandler dbConfig = do
   response <- liftIO $ Orchestration.existingElementaryParsers dbConfig
 
   return response
 
 
-saveParserHandler ::  DbConfig.FileDbConfig -> ElementaryParser -> Handler NoContent
+saveParserHandler ::  Configs.FileDbConfig -> ElementaryParser -> Handler NoContent
 saveParserHandler dbConfig parser = do
   _ <- liftIO $ Orchestration.createElementaryParser dbConfig parser
 
   return NoContent
 
 
-applyParserByName ::  DbConfig.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
+applyParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
 applyParserByName dbConfig parserName maybeTarget =
   case maybeTarget of
     Just target -> do

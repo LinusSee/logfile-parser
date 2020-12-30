@@ -4,16 +4,16 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c1224b1b197e36981d23d252fa5a5b4d7a84b0b5310a6e3dace8828792b819bd
+-- hash: 13aa942156a8fc37b2de64b4e696315bb7f2e737cb6ed436087ad2c1a0c40cdb
 
 name:           parser-rest
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/parser-rest#readme>
-homepage:       https://github.com/githubuser/parser-rest#readme
-bug-reports:    https://github.com/githubuser/parser-rest/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2020 Author name here
+description:    Please see the README on GitHub at <https://github.com/LinusSee/logfile-parser/tree/master/parser-rest#readme>
+homepage:       https://github.com/LinusSee/logfile-parser/tree/master/parser-rest#readme
+bug-reports:    https://github.com/LinusSee/logfile-parser/tree/master/parser-rest/issues
+author:         Linus See
+maintainer:     https://github.com/LinusSee
+copyright:      2020 Linus See
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -22,7 +22,7 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/parser-rest
+  location: https://github.com/LinusSee/logfile-parser/tree/master/parser-rest
 
 library
   exposed-modules:
@@ -32,7 +32,7 @@ library
       LogfileParserFileDb
       CustomParsers
       ParsingOrchestration
-      FileDbConfig
+      Configs
       Api
   other-modules:
       Paths_parser_rest
