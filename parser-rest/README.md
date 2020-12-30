@@ -82,6 +82,6 @@ So our steps are:
 5. zip it so the result is a standalone archive
 6. copy the archive wherever you want and run it
 
-If I understood the [yesod tutorial](https://www.yesodweb.com/book/deploying-your-webapp) correctly, all you have to do is run the exe. Since `servant`, like `yesod`, uses warp and warp is highly efficient, it is suitable for production.
+If I understood the [yesod tutorial](https://www.yesodweb.com/book/deploying-your-webapp) correctly, all you have to do is run the exe. Since `servant`, like `yesod`, uses warp and warp is highly efficient, it is suitable for production (see this [github issue](https://github.com/haskell-servant/servant/issues/469) for more infos).
 <br>
 Our proxy will then reroute the calls to our app. Of course just clicking on the exe is not a great way to run it in production, we would normally use some kind of server process, e.g. via `systemd/systemctl`.

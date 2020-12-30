@@ -5,7 +5,7 @@
 ### For development
 To build the application run `elm make src/Main.elm --output app.js`.
 <br>
-To then run it open the `index.html` in your browser or serve it via some http server like the node module `http-server-spa`.
+To then run it open the `index.html` in your browser or serve it via some http server like the node module `http-server-spa` (`http-server-spa . index.html 80`).
 
 ### For production
 To build the application run `elm make src/Main.elm --optimize --output app.js`.

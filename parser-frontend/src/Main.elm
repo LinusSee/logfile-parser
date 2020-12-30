@@ -246,9 +246,9 @@ viewNavbar =
     nav [ class "navbar", class "navbar--desktop" ]
         (List.map (\( url, desc ) -> a [ href url, class "navbar__link" ] [ text desc ])
             [ ( "https://wikipedia.org", "Wikipedia" )
-            , ( "http://localhost:8081/", "Create Parser" )
-            , ( "http://localhost:8081/parse-logfile", "Create Logfile Parser" )
-            , ( "http://localhost:8081/apply-logfile", "Apply Parser" )
+            , ( "http://localhost:80/", "Create Parser" )
+            , ( "http://localhost:80/parse-logfile", "Create Logfile Parser" )
+            , ( "http://localhost:80/apply-logfile", "Apply Parser" )
             ]
         )
 
