@@ -1,4 +1,6 @@
 # Build/Generated files
 elm-stuff
 app.js
+app.min.js
+parser-frontend.zip
 
