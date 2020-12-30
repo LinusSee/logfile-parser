@@ -129,7 +129,7 @@ update msg (CreateLogfileParser session model) =
                             ( CreateLogfileParser session { model | existingParsers = data }, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateLogfileParser session { model | requestState = Failure }, Cmd.none )
+                    ( CreateLogfileParser session { model | requestState = Failure }, Cmd.none )
 
         ChangeParserName newName ->
             ( CreateLogfileParser
@@ -191,7 +191,7 @@ update msg (CreateLogfileParser session model) =
                     ( CreateLogfileParser session model, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateLogfileParser session { model | requestState = Failure }, Cmd.none )
+                    ( CreateLogfileParser session { model | requestState = Failure }, Cmd.none )
 
         GotParserApplicationResult response ->
             case response of
@@ -199,7 +199,7 @@ update msg (CreateLogfileParser session model) =
                     ( CreateLogfileParser session { model | parsingResult = data }, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateLogfileParser session model, Cmd.none )
+                    ( CreateLogfileParser session model, Cmd.none )
 
         Submit ->
             ( CreateLogfileParser session model

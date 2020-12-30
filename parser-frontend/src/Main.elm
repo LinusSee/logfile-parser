@@ -37,7 +37,7 @@ main =
 
 
 type Model
-    = NotFound Session
+    = RouteNotFound Session
     | ApplyLogfileParser LogfileParserApplication.Model
     | CreateParser ParserCreation.Model
     | CreateLogfileParser LogfileParserCreation.Model
@@ -45,7 +45,7 @@ type Model
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    changeRouteTo (Parser.parse routeParser url) (NotFound { key = key })
+    changeRouteTo (Parser.parse routeParser url) (RouteNotFound { key = key })
 
 
 
@@ -109,7 +109,7 @@ update msg model =
                     ( model, Nav.pushUrl session.key (Url.toString url) )
 
         ( ChangedUrl url, _ ) ->
-            Debug.log "Change route!" (changeRouteTo (Parser.parse routeParser url) model)
+            changeRouteTo (Parser.parse routeParser url) model
 
         -- Handle cases that should never happen
         ( GotApplyLogfileParserMsg _, _ ) ->
@@ -126,10 +126,6 @@ update msg model =
 
 
 
--- ( _, _ ) ->
---     -- Disregard invalid combinations
---     -- ( model, Cmd.none )
---     Debug.todo "Should never happen"
 -- ROUTING
 
 
@@ -151,15 +147,12 @@ routeParser =
 changeRouteTo : Maybe Route -> Model -> ( Model, Cmd Msg )
 changeRouteTo maybeRoute model =
     let
-        myDebug =
-            Debug.log (Debug.toString model) "Some return val"
-
         session =
             toSession model
     in
     case maybeRoute of
         Nothing ->
-            ( NotFound session, Cmd.none )
+            ( RouteNotFound session, Cmd.none )
 
         Just ApplyParserRoute ->
             case model of
@@ -201,7 +194,7 @@ changeRouteTo maybeRoute model =
 toSession : Model -> Session
 toSession model =
     case model of
-        NotFound session ->
+        RouteNotFound session ->
             session
 
         ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session _) ->
@@ -263,8 +256,10 @@ viewNavbar =
 viewCenter : Model -> { title : String, centerContent : Html Msg }
 viewCenter model =
     case model of
-        NotFound _ ->
-            Debug.todo "not found"
+        RouteNotFound _ ->
+            { title = "Size not found"
+            , centerContent = div [] [ text "No size could be found for the url you requested." ]
+            }
 
         ApplyLogfileParser (LogfileParserApplication.ApplyLogfileParser session applyModel) ->
             { title = "Apply logfile parser"

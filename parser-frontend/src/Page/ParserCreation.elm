@@ -41,6 +41,7 @@ type ValidationProblem
 
 type ValidatedField
     = Matching
+    | PatternType
     | Name
 
 
@@ -152,7 +153,7 @@ update msg (CreateParser session model) =
                             )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser session { model | requestState = Failure }, Cmd.none )
+                    ( CreateParser session { model | requestState = Failure }, Cmd.none )
 
         PostedParser result ->
             case result of
@@ -160,7 +161,7 @@ update msg (CreateParser session model) =
                     ( CreateParser session model, Cmd.none )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( CreateParser session { model | requestState = Failure }, Cmd.none )
+                    ( CreateParser session { model | requestState = Failure }, Cmd.none )
 
         ChangeForm field newContent ->
             case model.requestState of
@@ -485,7 +486,7 @@ matchingValidator patternType =
             ifBlank .matching (InvalidEntry Matching "MatchFor matching pattern musn't be empty.")
 
         _ ->
-            Debug.todo "Should never happen"
+            ifTrue (\model -> True) (InvalidEntry PatternType "This pattern type does not exist.")
 
 
 isInvalidList : ValidatedModel -> Bool

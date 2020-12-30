@@ -110,7 +110,7 @@ update msg (ApplyLogfileParser session model) =
                     )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( ApplyLogfileParser session model, Cmd.none )
+                    ( ApplyLogfileParser session model, Cmd.none )
 
         GotParsingResult response ->
             case response of
@@ -127,7 +127,7 @@ update msg (ApplyLogfileParser session model) =
                     )
 
                 Err error ->
-                    Debug.log (Debug.toString error) ( ApplyLogfileParser session model, Cmd.none )
+                    ( ApplyLogfileParser session model, Cmd.none )
 
 
 
