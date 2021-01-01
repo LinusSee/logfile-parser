@@ -5,6 +5,7 @@ import Html exposing (Html, a, article, button, div, h2, input, label, li, optio
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Models.Shared.ElementaryParser as ElementaryParser
 import Session exposing (Session)
 import Url.Builder as UrlBuilder
 import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
@@ -21,7 +22,7 @@ type Model
 type alias CreateParserModel =
     { requestState : HttpRequestState
     , createForm : DecEnc.ParserFormData
-    , existingParsers : List DecEnc.ElementaryParser
+    , existingParsers : List ElementaryParser.ElementaryParser
     , parserToApply : String
     , stringToParse : String
     , parsingResult : ( String, String )
@@ -75,7 +76,7 @@ init session =
 
 
 type Msg
-    = GotElementaryParsers (Result Http.Error (List DecEnc.ElementaryParser))
+    = GotElementaryParsers (Result Http.Error (List ElementaryParser.ElementaryParser))
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | ChoseParserToApply String
@@ -112,28 +113,28 @@ update msg (CreateParser session model) =
                                     }
                                 , parserToApply =
                                     case List.head data of
-                                        Just (DecEnc.OneOf name _) ->
+                                        Just (ElementaryParser.OneOf name _) ->
                                             name
 
-                                        Just (DecEnc.Time name _) ->
+                                        Just (ElementaryParser.Time name _) ->
                                             name
 
-                                        Just (DecEnc.Date name _) ->
+                                        Just (ElementaryParser.Date name _) ->
                                             name
 
-                                        Just (DecEnc.Characters name _) ->
+                                        Just (ElementaryParser.Characters name _) ->
                                             name
 
-                                        Just (DecEnc.MatchUntilIncluded name _) ->
+                                        Just (ElementaryParser.MatchUntilIncluded name _) ->
                                             name
 
-                                        Just (DecEnc.MatchUntilExcluded name _) ->
+                                        Just (ElementaryParser.MatchUntilExcluded name _) ->
                                             name
 
-                                        Just (DecEnc.MatchFor name _) ->
+                                        Just (ElementaryParser.MatchFor name _) ->
                                             name
 
-                                        Just (DecEnc.MatchUntilEnd name) ->
+                                        Just (ElementaryParser.MatchUntilEnd name) ->
                                             name
 
                                         Nothing ->
@@ -252,33 +253,33 @@ update msg (CreateParser session model) =
                     )
 
 
-chooseParserByName : String -> List DecEnc.ElementaryParser -> Maybe DecEnc.ElementaryParser
+chooseParserByName : String -> List ElementaryParser.ElementaryParser -> Maybe ElementaryParser.ElementaryParser
 chooseParserByName targetName parsers =
     let
         matchesName parser =
             case parser of
-                DecEnc.OneOf name _ ->
+                ElementaryParser.OneOf name _ ->
                     targetName == name
 
-                DecEnc.Time name _ ->
+                ElementaryParser.Time name _ ->
                     targetName == name
 
-                DecEnc.Date name _ ->
+                ElementaryParser.Date name _ ->
                     targetName == name
 
-                DecEnc.Characters name _ ->
+                ElementaryParser.Characters name _ ->
                     targetName == name
 
-                DecEnc.MatchUntilIncluded name _ ->
+                ElementaryParser.MatchUntilIncluded name _ ->
                     targetName == name
 
-                DecEnc.MatchUntilExcluded name _ ->
+                ElementaryParser.MatchUntilExcluded name _ ->
                     targetName == name
 
-                DecEnc.MatchFor name _ ->
+                ElementaryParser.MatchFor name _ ->
                     targetName == name
 
-                DecEnc.MatchUntilEnd name ->
+                ElementaryParser.MatchUntilEnd name ->
                     targetName == name
     in
     List.head (List.filter matchesName parsers)
@@ -369,7 +370,7 @@ viewProblems problems =
                 )
 
 
-viewParserApplication : String -> List DecEnc.ElementaryParser -> String -> Html Msg
+viewParserApplication : String -> List ElementaryParser.ElementaryParser -> String -> Html Msg
 viewParserApplication selection parsers stringToParse =
     article [ class "article" ]
         [ h2 [ class "header2--centered" ] [ text "Test existing parsers" ]
@@ -386,31 +387,31 @@ viewParserApplication selection parsers stringToParse =
         ]
 
 
-parserToOption : String -> DecEnc.ElementaryParser -> Html Msg
+parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
 parserToOption selection parser =
     case parser of
-        DecEnc.OneOf name elements ->
+        ElementaryParser.OneOf name elements ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Time name pattern ->
+        ElementaryParser.Time name pattern ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Date name pattern ->
+        ElementaryParser.Date name pattern ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.Characters name chars ->
+        ElementaryParser.Characters name chars ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.MatchUntilIncluded name _ ->
+        ElementaryParser.MatchUntilIncluded name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.MatchUntilExcluded name _ ->
+        ElementaryParser.MatchUntilExcluded name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.MatchFor name _ ->
+        ElementaryParser.MatchFor name _ ->
             option [ value name, selected (selection == name) ] [ text name ]
 
-        DecEnc.MatchUntilEnd name ->
+        ElementaryParser.MatchUntilEnd name ->
             option [ value name, selected (selection == name) ] [ text name ]
 
 
