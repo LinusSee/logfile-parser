@@ -1,8 +1,10 @@
 module Models.Shared.LogfileParser exposing
     ( LogfileParser
     , logfileParserEncoder
+    , logfileParserNamesDecoder
     )
 
+import Json.Decode as Decode exposing (Decoder, field, string)
 import Json.Encode as Encode
 import Models.Shared.ElementaryParser as ElementaryParser
 
@@ -39,3 +41,8 @@ namedParserEncoder ( name, parser ) =
 
 
 -- DECODING
+
+
+logfileParserNamesDecoder : Decoder (List String)
+logfileParserNamesDecoder =
+    Decode.list string

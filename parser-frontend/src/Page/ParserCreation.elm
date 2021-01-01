@@ -1,11 +1,12 @@
 module Page.ParserCreation exposing (..)
 
-import DecEnc
 import Html exposing (Html, a, article, button, div, h2, input, label, li, option, p, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Models.Shared.ElementaryParser as ElementaryParser
+import Models.Shared.ParserApplication as ParserApplication
+import Models.Specific.ParserCreation as PageModels
 import Session exposing (Session)
 import Url.Builder as UrlBuilder
 import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
@@ -21,7 +22,7 @@ type Model
 
 type alias CreateParserModel =
     { requestState : HttpRequestState
-    , createForm : DecEnc.ParserFormData
+    , createForm : PageModels.ParserFormData
     , existingParsers : List ElementaryParser.ElementaryParser
     , parserToApply : String
     , stringToParse : String
@@ -65,7 +66,7 @@ init session =
     , Cmd.batch
         [ Http.get
             { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-            , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
+            , expect = Http.expectJson GotElementaryParsers ElementaryParser.parsersDataDecoder
             }
         ]
     )
@@ -84,7 +85,7 @@ type Msg
     | ApplyParser
     | GotParserApplicationResult (Result Http.Error ( String, String ))
     | Reset
-    | Submit DecEnc.ParserFormData
+    | Submit PageModels.ParserFormData
 
 
 type FormChanged
@@ -439,7 +440,7 @@ type alias ValidatedModel =
     { matching : String, name : String }
 
 
-validateForm : DecEnc.ParserFormData -> Result (List ValidationProblem) (Validate.Valid ValidatedModel)
+validateForm : PageModels.ParserFormData -> Result (List ValidationProblem) (Validate.Valid ValidatedModel)
 validateForm formData =
     validate (modelValidator formData.patternType) { matching = formData.matching, name = formData.name }
 
@@ -537,11 +538,11 @@ isValidTime model =
 -- HTTP
 
 
-postParser : DecEnc.ParserFormData -> Cmd Msg
+postParser : PageModels.ParserFormData -> Cmd Msg
 postParser formData =
     Http.post
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-        , body = Http.jsonBody (DecEnc.parserEncoder formData)
+        , body = Http.jsonBody (PageModels.parserEncoder formData)
         , expect = Http.expectWhatever PostedParser
         }
 
@@ -554,5 +555,5 @@ getApplyParser model =
                 "http://localhost:8080/api/parsers/building-blocks/complex/apply"
                 [ model.parserToApply ]
                 [ UrlBuilder.string "target" model.stringToParse ]
-        , expect = Http.expectJson GotParserApplicationResult DecEnc.parserApplicationDecoder
+        , expect = Http.expectJson GotParserApplicationResult ParserApplication.parserApplicationDecoder
         }

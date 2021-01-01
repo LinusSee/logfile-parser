@@ -1,10 +1,11 @@
 module Page.LogfileParserApplication exposing (..)
 
-import DecEnc
 import Html exposing (Html, a, article, button, div, h2, label, option, p, select, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Models.Shared.LogfileParser as LogfileParser
+import Models.Shared.ParserApplication as ParserApplication
 import Session exposing (Session)
 import Url.Builder as UrlBuilder
 
@@ -43,7 +44,7 @@ init session =
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/logfile"
-        , expect = Http.expectJson GotLogfileParserNames DecEnc.logfileParserNames
+        , expect = Http.expectJson GotLogfileParserNames LogfileParser.logfileParserNamesDecoder
         }
     )
 
@@ -85,7 +86,7 @@ update msg (ApplyLogfileParser session model) =
                         "http://localhost:8080/api/parsers/logfile/apply"
                         [ model.chosenParser ]
                         [ UrlBuilder.string "target" model.stringToParse ]
-                , expect = Http.expectJson GotParsingResult DecEnc.logfileParserApplicationDecoder
+                , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
                 }
             )
 

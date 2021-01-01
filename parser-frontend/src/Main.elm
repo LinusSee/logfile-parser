@@ -2,7 +2,6 @@ module Main exposing (..)
 
 import Browser
 import Browser.Navigation as Nav
-import DecEnc
 import Html exposing (Html, a, button, div, h2, input, label, li, nav, option, select, text, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)

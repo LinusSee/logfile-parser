@@ -9,6 +9,7 @@ module Models.Shared.ElementaryParser exposing
     , matchUntilIncludedEncoder
     , oneOfEncoder
     , parserDataDecoder
+    , parsersDataDecoder
     , timeEncoder
     )
 
@@ -144,6 +145,11 @@ matchUntilEndEncoder name =
 
 
 -- DECODING
+
+
+parsersDataDecoder : Decoder (List ElementaryParser)
+parsersDataDecoder =
+    Decode.list parserDataDecoder
 
 
 parserDataDecoder : Decoder ElementaryParser

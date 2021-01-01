@@ -1,12 +1,12 @@
 module Page.LogfileParserCreation exposing (..)
 
-import DecEnc
 import Html exposing (Html, a, article, button, div, h2, input, label, li, option, p, select, table, tbody, td, text, textarea, th, thead, tr, ul)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Models.Shared.ElementaryParser as ElementaryParser
 import Models.Shared.LogfileParser as LogfileParser
+import Models.Shared.ParserApplication as ParserApplication
 import Session exposing (Session)
 
 
@@ -53,7 +53,7 @@ init session =
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-        , expect = Http.expectJson GotElementaryParsers DecEnc.parsersDataDecoder
+        , expect = Http.expectJson GotElementaryParsers ElementaryParser.parsersDataDecoder
         }
     )
 
@@ -399,6 +399,6 @@ postApplyParser target parser =
     in
     Http.post
         { url = "http://localhost:8080/api/parsers/logfile/apply"
-        , body = Http.jsonBody (DecEnc.logfileParserApplicationEncoder data)
-        , expect = Http.expectJson GotParserApplicationResult DecEnc.logfileParserApplicationDecoder
+        , body = Http.jsonBody (ParserApplication.logfileParserApplicationEncoder data)
+        , expect = Http.expectJson GotParserApplicationResult ParserApplication.logfileParserApplicationDecoder
         }
