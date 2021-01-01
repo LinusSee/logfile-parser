@@ -4,6 +4,7 @@ import Http
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
 import Models.Shared.ElementaryParser as ElementaryParser
+import Models.Shared.LogfileParser as LogfileParser
 
 
 
@@ -23,15 +24,9 @@ type alias ParserApplicationData =
     }
 
 
-type alias LogfileParser =
-    { name : String
-    , parsers : List ( String, ElementaryParser.ElementaryParser )
-    }
-
-
 type alias LogfileParserApplicationData =
     { target : String
-    , parser : LogfileParser
+    , parser : LogfileParser.LogfileParser
     }
 
 
@@ -107,12 +102,8 @@ parserApplicationEncoder data =
         ]
 
 
-logfileParserEncoder : LogfileParser -> Encode.Value
-logfileParserEncoder parser =
-    Encode.object
-        [ ( "name", Encode.string parser.name )
-        , ( "parsers", Encode.list namedParserEncoder parser.parsers )
-        ]
+
+--TODO: Still needed?
 
 
 namedParserEncoder : ( String, ElementaryParser.ElementaryParser ) -> Encode.Value
@@ -127,7 +118,7 @@ logfileParserApplicationEncoder : LogfileParserApplicationData -> Encode.Value
 logfileParserApplicationEncoder data =
     Encode.object
         [ ( "target", Encode.string data.target )
-        , ( "parser", logfileParserEncoder data.parser )
+        , ( "parser", LogfileParser.logfileParserEncoder data.parser )
         ]
 
 

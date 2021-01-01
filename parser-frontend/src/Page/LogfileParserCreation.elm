@@ -6,6 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Models.Shared.ElementaryParser as ElementaryParser
+import Models.Shared.LogfileParser as LogfileParser
 import Session exposing (Session)
 
 
@@ -381,16 +382,16 @@ parserToOption selection parser =
 -- HTTP
 
 
-postParser : DecEnc.LogfileParser -> Cmd Msg
+postParser : LogfileParser.LogfileParser -> Cmd Msg
 postParser parser =
     Http.post
         { url = "http://localhost:8080/api/parsers/logfile"
-        , body = Http.jsonBody (DecEnc.logfileParserEncoder parser)
+        , body = Http.jsonBody (LogfileParser.logfileParserEncoder parser)
         , expect = Http.expectWhatever PostedLogfileParser
         }
 
 
-postApplyParser : String -> DecEnc.LogfileParser -> Cmd Msg
+postApplyParser : String -> LogfileParser.LogfileParser -> Cmd Msg
 postApplyParser target parser =
     let
         data =

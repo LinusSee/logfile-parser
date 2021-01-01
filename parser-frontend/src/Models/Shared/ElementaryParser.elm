@@ -1,4 +1,16 @@
-module Models.Shared.ElementaryParser exposing (..)
+module Models.Shared.ElementaryParser exposing
+    ( ElementaryParser(..)
+    , charactersEncoder
+    , dateEncoder
+    , elementaryParserEncoder
+    , matchForEncoder
+    , matchUntilEndEncoder
+    , matchUntilExcludedEncoder
+    , matchUntilIncludedEncoder
+    , oneOfEncoder
+    , parserDataDecoder
+    , timeEncoder
+    )
 
 import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
 import Json.Encode as Encode
