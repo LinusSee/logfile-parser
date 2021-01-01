@@ -7,7 +7,9 @@ import Http
 import Models.Shared.ElementaryParser as ElementaryParser
 import Models.Shared.LogfileParser as LogfileParser
 import Models.Shared.ParserApplication as ParserApplication
+import Models.Specific.LogfileParserCreation as PageModels
 import Session exposing (Session)
+import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
 
 
 
@@ -28,6 +30,7 @@ type alias CreateLogfileParserModel =
     , nameForSelectedParser : String
     , stringToParse : String
     , parsingResult : List (List ( String, String ))
+    , problems : List ValidationProblem
     }
 
 
@@ -35,6 +38,16 @@ type HttpRequestState
     = Failure
     | Loading
     | Success
+
+
+type ValidationProblem
+    = InvalidEntry ValidatedField String
+
+
+type ValidatedField
+    = ColumnName
+    | SelectedParserName
+    | LogfileParserName
 
 
 init : Session -> ( Model, Cmd Msg )
@@ -50,6 +63,7 @@ init session =
         , nameForSelectedParser = ""
         , stringToParse = ""
         , parsingResult = []
+        , problems = []
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/building-blocks/complex"
@@ -67,7 +81,7 @@ type Msg
     | ChangeParserName String
     | SelectParserToAdd String
     | ChangeNameForSelectedParser String
-    | AddSelectedParser
+    | AddSelectedParser PageModels.AddElementaryParserData
     | ApplyParser
     | ChangeParsingContent String
     | PostedLogfileParser (Result Http.Error ())
@@ -123,6 +137,7 @@ update msg (CreateLogfileParser session model) =
                                 , nameForSelectedParser = ""
                                 , stringToParse = ""
                                 , parsingResult = []
+                                , problems = []
                                 }
                             , Cmd.none
                             )
@@ -154,29 +169,39 @@ update msg (CreateLogfileParser session model) =
             , Cmd.none
             )
 
-        AddSelectedParser ->
-            let
-                maybeChosenParser =
-                    chooseParserByName model.selectedParser model.existingParsers
-            in
-            case maybeChosenParser of
-                Just chosenParser ->
-                    ( CreateLogfileParser session
-                        { requestState = model.requestState
-                        , existingParsers = model.existingParsers
-                        , chosenParsers = ( model.nameForSelectedParser, chosenParser ) :: model.chosenParsers
-                        , displayDropdown = model.displayDropdown
-                        , parserName = model.parserName
-                        , selectedParser = model.selectedParser
-                        , nameForSelectedParser = ""
-                        , stringToParse = model.stringToParse
-                        , parsingResult = model.parsingResult
-                        }
-                    , Cmd.none
-                    )
+        AddSelectedParser data ->
+            case validateAddParserData model.existingParsers data of
+                Ok validatedData ->
+                    let
+                        validated =
+                            Validate.fromValid validatedData
 
-                Nothing ->
-                    ( CreateLogfileParser session model, Cmd.none )
+                        maybeChosenParser =
+                            chooseParserByName validated.parserName model.existingParsers
+                    in
+                    case maybeChosenParser of
+                        Just chosenParser ->
+                            ( CreateLogfileParser session
+                                { requestState = model.requestState
+                                , existingParsers = model.existingParsers
+                                , chosenParsers = ( validated.columnName, chosenParser ) :: model.chosenParsers
+                                , displayDropdown = model.displayDropdown
+                                , parserName = model.parserName
+                                , selectedParser = model.selectedParser
+                                , nameForSelectedParser = ""
+                                , stringToParse = model.stringToParse
+                                , parsingResult = model.parsingResult
+                                , problems = model.problems
+                                }
+                            , Cmd.none
+                            )
+
+                        Nothing ->
+                            -- Should not be possible due to validation
+                            ( CreateLogfileParser session model, Cmd.none )
+
+                Err problems ->
+                    ( CreateLogfileParser session { model | problems = problems }, Cmd.none )
 
         ChangeParsingContent newValue ->
             ( CreateLogfileParser session { model | stringToParse = newValue }, Cmd.none )
@@ -258,6 +283,7 @@ view model =
             div []
                 [ div [ class "article" ]
                     [ h2 [ class "header2--centered" ] [ text "Combine parsers to create a logfile parser" ]
+                    , viewProblems model.problems
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
                         , input [ id "parserNameInput", placeholder "Selected parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
@@ -267,7 +293,7 @@ view model =
                         , input [ id "selectedParserName", placeholder "Name of the parsed value", value model.nameForSelectedParser, onInput ChangeNameForSelectedParser ]
                             [ text model.nameForSelectedParser ]
                         ]
-                    , viewParserSelection model.selectedParser model.existingParsers
+                    , viewParserSelection model
                     , div [ class "button-group", class "button-group--centered-content" ]
                         [ button [ onClick Submit, class "standard-button" ] [ text "Submit" ]
                         ]
@@ -277,12 +303,37 @@ view model =
                 ]
 
 
-viewParserSelection : String -> List ElementaryParser.ElementaryParser -> Html Msg
-viewParserSelection selection parsers =
+viewProblems : List ValidationProblem -> Html Msg
+viewProblems problems =
+    case problems of
+        [] ->
+            ul [] []
+
+        _ ->
+            ul [ class "problem-list" ]
+                (List.map
+                    (\(InvalidEntry _ problem) ->
+                        li [ class "problem-list__element" ] [ text problem ]
+                    )
+                    problems
+                )
+
+
+viewParserSelection : CreateLogfileParserModel -> Html Msg
+viewParserSelection model =
     div [ class "input-group", class "input-group--centered-content" ]
         [ label [] [ text "Parser" ]
-        , select [ value selection, onInput SelectParserToAdd ] (List.map (parserToOption selection) parsers)
-        , button [ onClick AddSelectedParser, class "standard-button" ] [ text "Apply" ]
+        , select [ value model.selectedParser, onInput SelectParserToAdd ] (List.map (parserToOption model.selectedParser) model.existingParsers)
+        , button
+            [ onClick
+                (AddSelectedParser
+                    { columnName = model.nameForSelectedParser
+                    , parserName = model.selectedParser
+                    }
+                )
+            , class "standard-button"
+            ]
+            [ text "Apply" ]
         ]
 
 
@@ -376,6 +427,33 @@ parserToOption selection parser =
 
         ElementaryParser.MatchUntilEnd name ->
             option [ value name, selected (selection == name) ] [ text name ]
+
+
+
+-- FORM
+
+
+validateAddParserData : List ElementaryParser.ElementaryParser -> PageModels.AddElementaryParserData -> Result (List ValidationProblem) (Validate.Valid PageModels.AddElementaryParserData)
+validateAddParserData existingParsers data =
+    validate (addElementaryParserValidator existingParsers) data
+
+
+addElementaryParserValidator : List ElementaryParser.ElementaryParser -> Validator ValidationProblem PageModels.AddElementaryParserData
+addElementaryParserValidator existingParsers =
+    let
+        selectedParserExists =
+            \model -> chooseParserByName (.parserName model) existingParsers /= Nothing
+    in
+    Validate.all
+        [ ifBlank .columnName
+            (InvalidEntry ColumnName "The column name for the parsing result musn't be empty.")
+        , Validate.firstError
+            [ ifBlank .parserName
+                (InvalidEntry SelectedParserName "Please select an elementary parser.")
+            , ifFalse selectedParserExists
+                (InvalidEntry SelectedParserName "Please select a valid parser.")
+            ]
+        ]
 
 
 
