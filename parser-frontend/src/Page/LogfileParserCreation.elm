@@ -7,9 +7,8 @@ import Http
 import Models.Shared.ElementaryParser as ElementaryParser
 import Models.Shared.LogfileParser as LogfileParser
 import Models.Shared.ParserApplication as ParserApplication
-import Models.Specific.LogfileParserCreation as PageModels
 import Session exposing (Session)
-import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, validate)
+import Validate exposing (Validator, fromErrors, ifBlank, ifEmptyList, ifFalse, ifTrue, validate)
 
 
 
@@ -48,6 +47,13 @@ type ValidatedField
     = ColumnName
     | SelectedParserName
     | LogfileParserName
+    | ChosenParsers
+
+
+type alias AddElementaryParserData =
+    { columnName : String
+    , parserName : String
+    }
 
 
 init : Session -> ( Model, Cmd Msg )
@@ -81,12 +87,12 @@ type Msg
     | ChangeParserName String
     | SelectParserToAdd String
     | ChangeNameForSelectedParser String
-    | AddSelectedParser PageModels.AddElementaryParserData
-    | ApplyParser
+    | AddSelectedParser AddElementaryParserData
+    | ApplyParser String LogfileParser.LogfileParser
     | ChangeParsingContent String
     | PostedLogfileParser (Result Http.Error ())
     | GotParserApplicationResult (Result Http.Error (List (List ( String, String ))))
-    | Submit
+    | Submit LogfileParser.LogfileParser
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -191,7 +197,7 @@ update msg (CreateLogfileParser session model) =
                                 , nameForSelectedParser = ""
                                 , stringToParse = model.stringToParse
                                 , parsingResult = model.parsingResult
-                                , problems = model.problems
+                                , problems = []
                                 }
                             , Cmd.none
                             )
@@ -206,11 +212,15 @@ update msg (CreateLogfileParser session model) =
         ChangeParsingContent newValue ->
             ( CreateLogfileParser session { model | stringToParse = newValue }, Cmd.none )
 
-        ApplyParser ->
-            ( CreateLogfileParser session model
-            , postApplyParser model.stringToParse
-                { name = model.parserName, parsers = model.chosenParsers }
-            )
+        ApplyParser target logfileParser ->
+            case validateLogfileParser logfileParser of
+                Ok validParser ->
+                    ( CreateLogfileParser session { model | problems = [] }
+                    , postApplyParser target validParser
+                    )
+
+                Err problems ->
+                    ( CreateLogfileParser session { model | problems = problems }, Cmd.none )
 
         PostedLogfileParser response ->
             case response of
@@ -228,10 +238,15 @@ update msg (CreateLogfileParser session model) =
                 Err error ->
                     ( CreateLogfileParser session model, Cmd.none )
 
-        Submit ->
-            ( CreateLogfileParser session model
-            , postParser { name = model.parserName, parsers = model.chosenParsers }
-            )
+        Submit logfileParser ->
+            case validateLogfileParser logfileParser of
+                Ok validParser ->
+                    ( CreateLogfileParser session { model | problems = [] }
+                    , postParser validParser
+                    )
+
+                Err problems ->
+                    ( CreateLogfileParser session { model | problems = problems }, Cmd.none )
 
 
 chooseParserByName : String -> List ElementaryParser.ElementaryParser -> Maybe ElementaryParser.ElementaryParser
@@ -295,7 +310,16 @@ view model =
                         ]
                     , viewParserSelection model
                     , div [ class "button-group", class "button-group--centered-content" ]
-                        [ button [ onClick Submit, class "standard-button" ] [ text "Submit" ]
+                        [ button
+                            [ onClick
+                                (Submit
+                                    { name = model.parserName
+                                    , parsers = model.chosenParsers
+                                    }
+                                )
+                            , class "standard-button"
+                            ]
+                            [ text "Submit" ]
                         ]
                     , ul [ class "parser-list" ] (List.map viewParser model.chosenParsers)
                     ]
@@ -374,7 +398,16 @@ viewParserApplication model =
             , textarea [ placeholder "String to parse", value model.stringToParse, onInput ChangeParsingContent ] []
             ]
         , div [ class "button-group", class "button-group--centered-content" ]
-            [ button [ onClick ApplyParser, class "standard-button", class "standard-button--long" ] [ text "Apply" ]
+            [ button
+                [ onClick
+                    (ApplyParser
+                        model.stringToParse
+                        { name = model.parserName, parsers = model.chosenParsers }
+                    )
+                , class "standard-button"
+                , class "standard-button--long"
+                ]
+                [ text "Apply" ]
             ]
         , div [ class "results" ]
             [ h2 [ class "header2--centered" ] [ text "Parsing result" ]
@@ -433,12 +466,17 @@ parserToOption selection parser =
 -- FORM
 
 
-validateAddParserData : List ElementaryParser.ElementaryParser -> PageModels.AddElementaryParserData -> Result (List ValidationProblem) (Validate.Valid PageModels.AddElementaryParserData)
+validateAddParserData : List ElementaryParser.ElementaryParser -> AddElementaryParserData -> Result (List ValidationProblem) (Validate.Valid AddElementaryParserData)
 validateAddParserData existingParsers data =
     validate (addElementaryParserValidator existingParsers) data
 
 
-addElementaryParserValidator : List ElementaryParser.ElementaryParser -> Validator ValidationProblem PageModels.AddElementaryParserData
+validateLogfileParser : LogfileParser.LogfileParser -> Result (List ValidationProblem) (Validate.Valid LogfileParser.LogfileParser)
+validateLogfileParser logfileParser =
+    validate logfileParserValidator logfileParser
+
+
+addElementaryParserValidator : List ElementaryParser.ElementaryParser -> Validator ValidationProblem AddElementaryParserData
 addElementaryParserValidator existingParsers =
     let
         selectedParserExists =
@@ -456,12 +494,26 @@ addElementaryParserValidator existingParsers =
         ]
 
 
+logfileParserValidator : Validator ValidationProblem LogfileParser.LogfileParser
+logfileParserValidator =
+    Validate.firstError
+        [ ifBlank .name
+            (InvalidEntry LogfileParserName "Please enter a name for the logfile parser.")
+        , ifEmptyList .parsers
+            (InvalidEntry ChosenParsers "Please add at least one elementary parser to the logfile parser.")
+        ]
+
+
 
 -- HTTP
 
 
-postParser : LogfileParser.LogfileParser -> Cmd Msg
-postParser parser =
+postParser : Validate.Valid LogfileParser.LogfileParser -> Cmd Msg
+postParser validParser =
+    let
+        parser =
+            Validate.fromValid validParser
+    in
     Http.post
         { url = "http://localhost:8080/api/parsers/logfile"
         , body = Http.jsonBody (LogfileParser.logfileParserEncoder parser)
@@ -469,9 +521,12 @@ postParser parser =
         }
 
 
-postApplyParser : String -> LogfileParser.LogfileParser -> Cmd Msg
-postApplyParser target parser =
+postApplyParser : String -> Validate.Valid LogfileParser.LogfileParser -> Cmd Msg
+postApplyParser target validParser =
     let
+        parser =
+            Validate.fromValid validParser
+
         data =
             { target = target, parser = parser }
     in
