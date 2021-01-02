@@ -46,7 +46,7 @@ type API =
             ( "logfile" :>
                 (
                      Get '[JSON] [String]
-                :<|> ReqBody '[JSON] CreateLogfileParserRequest :> Post '[JSON] NoContent
+                :<|> ReqBody '[JSON] CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
                 )
@@ -54,7 +54,7 @@ type API =
             :<|>
             ( "building-blocks" :> "complex" :>
                 (    Get '[JSON] [ElementaryParser]
-                :<|> ReqBody '[JSON] ElementaryParser :> Post '[JSON] NoContent
+                :<|> ReqBody '[JSON] ElementaryParser :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] ParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
                 )
