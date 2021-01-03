@@ -17,10 +17,14 @@ instance ToJSON ValidationError where
       FieldValidation fieldName ->
         object [ "field" .= fieldName, "reason" .= reason ]
 
+      QueryParamValidation paramName ->
+        object [ "queryParam" .= paramName, "reason" .= reason ]
+
       ExistsValidation target ->
         object [ "target" .= target, "reason" .= reason ]
 
 
 data ValidationType =
     FieldValidation String
+  | QueryParamValidation String
   | ExistsValidation String

@@ -1,8 +1,9 @@
 module Validation
 ( Valid
 , fromValid
-, validateElementaryParser
 , validateTarget
+, validateElementaryParser
+, validateElementaryParserExists
 , appendError
 ) where
 
@@ -34,7 +35,7 @@ validateTarget target =
     False ->
       Left $ ValidationError
           (FieldValidation "target")
-          "The target string to parse should not be empty."
+          "The target string to parse must not be empty."
 
   where targetIsValid = not $ null target
 

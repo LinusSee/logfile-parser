@@ -1,14 +1,40 @@
 module ValidationOrchestration
 ( validateParsingRequest
-
+, validateParsingUrlRequest
 ) where
 
 import Data.Either (isRight)
 
 import qualified Validation as Validation
-import ValidationModels (ValidationError)
+import ValidationModels (ValidationError (..), ValidationType (..))
 import HttpErrors (Problem (..))
 import CustomParsers
+
+
+
+validateParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
+validateParsingUrlRequest parserName maybeTarget =
+  case maybeTarget of
+    Just target ->
+      case isValidRequest of
+        True ->
+          Right (parserName, target)
+
+        False ->
+          Left $ errorsToValidationProblem $
+              ( Validation.appendError validatedTarget
+              . Validation.appendError validatedParserName
+              ) []
+
+      where validatedTarget = Validation.validateTarget target
+            validatedParserName = Validation.validateElementaryParserExists parserName
+
+            isValidRequest = isRight validatedTarget && isRight validatedParserName
+
+    Nothing ->
+      Left $ errorsToValidationProblem
+          [ValidationError (QueryParamValidation "target") "Target value must be present."]
+
 
 
 validateParsingRequest :: ParsingRequest -> Either Problem ParsingRequest
@@ -26,6 +52,7 @@ validateParsingRequest request@(ParsingRequest target parser) =
         validatedParser = Validation.validateElementaryParser parser
 
         isValidRequest = isRight validatedTarget && isRight validatedParser
+
 
 -- validateCreateLogfileParserRequest :: CreateLogfileParserRequest -> Either [ValidationError] (Validation.Valid LogfileParser)
 -- validateCreateLogfileParserRequest (CreateLogfileParserRequest target parsers) =

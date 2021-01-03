@@ -142,13 +142,19 @@ saveParserHandler dbConfig parser = do
 
 applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
 applyParserByNameHandler dbConfig parserName maybeTarget =
-  case maybeTarget of
-    Just target -> do
-      response <- liftIO $ Orchestration.applyElementaryParserByName dbConfig parserName target
+  case validatedParams of
+    Right (validParserName, validTarget) -> do
+      response <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
+
       return response
 
-    Nothing ->
-      return $ ParsingResponse "dummyError" (ParsingError "Missing query parameter 'target'")
+    Left problem ->
+      throwError $ err400
+        { errBody = encode problem
+        , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+        }
+
+  where validatedParams = ValidationOrchestration.validateParsingUrlRequest parserName maybeTarget
 
 
 
