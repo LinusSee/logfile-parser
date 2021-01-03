@@ -11,7 +11,7 @@ module Api
     ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Aeson
+import Data.Aeson as Aeson
 import Data.Aeson.TH
 import Network.Wai
 import Network.Wai.Handler.Warp
@@ -19,6 +19,8 @@ import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
+import Data.ByteString.Char8 (pack)
+import Data.CaseInsensitive (mk)
 
 import CustomParsers
   ( ElementaryParser
@@ -32,6 +34,7 @@ import CustomParsers
   )
 import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
+import qualified ValidationOrchestration as ValidationOrchestration
 
 
 startApp :: Configs.Config -> IO ()
@@ -86,8 +89,8 @@ server dbConfig =
   )
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
-  :<|> applyParserByName dbConfig
-  :<|> parserApplicationHandler
+  :<|> applyParserByNameHandler dbConfig
+  :<|> applyParserHandler
 
 
 getLogfileParserNames ::  Configs.FileDbConfig -> Handler [String]
@@ -112,7 +115,8 @@ applyLogfileParserByName dbConfig parserName maybeTarget =
       return response
 
     Nothing ->
-      return $ LogfileParsingError "Missing query parameter 'target'"
+      -- return $ LogfileParsingError "Missing query parameter 'target'"
+      throwError $ err404 { errBody = "Opps, that went wrong"}
 
 
 logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
@@ -136,8 +140,8 @@ saveParserHandler dbConfig parser = do
   return NoContent
 
 
-applyParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
-applyParserByName dbConfig parserName maybeTarget =
+applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
+applyParserByNameHandler dbConfig parserName maybeTarget =
   case maybeTarget of
     Just target -> do
       response <- liftIO $ Orchestration.applyElementaryParserByName dbConfig parserName target
@@ -148,8 +152,18 @@ applyParserByName dbConfig parserName maybeTarget =
 
 
 
-parserApplicationHandler :: ParsingRequest -> Handler ParsingResponse
-parserApplicationHandler request = do
-  let response = Orchestration.applyElementaryParser request
+applyParserHandler :: ParsingRequest -> Handler ParsingResponse
+applyParserHandler request =
+  case validatedRequest of
+    Right validRequest -> do
+      let response = Orchestration.applyElementaryParser request
 
-  return response
+      return response
+
+    Left problem ->
+      throwError $ err400
+        { errBody = encode problem
+        , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+        }
+
+  where validatedRequest = ValidationOrchestration.validateParsingRequest request

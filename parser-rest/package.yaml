@@ -21,6 +21,8 @@ description:         Please see the README on GitHub at <https://github.com/Linu
 dependencies:
 - base >= 4.7 && < 5
 - aeson
+- bytestring
+- case-insensitive
 - config-ini
 - servant-server
 - servant-options
