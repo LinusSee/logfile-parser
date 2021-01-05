@@ -10,6 +10,7 @@ module Validation
 ) where
 
 import Data.Either (isRight)
+import qualified Data.Char as Char
 
 import ValidationModels
   ( ValidationError (..)
@@ -194,9 +195,16 @@ validateDatePattern pattern =
       Left $ ValidationError
         (FieldValidation "pattern")
         ( "A time parser must match the following format: Three blocks of 'YYYY', 'MM', and 'DD'"
-        ++ " separated by a single char. The order of the blocks does not matter.")
+        ++ " separated by a single char. The order of the blocks does not matter (e.g. MM-YYYY.DD).")
 
-  where patternIsValid = not $ null pattern -- TODO: Check for actual pattern
+  where patternIsValid =     ("YYYY" `elem` comb1 && "MM" `elem` comb1 && "DD" `elem` comb1)
+                          || ("YYYY" `elem` comb2 && "MM" `elem` comb2 && "DD" `elem` comb2)
+                          || ("YYYY" `elem` comb3 && "MM" `elem` comb3 && "DD" `elem` comb3)
+                          && length pattern == 10
+        patternUpper = map Char.toUpper pattern
+        comb1 = [take 4 patternUpper] ++ [take 2 (drop 5 patternUpper)] ++ [drop 8 patternUpper]
+        comb2 = [take 2 patternUpper] ++ [take 4 (drop 3 patternUpper)] ++ [drop 8 patternUpper]
+        comb3 = [take 2 patternUpper] ++ [take 2 (drop 3 patternUpper)] ++ [drop 6 patternUpper]
 
 
 validateCharactersValue :: String -> Either ValidationError (Valid String)
