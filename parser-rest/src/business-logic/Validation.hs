@@ -180,9 +180,11 @@ validateTimePattern pattern =
       Left $ ValidationError
         (FieldValidation "pattern")
         ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
-        ++ " separated by a single char. The order of the blocks does not matter.")
+        ++ " separated by a single char. The order of the blocks does not matter (e.g. HH-MM).")
 
-  where patternIsValid = not $ null pattern -- TODO: Check for actual pattern
+  where patternIsValid = "HH" `elem` comb && "MM" `elem` comb && length pattern == 5      
+        patternUpper = map Char.toUpper pattern
+        comb = [take 2 patternUpper] ++ [drop 3 patternUpper]
 
 
 validateDatePattern :: String -> Either ValidationError (Valid String)
