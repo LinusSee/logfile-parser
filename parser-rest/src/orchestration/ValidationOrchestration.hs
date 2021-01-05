@@ -12,6 +12,20 @@ import CustomParsers
 
 
 
+
+validateElementaryParserToCreate :: ElementaryParser -> Either Problem ElementaryParser
+validateElementaryParserToCreate parser =
+  case isValidParser of
+    True ->
+      Right parser
+
+    False ->
+      Left $ errorsToValidationProblem $ Validation.appendError validatedParser []
+
+  where validatedParser = Validation.validateElementaryParser parser
+        isValidParser = isRight validatedParser
+
+
 validateParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
 validateParsingUrlRequest parserName maybeTarget =
   case maybeTarget of
