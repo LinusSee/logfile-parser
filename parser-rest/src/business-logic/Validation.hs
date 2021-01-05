@@ -9,7 +9,7 @@ module Validation
 , appendError
 ) where
 
-import Data.Either (isRight)
+import Data.Either (fromRight, fromLeft, isRight, isLeft)
 import qualified Data.Char as Char
 
 import ValidationModels
@@ -142,16 +142,52 @@ validateParsersList parsers =
       Right $ Valid parsers
 
     False ->
-      Left $ ValidationError
-          (FieldValidation "parsers")
-          "A logfile parsers must contain at least one elementary parser."
-  -- TODO: Validate the parsers themselves, not only the names
-  where parsersIsValid = not $ null parsers
+      case emptyParserList of
+        True ->
+          Left $
+            ValidationError
+                (FieldValidation "parsers")
+                "A logfile parsers must contain at least one elementary parser."
+
+        False ->
+          Left $
+            ValidationError
+                (FieldValidation "parsers")
+                "All parsers in the list must be valid."
+
+  where parsersIsValid = not emptyParserList && not (True `elem` (map isLeft validatedParsers))
+        emptyParserList = null parsers
+        validatedParsers = map validateNamedParser parsers
+
+
+validateNamedParser :: (String, ElementaryParser) -> Either [ValidationError] (Valid (String, ElementaryParser))
+validateNamedParser (name, parser) =
+  case isValid of
+    True ->
+      Right $ Valid (name, parser)
+
+    False ->
+      Left $ appendError validatedName (fromLeft [] validatedParser)
+
+  where validatedName = validateParserName name
+        validatedParser = validateElementaryParser parser
+        isValid = isRight validatedName && isRight validatedParser
+
 
 
 appendError :: Either ValidationError (Valid a) -> [ValidationError] -> [ValidationError]
 appendError (Left err) errs = err : errs
 appendError (Right _) errs = errs
+
+
+extractErrors :: [Either ValidationError (Valid a)] -> [ValidationError]
+extractErrors [] = []
+extractErrors (x:xs) =
+    case x of
+      Right _ ->
+        extractErrors xs
+      Left err ->
+        err : extractErrors xs
 
 
 
