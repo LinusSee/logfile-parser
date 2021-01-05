@@ -3,13 +3,74 @@ module ValidationOrchestration
 , validateParsingUrlRequest
 ) where
 
-import Data.Either (isRight)
+import Data.Either (isRight, fromLeft)
 
 import qualified Validation as Validation
 import ValidationModels (ValidationError (..), ValidationType (..))
 import HttpErrors (Problem (..))
 import CustomParsers
 
+
+
+
+validateCreateLogfileParserRequest :: CreateLogfileParserRequest -> Either Problem CreateLogfileParserRequest
+validateCreateLogfileParserRequest request@(CreateLogfileParserRequest name parsers) =
+    case isValidRequest of
+      True ->
+        Right request
+
+      False ->
+        Left $ errorsToValidationProblem (fromLeft [] validatedParser)
+
+    where validatedParser = Validation.validateLogfileParser logfileParser
+          isValidRequest = isRight validatedParser
+
+          logfileParser = LogfileParser name mappedParsers
+          mapParser ( NamedParser name parser ) = (name, parser)
+          mappedParsers = map mapParser parsers
+
+
+validateLogfileParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
+validateLogfileParsingUrlRequest parserName maybeTarget =
+    case maybeTarget of
+      Just target ->
+        case isValidRequest of
+          True ->
+            Right (parserName, target)
+
+          False ->
+            Left $ errorsToValidationProblem $
+                ( Validation.appendError validatedName
+                . Validation.appendError validatedTarget
+                ) []
+
+        where validatedName = Validation.validateLogfileParserExists parserName
+              validatedTarget = Validation.validateTarget target
+              isValidRequest = isRight validatedName && isRight validatedTarget
+
+      Nothing ->
+        Left $ errorsToValidationProblem
+            [ValidationError (QueryParamValidation "target") "Target value must be present."]
+
+
+validateLogfileParsingRequest :: LogfileParsingRequest -> Either Problem LogfileParsingRequest
+validateLogfileParsingRequest request@(LogfileParsingRequest target (CreateLogfileParserRequest name parsers)) =
+  case isValidRequest of
+    True ->
+      Right request
+
+    False ->
+      Left $ errorsToValidationProblem $
+          ( Validation.appendError validatedTarget
+          ) (fromLeft [] validatedParser)
+
+  where validatedTarget = Validation.validateTarget target
+        validatedParser = Validation.validateLogfileParser logfileParser
+        isValidRequest = isRight validatedTarget && isRight validatedParser
+
+        logfileParser = LogfileParser name mappedParsers
+        mapParser ( NamedParser name parser ) = (name, parser)
+        mappedParsers = map mapParser parsers
 
 
 
@@ -67,21 +128,6 @@ validateParsingRequest request@(ParsingRequest target parser) =
 
         isValidRequest = isRight validatedTarget && isRight validatedParser
 
-
--- validateCreateLogfileParserRequest :: CreateLogfileParserRequest -> Either [ValidationError] (Validation.Valid LogfileParser)
--- validateCreateLogfileParserRequest (CreateLogfileParserRequest target parsers) =
---   case requestIsValid of
---     Right
---
---     Left
---
---   where validatedTarget = Validation.validateTarget target
---         validatedParser = Validation.validateLogfileParser logfileParser
---         requestIsValid = isRight validatedTarget && isRight validatedParser
---
---         logfileParser = LogfileParser name mappedParsers
---         mapParser ( NamedParser name parser ) = (name, parser)
---         mappedParsers = map mapParser parsers
 
 
 errorsToValidationProblem :: [ValidationError] -> Problem

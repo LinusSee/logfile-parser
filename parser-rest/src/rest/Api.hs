@@ -85,7 +85,7 @@ server dbConfig =
   (    getLogfileParserNames dbConfig
   :<|> saveLogfileParserHandler dbConfig
   :<|> applyLogfileParserByName dbConfig
-  :<|> logfileParserApplicationHandler
+  :<|> applyLogfileParserHandler
   )
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
@@ -119,8 +119,8 @@ applyLogfileParserByName dbConfig parserName maybeTarget =
       throwError $ err404 { errBody = "Opps, that went wrong"}
 
 
-logfileParserApplicationHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
-logfileParserApplicationHandler request = do
+applyLogfileParserHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
+applyLogfileParserHandler request = do
   let response = Orchestration.applyLogfileParser request
 
   return response

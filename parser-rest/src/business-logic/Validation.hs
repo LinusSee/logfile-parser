@@ -4,6 +4,8 @@ module Validation
 , validateTarget
 , validateElementaryParser
 , validateElementaryParserExists
+, validateLogfileParser
+, validateLogfileParserExists
 , appendError
 ) where
 
@@ -82,20 +84,6 @@ validateParserName name =
   where nameIsValid = not $ null name
 
 
-appendError :: Either ValidationError (Valid a) -> [ValidationError] -> [ValidationError]
-appendError (Left err) errs = err : errs
-appendError (Right _) errs = errs
--- concatErrorsFromValidationResults :: [ Either ValidationError (Valid a)] -> [ValidationError]
--- concatErrorsFromValidationResults [] = []
--- concatErrorsFromValidationResults (x:xs) =
---   case x of
---     Left err ->
---       err : concatErrorsFromValidationResults xs
---
---     Right _ ->
---       concatErrorsFromValidationResults xs
-
-
 validateParsersList :: [(String, ElementaryParser)] -> Either ValidationError (Valid [(String, ElementaryParser)])
 validateParsersList parsers =
   case parsersIsValid of
@@ -108,3 +96,8 @@ validateParsersList parsers =
           "A logfile parsers must contain at least one elementary parser."
 
   where parsersIsValid = not $ null parsers
+
+
+appendError :: Either ValidationError (Valid a) -> [ValidationError] -> [ValidationError]
+appendError (Left err) errs = err : errs
+appendError (Right _) errs = errs
