@@ -85,7 +85,7 @@ validateElementaryParserToCreate parser =
       Right parser
 
     False ->
-      Left $ errorsToValidationProblem $ Validation.appendError validatedParser []
+      Left $ errorsToValidationProblem $ fromLeft [] validatedParser
 
   where validatedParser = Validation.validateElementaryParser parser
         isValidParser = isRight validatedParser
@@ -125,7 +125,7 @@ validateParsingRequest request@(ParsingRequest target parser) =
     False ->
       Left $ errorsToValidationProblem $
         ( Validation.appendError validatedTarget
-        . Validation.appendError validatedParser) []
+        ) (fromLeft [] validatedParser)
 
   where validatedTarget = Validation.validateTarget target
         validatedParser = Validation.validateElementaryParser parser
