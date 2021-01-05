@@ -164,10 +164,10 @@ validateOneOfValues values =
     False ->
       Left $ ValidationError
         (FieldValidation "values")
-        "A oneOf parser must contain at least one value to match."
+        "A oneOf parser must contain at least one nonempty value/string to match."
 
-  where valuesIsValid = not $ null values
-  -- TODO: Empty elements are invalid
+  where valuesIsValid =    (not $ null values)
+                        && (not $ True `elem` (map null values))
 
 
 validateTimePattern :: String -> Either ValidationError (Valid String)
@@ -182,7 +182,7 @@ validateTimePattern pattern =
         ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
         ++ " separated by a single char. The order of the blocks does not matter (e.g. HH-MM).")
 
-  where patternIsValid = "HH" `elem` comb && "MM" `elem` comb && length pattern == 5      
+  where patternIsValid = "HH" `elem` comb && "MM" `elem` comb && length pattern == 5
         patternUpper = map Char.toUpper pattern
         comb = [take 2 patternUpper] ++ [drop 3 patternUpper]
 
