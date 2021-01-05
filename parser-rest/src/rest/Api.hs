@@ -101,29 +101,55 @@ getLogfileParserNames dbConfig = do
 
 
 saveLogfileParserHandler ::  Configs.FileDbConfig -> CreateLogfileParserRequest -> Handler NoContent
-saveLogfileParserHandler dbConfig logfileParser = do
-  _ <- liftIO $ Orchestration.createLogfileParser dbConfig logfileParser
+saveLogfileParserHandler dbConfig request =
+  case validatedRequest of
+    Right validRequest -> do
+        _ <- liftIO $ Orchestration.createLogfileParser dbConfig validRequest
 
-  return NoContent
+        return NoContent
+
+    Left problem ->
+        throwError $ err400
+          { errBody = encode problem
+          , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+          }
+
+  where validatedRequest = ValidationOrchestration.validateCreateLogfileParserRequest request
 
 
 applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler LogfileParsingResponse
 applyLogfileParserByName dbConfig parserName maybeTarget =
-  case maybeTarget of
-    Just target -> do
-      response <- liftIO $ Orchestration.applyLogfileParserByName dbConfig parserName target
+  case validatedParams of
+    Right (validParserName, validTarget) -> do
+      response <- liftIO $ Orchestration.applyLogfileParserByName dbConfig validParserName validTarget
+
       return response
 
-    Nothing ->
-      -- return $ LogfileParsingError "Missing query parameter 'target'"
-      throwError $ err404 { errBody = "Opps, that went wrong"}
+    Left problem ->
+        throwError $ err400
+          { errBody = encode problem
+          , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+          }
+
+    where validatedParams = ValidationOrchestration.validateLogfileParsingUrlRequest parserName maybeTarget
 
 
 applyLogfileParserHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
-applyLogfileParserHandler request = do
-  let response = Orchestration.applyLogfileParser request
+applyLogfileParserHandler request =
+  case validatedRequest of
+    Right validRequest -> do
+      let response = Orchestration.applyLogfileParser request
 
-  return response
+      return response
+
+    Left problem ->
+      throwError $ err400
+        { errBody = encode problem
+        , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+        }
+
+
+  where validatedRequest = ValidationOrchestration.validateLogfileParsingRequest request
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [ElementaryParser]
@@ -134,10 +160,21 @@ readAllElementaryParsersHandler dbConfig = do
 
 
 saveParserHandler ::  Configs.FileDbConfig -> ElementaryParser -> Handler NoContent
-saveParserHandler dbConfig parser = do
-  _ <- liftIO $ Orchestration.createElementaryParser dbConfig parser
+saveParserHandler dbConfig parser =
+  case validatedParser of
+    Right validParser -> do
+        _ <- liftIO $ Orchestration.createElementaryParser dbConfig validParser
 
-  return NoContent
+        return NoContent
+
+    Left problem ->
+        throwError $ err400
+          { errBody = encode problem
+          , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+          }
+
+
+  where validatedParser = ValidationOrchestration.validateElementaryParserToCreate parser
 
 
 applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
