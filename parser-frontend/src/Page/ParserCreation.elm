@@ -329,7 +329,7 @@ view model =
                         ]
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
-                        , input [ id "parserNameInput", placeholder "Loglevel oneof", value formData.name, onInput (ChangeForm ChangeName) ] []
+                        , input [ id "parserNameInput", placeholder (namePlaceholder formData.patternType), value formData.name, onInput (ChangeForm ChangeName) ] []
                         ]
                     , div [ class "button-group", class "button-group--centered-content" ]
                         [ button
@@ -420,16 +420,50 @@ matchingPlaceholder : String -> String
 matchingPlaceholder selection =
     case selection of
         "oneOf" ->
-            "'a', 'b', 'c'"
+            "a list e.g. \"a\", \"asdf\", \"foo\""
 
         "time" ->
-            "HH:MM"
+            "e.g. HH:MM"
 
         "date" ->
-            "YYYY-MM-DD"
+            "e.g. YYYY-MM-DD"
+
+        "characters" ->
+            "an arbitrary string"
+
+        "matchUntilIncluded" ->
+            "e.g. <StartCorrelationId>"
+
+        "matchUntilExcluded" ->
+            "e.g. <EndCorrelationId>"
 
         _ ->
-            "an arbitrary string"
+            "The number of chars e.g. 5"
+
+
+namePlaceholder : String -> String
+namePlaceholder selection =
+    case selection of
+        "oneOf" ->
+            "oneOf Loglevel"
+
+        "time" ->
+            "Standard Time"
+
+        "date" ->
+            "Easy sort date"
+
+        "characters" ->
+            "<EndCorrelationId>"
+
+        "matchUntilIncluded" ->
+            "UntilCorrelationId"
+
+        "matchUntilExcluded" ->
+            "ExceptEndCorrelationId"
+
+        _ ->
+            "Next 5 chars"
 
 
 

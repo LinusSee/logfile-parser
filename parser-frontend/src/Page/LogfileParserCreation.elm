@@ -301,7 +301,7 @@ view model =
                     , viewProblems model.problems
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "parserNameInput" ] [ text "Name" ]
-                        , input [ id "parserNameInput", placeholder "Selected parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
+                        , input [ id "parserNameInput", placeholder "Logfile parser name", value model.parserName, onInput ChangeParserName ] [ text model.parserName ]
                         ]
                     , div [ class "input-group", class "input-group--centered-content" ]
                         [ label [ for "selectedParserName" ] [ text "ColumnName" ]
