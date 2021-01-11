@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 81c1f46386ea74b86315cdb17cf7f54af623b18a2559454a554125ab72211e7b
+-- hash: 94bfba624a695e050240b29f82f3c0448ebf3bdd655ef6ac84a3f7559fc9f26a
 
 name:           parser-rest
 version:        0.1.0.0
@@ -93,9 +93,11 @@ test-suite parser-rest-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      ValidationSpec
       Paths_parser_rest
   hs-source-dirs:
       test
+      test/business-logic
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson

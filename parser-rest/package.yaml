@@ -58,7 +58,9 @@ executables:
 tests:
   parser-rest-test:
     main:                Spec.hs
-    source-dirs:         test
+    source-dirs:
+      - test
+      - test/business-logic
     ghc-options:
     - -threaded
     - -rtsopts

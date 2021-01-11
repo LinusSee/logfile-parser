@@ -10,6 +10,7 @@ import Data.Aeson
 
 
 data ValidationError = ValidationError ValidationType String
+  deriving (Show, Eq)
 
 instance ToJSON ValidationError where
   toJSON (ValidationError valType reason) =
@@ -28,3 +29,4 @@ data ValidationType =
     FieldValidation String
   | QueryParamValidation String
   | ExistsValidation String
+  deriving (Show, Eq)

@@ -24,6 +24,7 @@ import CustomParsers
 
 
 data Valid a = Valid a
+  deriving (Show, Eq)
 
 fromValid :: Valid a -> a
 fromValid (Valid val) = val
