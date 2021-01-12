@@ -14,20 +14,12 @@ spec :: Spec
 spec =
     describe "validateTarget" $ do
       context "when provided with a valid input (nonempty string)" $ do
-          it "returns a <Right> type" $ do
-              validateTarget "a valid string" `shouldSatisfy` Either.isRight
-
-
           it "returns a <Valid> type containing the target string if it is not null" $ do
               fromRight' (validateTarget "a valid string") `shouldBe` Just "a valid string"
 
 
 
       context "when provided with an invalid input (empty string)" $ do
-          it "returns a <Left> type if the target string is empty" $ do
-              validateTarget "" `shouldSatisfy` Either.isLeft
-
-
           it "returns a correct <ValidationError> if target string is empty" $ do
               validateTarget "" `shouldBe` (Left $ ValidationError
                                               (FieldValidation "target")
@@ -42,6 +34,32 @@ spec =
                                                        (FieldValidation "target")
                                                        "The target string to parse must not be empty.")
                        else fromRight' (validateTarget target) `shouldBe` Just target
+
+
+
+
+      describe "validateParserName" $ do
+        context "when provided with a valid input (nonempty string)" $ do
+            it "returns a <Valid> type containing the parserName string if it is not null" $ do
+                fromRight' (validateParserName "a valid name") `shouldBe` Just "a valid name"
+
+
+
+        context "when provided with an invalid input (empty string)" $ do
+            it "returns a correct <ValidationError> if parserName string is empty" $ do
+                validateParserName "" `shouldBe` (Left $ ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.")
+
+
+
+        context "properties" $ do
+            prop "returns a <ValidationError> for parserName == null and <Valid> containing the parserName otherwise" $
+              \parserName -> if null parserName
+                         then validateParserName parserName `shouldBe` (Left $ ValidationError
+                                                         (FieldValidation "name")
+                                                         "The name of the parser must not be empty.")
+                         else fromRight' (validateParserName parserName) `shouldBe` Just parserName
 
 
 

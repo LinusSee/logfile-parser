@@ -2,6 +2,7 @@ module Validation
 ( Valid
 , fromValid
 , validateTarget
+, validateParserName
 , validateElementaryParser
 , validateElementaryParserExists
 , validateLogfileParser
