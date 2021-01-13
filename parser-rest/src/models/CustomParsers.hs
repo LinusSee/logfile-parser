@@ -34,7 +34,7 @@ data ElementaryParser =
   | MatchUntilExcluded String String
   | MatchFor String Int
   | MatchUntilEnd String
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 
 instance ToJSON ElementaryParser where
