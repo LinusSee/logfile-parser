@@ -3,6 +3,8 @@ module ValidationSpec
 ) where
 
 import qualified Data.Either as Either
+import qualified Data.Char as Char
+import Data.List (isInfixOf)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 
@@ -114,11 +116,94 @@ spec =
             let parser = Time "some parser name" "HH.MM"
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
+        context "when provided with an invalid input (invalid pattern)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = Time "some parser name" ".HHMM"
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                  (FieldValidation "pattern")
+                                                                  ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
+                                                                  ++ " separated by a single char. The order of the blocks does not matter (e.g. HH-MM).")
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName pattern -> do
+                let upperPattern = map Char.toUpper pattern
+                let parser = Time parserName pattern
+                let validationResult = validateElementaryParser parser
+
+                -- The second part of the condition is incorrect: Leave this until I know how to generate proper testdata
+                if null parserName && (length upperPattern /= 5 || not ("HH" `isInfixOf` upperPattern) || not ("MM" `isInfixOf` upperPattern))
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "pattern")
+                                                    ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
+                                                    ++ " separated by a single char. The order of the blocks does not matter (e.g. HH-MM).")
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left[ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if (length upperPattern /= 5 || not ("HH" `isInfixOf` upperPattern) || not ("MM" `isInfixOf` upperPattern))
+                    then validationResult `shouldBe` Left[ ValidationError
+                                                            (FieldValidation "pattern")
+                                                            ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
+                                                            ++ " separated by a single char. The order of the blocks does not matter (e.g. HH-MM).")]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
+
+
 
         context "when provided with a valid Date ElementaryParser" $ do
           it "returns a <Valid> type containing the parser" $ do
             let parser = Date "some parser name" "YYYY-DD-MM"
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
+        context "when provided with an invalid input (invalid pattern)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = Date "some parser name" "YYYY.MMDD."
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                (FieldValidation "pattern")
+                                                                ( "A time parser must match the following format: Three blocks of 'YYYY', 'MM', and 'DD'"
+                                                                ++ " separated by a single char. The order of the blocks does not matter (e.g. MM-YYYY.DD).")
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName pattern -> do
+                let upperPattern = map Char.toUpper pattern
+                let parser = Date parserName pattern
+                let validationResult = validateElementaryParser parser
+
+                -- The second part of the condition is incorrect: Leave this until I know how to generate proper testdata
+                if null parserName && ( length upperPattern /= 10 || not ("YYYY" `isInfixOf` upperPattern)
+                                      || not ("MM" `isInfixOf` upperPattern) || not ("DD" `isInfixOf` upperPattern))
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "pattern")
+                                                    ( "A time parser must match the following format: Three blocks of 'YYYY', 'MM', and 'DD'"
+                                                    ++ " separated by a single char. The order of the blocks does not matter (e.g. MM-YYYY.DD).")
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left [ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if length upperPattern /= 10 || not ("YYYY" `isInfixOf` upperPattern) || not ("MM" `isInfixOf` upperPattern) || not ("DD" `isInfixOf` upperPattern)
+                    then validationResult `shouldBe` Left [ ValidationError
+                                                            (FieldValidation "pattern")
+                                                            ( "A time parser must match the following format: Three blocks of 'YYYY', 'MM', and 'DD'"
+                                                            ++ " separated by a single char. The order of the blocks does not matter (e.g. MM-YYYY.DD).")]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
 
 
@@ -127,12 +212,82 @@ spec =
             let parser = Characters "some parser name" "stringToMatch"
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
+        context "when provided with an invalid input (empty string)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = Characters "some parser name" ""
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                  (FieldValidation "value")
+                                                                  "A characters parser must contain at least a single char to match."
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName value -> do
+                let parser = Characters parserName value
+                let validationResult = validateElementaryParser parser
+
+                if null parserName && null value
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "value")
+                                                    "A characters parser must contain at least a single char to match."
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left[ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if null value
+                    then validationResult `shouldBe` Left[ ValidationError
+                                                            (FieldValidation "value")
+                                                            "A characters parser must contain at least a single char to match."]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
 
 
         context "when provided with a valid MatchUntilIncluded ElementaryParser" $ do
           it "returns a <Valid> type containing the parser" $ do
             let parser = MatchUntilIncluded "some parser name" "includedValue"
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
+        context "when provided with an invalid input (empty string)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = MatchUntilIncluded "some parser name" ""
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                (FieldValidation "value")
+                                                                "A matchUntilIncluded parser must contain at least a single char to match."
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName value -> do
+                let parser = MatchUntilIncluded parserName value
+                let validationResult = validateElementaryParser parser
+
+                if null parserName && null value
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "value")
+                                                    "A matchUntilIncluded parser must contain at least a single char to match."
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left[ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if null value
+                    then validationResult `shouldBe` Left[ ValidationError
+                                                            (FieldValidation "value")
+                                                            "A matchUntilIncluded parser must contain at least a single char to match."]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
 
 
@@ -141,12 +296,82 @@ spec =
             let parser = MatchUntilExcluded "some parser name" "excludedValue"
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
+        context "when provided with an invalid input (empty string)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = MatchUntilExcluded "some parser name" ""
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                  (FieldValidation "value")
+                                                                  "A matchUntilExcluded parser must contain at least a single char to match."
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName value -> do
+                let parser = MatchUntilExcluded parserName value
+                let validationResult = validateElementaryParser parser
+
+                if null parserName && null value
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "value")
+                                                    "A matchUntilExcluded parser must contain at least a single char to match."
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left[ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if null value
+                    then validationResult `shouldBe` Left[ ValidationError
+                                                            (FieldValidation "value")
+                                                            "A matchUntilExcluded parser must contain at least a single char to match."]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
 
 
         context "when provided with a valid MatchFor ElementaryParser" $ do
           it "returns a <Valid> type containing the parser" $ do
             let parser = MatchFor "some parser name" 5
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
+
+        context "when provided with an invalid input (count <= 0)" $ do
+          it "returns a correct <ValidationError> list" $ do
+              let parser = MatchFor "some parser name" 0
+              validateElementaryParser parser `shouldBe` Left [ ValidationError
+                                                                (FieldValidation "count")
+                                                                "A matchFor parser must have a count greater 0."
+                                                              ]
+
+        context "properties" $ do
+          prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
+            \parserName count -> do
+                let parser = MatchFor parserName count
+                let validationResult = validateElementaryParser parser
+
+                if null parserName && count <= 0
+                then validationResult `shouldBe` Left [
+                                                  ValidationError
+                                                    (FieldValidation "name")
+                                                    "The name of the parser must not be empty.",
+                                                  ValidationError
+                                                    (FieldValidation "count")
+                                                    "A matchFor parser must have a count greater 0."
+                                                  ]
+                else
+                  if null parserName
+                  then validationResult `shouldBe` Left [ ValidationError
+                                                          (FieldValidation "name")
+                                                          "The name of the parser must not be empty."]
+                  else
+                    if count <= 0
+                    then validationResult `shouldBe` Left [ ValidationError
+                                                            (FieldValidation "count")
+                                                            "A matchFor parser must have a count greater 0."]
+                    else fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
 
 
