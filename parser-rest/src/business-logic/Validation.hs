@@ -182,16 +182,6 @@ appendError (Left err) errs = err : errs
 appendError (Right _) errs = errs
 
 
-extractErrors :: [Either ValidationError (Valid a)] -> [ValidationError]
-extractErrors [] = []
-extractErrors (x:xs) =
-    case x of
-      Right _ ->
-        extractErrors xs
-      Left err ->
-        err : extractErrors xs
-
-
 
 validateOneOfValues :: [String] -> Either ValidationError (Valid [String])
 validateOneOfValues values =

@@ -432,6 +432,29 @@ spec =
 
 
 
+        describe "appendError" $ do
+          context "when passing an <ValidationError> and an error list" $ do
+            it "returns a list containing the error and the previous list elements" $ do
+              let errorToAppend = ValidationError
+                                    (FieldValidation "name")
+                                    "The name of the parser must not be empty."
+              let previousList = [ ValidationError
+                                    (FieldValidation "parsers")
+                                    "All parsers in the list must be valid."
+                                 ]
+              appendError ( Left errorToAppend ) previousList `shouldBe` errorToAppend : previousList
+
+          context "when passing a <Valid> type and an error list" $ do
+            it "returns the unchanged error list" $ do
+              let previousList = [ ValidationError
+                                  (FieldValidation "name")
+                                  "The name of the parser must not be empty."
+                               ]
+              appendError (validateParserName "parserName") previousList `shouldBe` previousList
+
+
+
+
 
 fromRight' :: (Show a, Eq a) => Either b (Valid a) -> Maybe a
 fromRight' (Right val) = Just (fromValid val)
