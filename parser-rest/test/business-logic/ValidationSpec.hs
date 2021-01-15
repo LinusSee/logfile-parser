@@ -383,6 +383,55 @@ spec =
 
 
 
+      describe "validateLogfileParser" $ do
+        context "when provided with a valid LogfileParser" $ do
+            it "returns a <Valid> type containing the parser" $ do
+              let parser = LogfileParser "logfileParserName"
+                                        [( "colName"
+                                         , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
+                                        )]
+              fromRight' (validateLogfileParser parser) `shouldBe` Just parser
+
+
+        context "when provided with an invalid LogfileParser" $ do
+            it "returns a correct <ValidationError> list on empty logfileParserName" $ do
+              let parser = LogfileParser "logfileParserName" []
+              validateLogfileParser parser `shouldBe` Left [ ValidationError
+                                                              (FieldValidation "parsers")
+                                                              "A logfile parsers must contain at least one elementary parser."
+                                                           ]
+
+            it "returns a correct <ValidationError> list on empty elementary parser list" $ do
+              let parser = LogfileParser ""
+                                        [( "colName"
+                                         , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
+                                        )]
+              validateLogfileParser parser `shouldBe` Left [
+                                                              ValidationError
+                                                                (FieldValidation "name")
+                                                                "The name of the parser must not be empty."
+                                                           ]
+
+            it "returns a correct <ValidationError> list on 2 invalid elementary parsers" $ do
+              let parser = LogfileParser ""
+                                        [ ( ""
+                                          , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
+                                          ),
+                                          ( "colName"
+                                           , Time "timeParser" ".HHMM"
+                                          )
+                                        ]
+              validateLogfileParser parser `shouldBe` Left [ ValidationError
+                                                               (FieldValidation "name")
+                                                               "The name of the parser must not be empty."
+                                                           , ValidationError
+                                                               (FieldValidation "parsers")
+                                                               "All parsers in the list must be valid."
+                                                           ]
+
+
+
+
 
 fromRight' :: (Show a, Eq a) => Either b (Valid a) -> Maybe a
 fromRight' (Right val) = Just (fromValid val)

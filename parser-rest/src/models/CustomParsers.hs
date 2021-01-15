@@ -75,7 +75,7 @@ data ParsingResult =
 
 data LogfileParser =
   LogfileParser String [(String, ElementaryParser)]
-  deriving (Show, Read)
+  deriving (Show, Read, Eq)
 
 instance FromJSON LogfileParser where
   parseJSON (Object o) =
