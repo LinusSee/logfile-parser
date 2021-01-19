@@ -17,7 +17,7 @@ import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, valid
 
 
 type Model
-    = CreateParser Session CreateParserModel
+    = CreateParser Session CreateParserModel 
 
 
 type alias CreateParserModel =
