@@ -71,6 +71,7 @@ data ParsingResult =
   | MatchForResult String
   | MatchUntilEndResult String
   | ParsingError String
+  deriving (Show, Eq)
 
 
 data LogfileParser =

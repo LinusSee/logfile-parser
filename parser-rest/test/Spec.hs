@@ -7,6 +7,8 @@ import Test.Hspec
 import Test.Hspec.Wai
 import Test.Hspec.Wai.JSON
 
+import qualified ElementaryParsingSpec
+import qualified LogfileParsingSpec
 import qualified ValidationSpec
 
 
@@ -16,6 +18,8 @@ main = hspec spec
 
 spec :: Spec
 spec = do
+    describe "ElementaryParsing" ElementaryParsingSpec.spec
+    describe "LogfileParsing" LogfileParsingSpec.spec
     describe "Validation" ValidationSpec.spec
 -- spec :: Spec
 -- spec = with (return app) $ do

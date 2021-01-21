@@ -81,7 +81,7 @@ chooseParser parser =
 
 applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResult
 applyOneOf target = do
-  result <- Parsec.choice (map Parsec.string target)
+  result <- Parsec.choice (map (Parsec.try .Parsec.string) target)
   return $ OneOfResult result
 
 
