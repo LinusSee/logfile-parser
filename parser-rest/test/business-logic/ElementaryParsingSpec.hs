@@ -53,9 +53,44 @@ spec = do
 
     describe "chooseParser" $ do
         context "when provided with a valid input" $ do
-            it "TODO" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
                 pending
 
+
+
+    describe "chooseParser" $ do
+        context "when provided with a valid input" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
+                pending
+
+
+
+    describe "chooseParser" $ do
+        context "when provided with a valid input" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
+                pending
+
+
+
+
+    describe "chooseParser" $ do
+        context "when provided with a valid input" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
+                pending
+
+
+
+    describe "chooseParser" $ do
+        context "when provided with a valid input" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
+                pending
+
+
+
+    describe "chooseParser" $ do
+        context "when provided with a valid input" $ do
+            it "matches a value that fits a Time parser's pattern" $ do
+                pending
 
 
 
