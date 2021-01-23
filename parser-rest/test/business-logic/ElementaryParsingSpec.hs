@@ -16,7 +16,7 @@ import ElementaryParsing
 spec :: Spec
 spec = do
     -- TODO: Improve readability/descriptions (ugly edge cases)
-    describe "applyParser" $ do
+    describe "applyParser - OneOf Parser" $ do
         context "when provided with a valid target value and an OneOf parser" $ do
             it "returns the first match even if another would fit" $ do
                 let parser = OneOf "name" ["matchNormal", "other", "matchNormalExtended"]
@@ -43,29 +43,77 @@ spec = do
                     applyParser val parser `shouldSatisfy` isLeft
 
 
+
+    describe "applyParser - Time Parser" $ do
         context "when provided with a valid target value and a Time parser" $ do
-            it "returns a time by matching the pattern" $ do
-              pending
+            it "returns a time by matching the pattern HH:MM" $ do
+                let target = "11:59 and some more text"
+                let parser = Time "someName" "HH:MM"
+
+                applyParser target parser `shouldBe` Right (TimeResult "11:59:00")
+
+
+            it "returns a time by matching the pattern HH_MM" $ do
+                let target = "14_01"
+                let parser = Time "someName" "HH_MM"
+
+                applyParser target parser `shouldBe` Right (TimeResult "14:01:00")
+
+
+            it "returns a time by matching the pattern MM-HH" $ do
+                let target = "00-0 and some more text"
+                let parser = Time "someName" "MM-HH"
+
+                applyParser target parser `shouldBe` Right (TimeResult "00:00:00")
+
+
+        context "when provided with an invalid target value and a Time parser" $ do
+            it "returns an error if the separator doesn't match the pattern" $ do
+                let target = "10:00 and some more text"
+                let parser = Time "someName" "HH-MM"
+
+                applyParser target parser `shouldSatisfy` isLeft
+
+
+            it "returns an error if the target doesn't match the pattern" $ do
+                let target = "1-a00 and some more text"
+                let parser = Time "someName" "HH-MM"
+
+                applyParser target parser `shouldSatisfy` isLeft
+
+
+            it "returns an error if the hour is not a valid one" $ do
+                let target = "24-00 and some more text"
+                let parser = Time "someName" "HH-MM"
+
+                applyParser target parser `shouldSatisfy` isLeft
+
+
+            it "returns an error if the minute is not a valid one" $ do
+                let target = "10-60 and some more text"
+                let parser = Time "someName" "HH-MM"
+
+                applyParser target parser `shouldSatisfy` isLeft
 
 
         -- Use the newly learned knowledge about generators to generate patterns
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending
 
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending
 
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending
@@ -73,21 +121,21 @@ spec = do
 
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending
 
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending
 
 
 
-    describe "chooseParser" $ do
+    describe "applyParser" $ do
         context "when provided with a valid input" $ do
             it "matches a value that fits a Time parser's pattern" $ do
                 pending

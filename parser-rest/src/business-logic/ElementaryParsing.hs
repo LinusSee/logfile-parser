@@ -238,16 +238,23 @@ timePatternToParsers pattern =
 
 
 hourParser :: Parsec.Parsec String () String
-hourParser = Parsec.choice $ reverse
-    (map (Parsec.try . Parsec.string . show) [2..24])
-    ++ [Parsec.string "1"]
-  --Parsec.choice $ reverse (map (Parsec.string . show) [1..24])
+hourParser = fmap normalize (Parsec.choice $ map (Parsec.try . Parsec.string) hourPossibilities)
+
+    where hourPossibilities = map (('0':) . show) [0..9] ++ map show [10..23] ++ map show [0..9]
+          normalize hour =
+              if length hour < 2
+              then '0': hour
+              else hour
 
 
 minuteParser :: Parsec.Parsec String () String
-minuteParser = Parsec.choice $ reverse
-    (map (Parsec.try . Parsec.string . show) [1..59])
-    ++ [Parsec.string "1"]
+minuteParser = fmap normalize (Parsec.choice $ map (Parsec.try . Parsec.string) minutePossibilities)
+
+    where minutePossibilities = map (('0':) . show) [0..9] ++ map show [10..59]
+          normalize minute =
+              if length minute < 2
+              then '0': minute
+              else minute
   --Parsec.choice $ reverse (map (Parsec.string . show) [1..59])
 
 yearParser :: Parsec.Parsec String () String
