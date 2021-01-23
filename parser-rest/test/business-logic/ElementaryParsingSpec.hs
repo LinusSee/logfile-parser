@@ -106,10 +106,21 @@ spec = do
 
 
 
-    describe "applyParser" $ do
-        context "when provided with a valid input" $ do
-            it "matches a value that fits a Time parser's pattern" $ do
-                pending
+    describe "applyParser - Characters" $ do
+        context "when provided with a valid input and a Characters parser" $ do
+            prop "matches the provided string" $ do
+                \name target -> do
+                    let parser = Characters name target
+
+                    applyParser target parser `shouldBe` Right (CharactersResult target)
+
+        context "when provided with an invalid input and a Characters parser" $ do
+            prop "doesn't match the provided string" $ do
+                \name -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
+                    let parser = Characters name target
+
+                    applyParser (drop 1 target) parser `shouldSatisfy` isLeft
+
 
 
 
