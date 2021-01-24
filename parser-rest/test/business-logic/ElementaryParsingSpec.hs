@@ -124,9 +124,9 @@ spec = do
 
 
 
-    describe "applyParser" $ do
+    describe "applyParser - MatchUntilIncluded" $ do
         context "when provided with a valid input and a MatchUntilIncluded parser" $ do
-            prop "matches until the provided string" $ do
+            prop "matches until the provided string, with the string being included" $ do
                 \name before after -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
                     let parser = MatchUntilIncluded name target
                     let stringToParse = takeUntilSubstring before target ++ target ++ after
@@ -134,11 +134,12 @@ spec = do
 
                     applyParser stringToParse parser `shouldBe` Right (MatchUntilIncludedResult result)
 
+
         context "when provided with an invalid input and a MatchUntilIncluded parser" $ do
             prop "doesn't match the provided string" $ do
                 \name before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
                     -- Testdata could be incorrect in some rare constellations (check if problems occur)
-                    let parser = Characters name target
+                    let parser = MatchUntilIncluded name target
                     let stringToParse = takeUntilSubstring before target ++ drop 1 target
 
                     applyParser stringToParse parser `shouldSatisfy` isLeft
@@ -146,10 +147,25 @@ spec = do
 
 
 
-    describe "applyParser" $ do
-        context "when provided with a valid input" $ do
-            it "matches a value that fits a Time parser's pattern" $ do
-                pending
+    describe "applyParser - MatchUntilExcluded" $ do
+        context "when provided with a valid input and a MatchUntilExcluded parser" $ do
+            prop "matches until the provided string, with the provided string being excluded" $ do
+                \name before after -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
+                    let parser = MatchUntilExcluded name target
+                    let stringToParse = takeUntilSubstring before target ++ target ++ after
+                    let result = takeUntilSubstring before target
+
+                    applyParser stringToParse parser `shouldBe` Right (MatchUntilExcludedResult result)
+
+
+        context "when provided with an invalid input and a MatchUntilExcluded parser" $ do
+            prop "doesn't match the provided string" $ do
+                \name before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
+                    -- Testdata could be incorrect in some rare constellations (check if problems occur)
+                    let parser = MatchUntilExcluded name target
+                    let stringToParse = takeUntilSubstring before target ++ drop 1 target
+
+                    applyParser stringToParse parser `shouldSatisfy` isLeft
 
 
 
