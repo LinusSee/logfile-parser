@@ -169,10 +169,13 @@ spec = do
 
 
 
-    describe "applyParser" $ do
-        context "when provided with a valid input" $ do
-            it "matches a value that fits a Time parser's pattern" $ do
-                pending
+    describe "applyParser - MatchFor" $ do
+        context "when provided with a valid input and a MatchFor parser" $ do
+            prop "matches the first n characters" $ do
+                \name count -> QC.forAll (certainLengthString count) $ \target -> do
+                    let parser = MatchFor name count
+
+                    applyParser target parser `shouldBe` Right (MatchForResult (take count target))
 
 
 
@@ -193,6 +196,16 @@ takeUntilSubstring (x:xs) (y:ys)
 
 
 
+certainLengthString :: Int -> QC.Gen String
+certainLengthString 1 = do
+    char <- QC.arbitrary
+    return $ char : ""
+certainLengthString n = do
+    char <- QC.arbitrary
+    end <- certainLengthString (n - 1)
+    return $ char : end
+
+
 nonEmptyString :: QC.Gen String
 nonEmptyString = QC.listOf1 QC.arbitrary
 
@@ -207,3 +220,4 @@ validTimePattern = do
 
 timePatternBlocks :: [String]
 timePatternBlocks = ["HH", "MM"]
+-- QC.listOf $ QC.elements "HM"
