@@ -25,30 +25,6 @@ applyParser target parser =
     parse chosenParser target
 
     where chosenParser = chooseParser parser
-  -- case parser of
-  --   OneOf _ xs ->
-  --     parse (applyOneOf xs) target
-  --
-  --   Time _ pattern ->
-  --     parse (applyTime pattern) target
-  --
-  --   Date _ pattern ->
-  --     parse (applyDate pattern) target
-  --
-  --   Characters _ chars ->
-  --     parse (applyCharacters chars) target
-  --
-  --   MatchUntilIncluded _ chars ->
-  --     parse (applyMatchUntilIncluded chars) target
-  --
-  --   MatchUntilExcluded _ chars ->
-  --     parse (applyMatchUntilExcluded chars) target
-  --
-  --   MatchFor _ count ->
-  --     parse (applyMatchFor count) target
-  --
-  --   MatchUntilEnd _ ->
-  --     parse applyMatchUntilEnd target
 
 
 chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResult
@@ -169,17 +145,21 @@ datePatternToParsers pattern =
       case take 2 $ drop 3 pattern of
         "DD" -> do
           month <- monthParser
-          _ <- Parsec.char $ head (drop 2 pattern)
+          let sep1 = head (drop 2 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           day <- dayParser
-          _ <- Parsec.char $ head (drop 5 pattern)
+          let sep2 = head (drop 5 pattern)
+          _ <- Parsec.choice [ Parsec.char sep2, Parsec.char $ toLower sep2]
           year <- yearParser
           return (year ++ month ++ day)
 
         _ -> do
           month <- monthParser
-          _ <- Parsec.char $ head (drop 2 pattern)
+          let sep1 = head (drop 2 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           year <- yearParser
-          _ <- Parsec.char $ head (drop 7 pattern)
+          let sep2 = head (drop 7 pattern)
+          _ <- Parsec.choice [Parsec.char sep2, Parsec.char $ toLower sep2]
           day <- dayParser
           return (year ++ month ++ day)
 
@@ -187,17 +167,21 @@ datePatternToParsers pattern =
       case take 2 $ drop 3 pattern of
         "MM" -> do
           day <- dayParser
-          _ <- Parsec.char $ head (drop 2 pattern)
+          let sep1 = head (drop 2 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           month <- monthParser
-          _ <- Parsec.char $ head (drop 5 pattern)
+          let sep2 = head (drop 5 pattern)
+          _ <- Parsec.choice [Parsec.char sep2, Parsec.char $ toLower sep2]
           year <- yearParser
           return (year ++ month ++ day)
 
         _ -> do
           day <- dayParser
-          _ <- Parsec.char $ head (drop 2 pattern)
+          let sep1 = head (drop 2 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           year <- yearParser
-          _ <- Parsec.char $ head (drop 7 pattern)
+          let sep2 = head (drop 7 pattern)
+          _ <- Parsec.choice [Parsec.char sep2, Parsec.char $ toLower sep2]
           month <- monthParser
           return (year ++ month ++ day)
 
@@ -205,17 +189,21 @@ datePatternToParsers pattern =
       case take 2 $ drop 5 pattern of
         "MM" -> do
           year <- yearParser
-          _ <- Parsec.char $ head (drop 4 pattern)
+          let sep1 = head (drop 4 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           month <- monthParser
-          _ <- Parsec.char $ head (drop 7 pattern)
+          let sep2 = head (drop 7 pattern)
+          _ <- Parsec.choice [Parsec.char sep2, Parsec.char $ toLower sep2]
           day <- dayParser
           return (year ++ month ++ day)
 
         "DD" -> do
           year <- yearParser
-          _ <- Parsec.char $ head (drop 4 pattern)
+          let sep1 = head (drop 4 pattern)
+          _ <- Parsec.choice [Parsec.char sep1, Parsec.char $ toLower sep1]
           day <- dayParser
-          _ <- Parsec.char $ head (drop 7 pattern)
+          let sep2 = head (drop 7 pattern)
+          _ <- Parsec.choice [Parsec.char sep2, Parsec.char $ toLower sep2]
           month <- monthParser
           return (year ++ month ++ day)
 
@@ -251,13 +239,9 @@ hourParser = fmap normalize (Parsec.choice $ map (Parsec.try . Parsec.string) ho
 
 
 minuteParser :: Parsec.Parsec String () String
-minuteParser = fmap normalize (Parsec.choice $ map (Parsec.try . Parsec.string) minutePossibilities)
+minuteParser = Parsec.choice $ map (Parsec.try . Parsec.string) minutePossibilities
 
     where minutePossibilities = map (('0':) . show) [0..9] ++ map show [10..59]
-          normalize minute =
-              if length minute < 2
-              then '0': minute
-              else minute
   --Parsec.choice $ reverse (map (Parsec.string . show) [1..59])
 
 yearParser :: Parsec.Parsec String () String

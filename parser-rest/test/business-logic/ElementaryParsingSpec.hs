@@ -2,7 +2,7 @@ module ElementaryParsingSpec
 ( spec
 ) where
 
-import Data.List (delete, isPrefixOf)
+import Data.List (delete, isPrefixOf, isSuffixOf)
 import Data.Either (isLeft)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
@@ -96,13 +96,22 @@ spec = do
                 applyParser target parser `shouldSatisfy` isLeft
 
 
-        -- Use the newly learned knowledge about generators to generate patterns
 
+    -- Use the newly learned knowledge about generators to generate patterns
+    describe "applyParser - Date" $ do
+        context "when provided with a valid input and a Date parser" $ do
+            prop "matches a value that fits a Date parser's pattern" $ do
+                \name -> QC.forAll validDatePattern $
+                  \pattern -> QC.forAll (simpleDateFromPattern pattern) $ \date -> do
+                    let parser = Date name pattern
+                    let result = Right ( DateResult
+                                          ( extractDatePattern "YYYY" pattern date ++ "-"
+                                          ++ extractDatePattern "MM" pattern date   ++ "-"
+                                          ++ extractDatePattern "DD" pattern date
+                                          )
+                                       )
 
-    describe "applyParser" $ do
-        context "when provided with a valid input" $ do
-            it "matches a value that fits a Time parser's pattern" $ do
-                pending
+                    applyParser date parser `shouldBe` result
 
 
 
@@ -243,3 +252,76 @@ validTimePattern = do
 timePatternBlocks :: [String]
 timePatternBlocks = ["HH", "MM"]
 -- QC.listOf $ QC.elements "HM"
+
+
+validDatePattern :: QC.Gen String
+validDatePattern = do
+    first <- QC.elements datePatternBlocks
+    second <- QC.elements $ delete first datePatternBlocks
+    third <- QC.elements $ delete first $ delete second datePatternBlocks
+
+    sep1 <- QC.arbitrary
+    sep2 <- QC.arbitrary
+
+    return $ first ++ (sep1 : second) ++ (sep2 : third)
+
+
+-- Ignore edge cases like leap year and what not
+simpleDateFromPattern :: String -> QC.Gen String
+simpleDateFromPattern pattern = do
+    year <- QC.elements [1970..2200]
+    month <- QC.elements $ map ((++) "0" . show) [1..9] ++ map show [10..12]
+    day <- dayForMonth month
+
+    return $ replaceDatePattern "YYYY" (show year)
+           $ replaceDatePattern "MM" month
+           $ replaceDatePattern "DD" day pattern
+
+
+dayForMonth :: String -> QC.Gen String
+dayForMonth month
+    | month == "02"                           = QC.elements (untilNine ++ map show [10..28])
+    | month `elem` ["01", "03", "05", "07", "08", "10", "12"] = QC.elements (untilNine ++ map show [10..31])
+    | otherwise                            = QC.elements (untilNine ++ map show [10..30])
+
+    where untilNine = ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+
+
+replacePattern :: String -> String -> String -> String
+replacePattern _ _ [] = []
+replacePattern pattern newVal target
+    | pattern `isPrefixOf` target = newVal ++ drop (length pattern) target
+    | otherwise                   = head target : replacePattern pattern newVal (tail target)
+
+
+replaceDatePattern :: String -> String -> String -> String
+replaceDatePattern _ _ [] = []
+replaceDatePattern pattern newVal target
+    | pattern `isPrefixOf` target  = newVal ++ drop (length pattern) target
+    | pattern `isSuffixOf` target = take (length target - length pattern) target ++ newVal
+    | "YYYY" `isPrefixOf` target   = take 5 target ++ newVal ++ drop 7 target
+    | otherwise                    = take 3 target ++ newVal ++ drop (length pattern + 3) target
+
+
+extractAtPattern :: String -> String -> String -> String
+extractAtPattern _ [] _ = []
+extractAtPattern toExtract pattern target
+    | toExtract `isPrefixOf` pattern = take (length toExtract) target
+    | otherwise                      = extractAtPattern toExtract (tail pattern) (tail target)
+
+
+extractDatePattern :: String -> String -> String -> String
+extractDatePattern _ _ [] = []
+extractDatePattern toExtract pattern target
+    | toExtract `isPrefixOf` pattern  = take (length toExtract) target
+    | toExtract `isSuffixOf` pattern = drop (length target - length toExtract) target
+    | "YYYY" `isPrefixOf` pattern   = take 2 $ drop 5 target
+    | otherwise                    = take (length toExtract) $ drop 3 target
+
+
+dateToTimeFormat :: String -> String -> String
+dateToTimeFormat date pattern = "Hey"
+
+
+datePatternBlocks :: [String]
+datePatternBlocks = ["YYYY", "MM", "DD"]
