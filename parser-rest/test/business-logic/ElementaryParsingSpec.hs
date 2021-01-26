@@ -179,10 +179,32 @@ spec = do
 
 
 
-    describe "applyParser" $ do
-        context "when provided with a valid input" $ do
-            it "matches a value that fits a Time parser's pattern" $ do
-                pending
+    describe "applyParser - MatchUntilEnd" $ do
+        context "when provided with a valid input without newline and a MatchUntil parser" $ do
+            prop "matches the entire string" $ do
+                \name start end -> do
+                    let parser = MatchUntilEnd name
+                    let target = filter ((/=)'\r') $ filter ((/=)'\n') (start ++ end)
+
+                    applyParser target parser `shouldBe` Right (MatchUntilEndResult target)
+
+
+            prop "matches until newline (\\n)" $ do
+                \name start -> QC.forAll (QC.listOf1 QC.arbitrary) $ \end -> do
+                    let parser = MatchUntilEnd name
+                    let cleanStart = filter ((/=) '\r') $ filter ((/=) '\n') start
+                    let target = cleanStart ++ "\n" ++ end
+
+                    applyParser target parser `shouldBe` Right (MatchUntilEndResult cleanStart)
+
+
+            prop "matches until newline (\\r\\n)" $ do
+                \name start -> QC.forAll (QC.listOf1 QC.arbitrary) $ \end -> do
+                    let parser = MatchUntilEnd name
+                    let cleanStart = filter ((/=) '\r') $ filter ((/=) '\n') start
+                    let target = cleanStart ++ "\r\n" ++ end
+
+                    applyParser target parser `shouldBe` Right (MatchUntilEndResult cleanStart)
 
 
 

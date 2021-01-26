@@ -22,30 +22,33 @@ parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 applyParser :: String -> ElementaryParser -> Either Parsec.ParseError ParsingResult
 applyParser target parser =
-  case parser of
-    OneOf _ xs ->
-      parse (applyOneOf xs) target
+    parse chosenParser target
 
-    Time _ pattern ->
-      parse (applyTime pattern) target
-
-    Date _ pattern ->
-      parse (applyDate pattern) target
-
-    Characters _ chars ->
-      parse (applyCharacters chars) target
-
-    MatchUntilIncluded _ chars ->
-      parse (applyMatchUntilIncluded chars) target
-
-    MatchUntilExcluded _ chars ->
-      parse (applyMatchUntilExcluded chars) target
-
-    MatchFor _ count ->
-      parse (applyMatchFor count) target
-
-    MatchUntilEnd _ ->
-      parse applyMatchUntilEnd target
+    where chosenParser = chooseParser parser
+  -- case parser of
+  --   OneOf _ xs ->
+  --     parse (applyOneOf xs) target
+  --
+  --   Time _ pattern ->
+  --     parse (applyTime pattern) target
+  --
+  --   Date _ pattern ->
+  --     parse (applyDate pattern) target
+  --
+  --   Characters _ chars ->
+  --     parse (applyCharacters chars) target
+  --
+  --   MatchUntilIncluded _ chars ->
+  --     parse (applyMatchUntilIncluded chars) target
+  --
+  --   MatchUntilExcluded _ chars ->
+  --     parse (applyMatchUntilExcluded chars) target
+  --
+  --   MatchFor _ count ->
+  --     parse (applyMatchFor count) target
+  --
+  --   MatchUntilEnd _ ->
+  --     parse applyMatchUntilEnd target
 
 
 chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResult
