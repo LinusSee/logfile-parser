@@ -108,6 +108,7 @@ instance FromJSON ParsingRequest where
 
 data ParsingResponse =
   ParsingResponse String ParsingResult
+  deriving (Eq, Show)
 
   --   OneOfResponse String
   -- | TimeResponse String -- TODO: Will be some time format
@@ -138,6 +139,7 @@ instance FromJSON LogfileParsingRequest where
 data LogfileParsingResponse =
     LogfileParsingResponse [[ParsingResponse]]
   | LogfileParsingError String
+  deriving (Eq, Show)
 
 instance ToJSON LogfileParsingResponse where
   toJSON (LogfileParsingResponse val) = object [ "result" .= val ]
