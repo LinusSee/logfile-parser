@@ -61,6 +61,7 @@ tests:
     source-dirs:
       - test
       - test/business-logic
+      - test/rest
     ghc-options:
     - -threaded
     - -rtsopts
@@ -73,3 +74,4 @@ tests:
     - hspec-wai-json
     - aeson
     - QuickCheck
+    - directory

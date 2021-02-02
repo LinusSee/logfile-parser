@@ -10,6 +10,7 @@ import Test.Hspec.Wai.JSON
 import qualified ElementaryParsingSpec
 import qualified LogfileParsingSpec
 import qualified ValidationSpec
+import qualified ApiSpec
 
 
 main :: IO ()
@@ -21,6 +22,7 @@ spec = do
     describe "ElementaryParsing" ElementaryParsingSpec.spec
     describe "LogfileParsing" LogfileParsingSpec.spec
     describe "Validation" ValidationSpec.spec
+    describe "Api" ApiSpec.spec
 -- spec :: Spec
 -- spec = with (return app) $ do
 --     describe "GET /users" $ do
