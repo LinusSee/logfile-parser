@@ -11,9 +11,16 @@ packages:
       sha256: 7812baf1b27c62068ba634207fbd7077b886424d666b36739a78c6d4008a1fd4
   original:
     hackage: servant-options-0.1.0.0@sha256:39f50166a68006250e79370372f553ca476f14d06d93fa0c401050253aeba803,914
+- completed:
+    hackage: servant-quickcheck-0.0.10.0@sha256:1d5849d703c2487752f8fc7391cca7c998ee24f54ca0bb72d238bf99b64ac667,3755
+    pantry-tree:
+      size: 976
+      sha256: 37dab60111c71d011fc4964e9a8b4b05ac544bc0ba8155e895518680066c2adb
+  original:
+    hackage: servant-quickcheck-0.0.10.0@sha256:1d5849d703c2487752f8fc7391cca7c998ee24f54ca0bb72d238bf99b64ac667,3755
 snapshots:
 - completed:
-    size: 532172
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/18.yaml
-    sha256: 4f2a092c6f4869854e8d7435ab98ce5157c641022c3cbfc4c4614ff3db752e62
-  original: lts-16.18
+    size: 563098
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/17/1.yaml
+    sha256: 395775c03e66a4286f134d50346b0b6f1432131cf542886252984b4cfa5fef69
+  original: lts-17.1

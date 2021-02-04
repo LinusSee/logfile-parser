@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 10878092d147d8ff634c473631be7f664cac11307147914a7800de393248d45f
+-- hash: 2eab575eb14b3ccd3b7be32a24d589bfbc73c365b2a54051882662ca63573a24
 
 name:           parser-rest
 version:        0.1.0.0
@@ -114,9 +114,13 @@ test-suite parser-rest-test
     , hspec
     , hspec-wai
     , hspec-wai-json
+    , http-client
+    , http-types
     , parsec
     , parser-rest
+    , servant-client
     , servant-options
+    , servant-quickcheck
     , servant-server
     , text
     , time

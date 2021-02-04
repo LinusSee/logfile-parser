@@ -17,7 +17,7 @@
 #
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
-resolver: lts-16.18
+resolver: lts-17.1
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -41,6 +41,10 @@ packages:
 #
 extra-deps:
  - servant-options-0.1.0.0@sha256:39f50166a68006250e79370372f553ca476f14d06d93fa0c401050253aeba803,914
+ - servant-quickcheck-0.0.10.0@sha256:1d5849d703c2487752f8fc7391cca7c998ee24f54ca0bb72d238bf99b64ac667,3755
+ #- servant-0.18.2@sha256:f8c9f0e9891a3ada1337a3c0b369333a3b5a2d0909dd3cd09d79bc26adeaca44,5298
+ #- servant-client-0.18.2@sha256:82578ade7468873259bb2fdc9d62290a0f998550900683e1410a237ed4b05410,4591
+ #- servant-server-0.18.2@sha256:56679af62ab8820a2108da6153d9ae9dde37199e62172365bdaea1458c3f7c2d,5482
 # extra-deps: []
 
 # Override default flag values for local packages and extra-deps

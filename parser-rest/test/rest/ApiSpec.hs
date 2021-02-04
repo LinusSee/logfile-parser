@@ -5,12 +5,41 @@ module ApiSpec
 
 import Test.Hspec
 
-import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
+import Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
+import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
+
+
+
+
+
+-- import           Control.Concurrent.MVar
+-- import           Control.Exception                (bracket)
+-- import           Data.Text                        (Text, unpack)
+-- import           GHC.Generics
+-- import           Network.HTTP.Client       hiding (Proxy)
+-- import           Network.HTTP.Types
+-- import           Network.Wai
+-- import qualified Network.Wai.Handler.Warp         as Warp
+--
+-- import           Servant
+-- import           Servant.Client
+-- import           Servant.Server
+-- import           Servant.QuickCheck
+-- import           Servant.QuickCheck.Internal (serverDoesntSatisfy)
+--
+-- import           Test.Hspec
+-- import           Test.Hspec.Wai         hiding (pending)
+-- import           Test.Hspec.Wai.Matcher
+
+
+
+
 
 import CustomParsers (ElementaryParser (..))
 import ElementaryParserFileDb (save) -- For initialising data
 import qualified Configs as Configs
+import qualified Api as Api
 
 
 createDbFiles :: IO ()
@@ -26,13 +55,37 @@ clearDbFiles = removeDirectoryRecursive dbBasePath
 
 
 spec :: Spec
-spec = before_ createDbFiles $
-       after_ clearDbFiles $ do
-         describe "api" $ do
-           it "returns" $ do
-             pending
+spec =  before_ createDbFiles $
+        before_ createElementaryParsers $
+        after_ clearDbFiles $ do
+        -- around withUserApp $ do
+          -- let getNames = client Api.api -- Change back to Proxy...
+          -- baseUrl <- runIO $ parseBaseUrl "http://localhost"
+          -- manager <- runIO $ newManager defaultManagerSettings
+          --
+          -- let clientEnv port = mkClientEnv manager (baseUrl {baseUrlPort = port})
 
 
+          describe "api" $ do
+            describe "building-blocks" $ do
+              describe "GET parser names as JSON" $ do
+                it "returns the names of the parsers added by before_ as a list" $ do
+                  -- result <- runClientM getNames (clientEnv port)
+                  -- result `shouldBe` Right ["asdf"]
+                  pending
+
+
+          describe "logfile" $ do
+            it "returns" $ do
+              pending
+
+
+
+
+
+withUserApp :: (Warp.Port -> IO ()) -> IO ()
+withUserApp action =
+    Warp.testWithApplication (pure $ Api.app fileDbConfig) action
 
 
 createElementaryParsers :: IO ()

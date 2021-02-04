@@ -74,4 +74,8 @@ tests:
     - hspec-wai-json
     - aeson
     - QuickCheck
+    - servant-quickcheck
+    - servant-client
+    - http-client
+    - http-types
     - directory

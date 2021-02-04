@@ -7,6 +7,8 @@
 module Api
     ( startApp
     , app
+    , API
+    , api
     , server
     ) where
 
