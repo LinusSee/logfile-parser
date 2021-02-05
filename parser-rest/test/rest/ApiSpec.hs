@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module ApiSpec
 ( spec
 ) where
@@ -5,6 +7,8 @@ module ApiSpec
 
 import Test.Hspec
 
+import Data.Aeson
+import Data.Aeson.TH
 import Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
@@ -31,12 +35,17 @@ import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 -- import           Test.Hspec
 -- import           Test.Hspec.Wai         hiding (pending)
 -- import           Test.Hspec.Wai.Matcher
+-- import Servant
+import qualified Servant.Client as ServC
 
 
 
 
-
-import CustomParsers (ElementaryParser (..))
+import CustomParsers ( ElementaryParser (..)
+                     , LogfileParsingResponse (..)
+                     , ParsingResponse (..)
+                     , ParsingResult (..)
+                     )
 import ElementaryParserFileDb (save) -- For initialising data
 import qualified Configs as Configs
 import qualified Api as Api
@@ -58,8 +67,8 @@ spec :: Spec
 spec =  before_ createDbFiles $
         before_ createElementaryParsers $
         after_ clearDbFiles $ do
-        -- around withUserApp $ do
-          -- let getNames = client Api.api -- Change back to Proxy...
+        around withUserApp $ do
+          let getNames = ServC.client Api.api -- Change back to Proxy...
           -- baseUrl <- runIO $ parseBaseUrl "http://localhost"
           -- manager <- runIO $ newManager defaultManagerSettings
           --
@@ -69,14 +78,14 @@ spec =  before_ createDbFiles $
           describe "api" $ do
             describe "building-blocks" $ do
               describe "GET parser names as JSON" $ do
-                it "returns the names of the parsers added by before_ as a list" $ do
+                it "returns the names of the parsers added by before_ as a list" $ \port -> do
                   -- result <- runClientM getNames (clientEnv port)
                   -- result `shouldBe` Right ["asdf"]
                   pending
 
 
           describe "logfile" $ do
-            it "returns" $ do
+            it "returns" $ \port -> do
               pending
 
 
@@ -141,3 +150,26 @@ elementaryParsersDbName = "/parsers.txt"
 
 logfileParsersDbName :: String
 logfileParsersDbName = "/logfile_parsers.txt"
+
+
+
+instance FromJSON ParsingResponse where
+  parseJSON (Object o) =
+    do maybeResult <- o .:? "result"
+       case maybeResult of
+         Just (String result) ->
+            ParsingResponse <$> o .: "name" <*> (fmap OneOfResult (o .: "result"))
+
+         Nothing ->
+            ParsingResponse <$> o .: "name" <*> (fmap OneOfResult (o .: "result"))
+            -- ParsingResponse (ParsingError <$> o .: "name" <*> o .: "error")
+
+
+instance FromJSON LogfileParsingResponse where
+  parseJSON (Object o) =
+    do parserType <- o .:? "result"
+       case parserType of Just (String result) ->
+                              LogfileParsingResponse <$> o .: "result"
+
+                          Nothing ->
+                              LogfileParsingError <$> o .: "error"
