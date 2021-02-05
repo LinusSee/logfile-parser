@@ -45,6 +45,10 @@ import CustomParsers ( ElementaryParser (..)
                      , LogfileParsingResponse (..)
                      , ParsingResponse (..)
                      , ParsingResult (..)
+                     , CreateLogfileParserRequest (..)
+                     , LogfileParsingRequest (..)
+                     , NamedParser (..)
+                     , ParsingRequest (..)
                      )
 import ElementaryParserFileDb (save) -- For initialising data
 import qualified Configs as Configs
@@ -153,6 +157,26 @@ logfileParsersDbName = "/logfile_parsers.txt"
 
 
 
+instance ToJSON ParsingRequest where
+  toJSON (ParsingRequest target parser) =
+    object [ "target" .= target, "parser" .= parser ]
+
+
+instance ToJSON LogfileParsingRequest where
+  toJSON (LogfileParsingRequest target parser) =
+    object [ "target" .= target, "parser" .= parser ]
+
+
+instance ToJSON CreateLogfileParserRequest where
+  toJSON (CreateLogfileParserRequest name parsers) =
+    object [ "name" .= name, "parsers" .= parsers]
+
+
+instance ToJSON NamedParser where
+  toJSON (NamedParser name parser) =
+    object [ "name" .= name, "parser" .= parser]
+
+
 instance FromJSON ParsingResponse where
   parseJSON (Object o) =
     do maybeResult <- o .:? "result"
@@ -161,8 +185,7 @@ instance FromJSON ParsingResponse where
             ParsingResponse <$> o .: "name" <*> (fmap OneOfResult (o .: "result"))
 
          Nothing ->
-            ParsingResponse <$> o .: "name" <*> (fmap OneOfResult (o .: "result"))
-            -- ParsingResponse (ParsingError <$> o .: "name" <*> o .: "error")
+            ParsingResponse <$> o .: "name" <*> (fmap ParsingError (o .: "error"))
 
 
 instance FromJSON LogfileParsingResponse where
