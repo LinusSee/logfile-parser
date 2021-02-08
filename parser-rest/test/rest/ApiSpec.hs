@@ -21,12 +21,12 @@ import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 -- import           Control.Exception                (bracket)
 -- import           Data.Text                        (Text, unpack)
 -- import           GHC.Generics
--- import           Network.HTTP.Client       hiding (Proxy)
+import qualified Network.HTTP.Client              as HttpClient
 -- import           Network.HTTP.Types
 -- import           Network.Wai
--- import qualified Network.Wai.Handler.Warp         as Warp
+import qualified Network.Wai.Handler.Warp         as Warp
 --
--- import           Servant
+import           Servant
 -- import           Servant.Client
 -- import           Servant.Server
 -- import           Servant.QuickCheck
@@ -72,19 +72,20 @@ spec =  before_ createDbFiles $
         before_ createElementaryParsers $
         after_ clearDbFiles $ do
         around withUserApp $ do
-          let getNames = ServC.client Api.api -- Change back to Proxy...
-          -- baseUrl <- runIO $ parseBaseUrl "http://localhost"
-          -- manager <- runIO $ newManager defaultManagerSettings
-          --
-          -- let clientEnv port = mkClientEnv manager (baseUrl {baseUrlPort = port})
+          -- let getNames = ServC.client Api.api -- Change back to Proxy...
+          let (_) :<|> ( getNames :<|> _) = ServC.client Api.api
+          baseUrl <- runIO $ ServC.parseBaseUrl "http://localhost"
+          manager <- runIO $ HttpClient.newManager HttpClient.defaultManagerSettings
+
+          let clientEnv port = ServC.mkClientEnv manager (baseUrl {ServC.baseUrlPort = port})
 
 
           describe "api" $ do
             describe "building-blocks" $ do
               describe "GET parser names as JSON" $ do
                 it "returns the names of the parsers added by before_ as a list" $ \port -> do
-                  -- result <- runClientM getNames (clientEnv port)
-                  -- result `shouldBe` Right ["asdf"]
+                  result <- ServC.runClientM getNames (clientEnv port)
+                  result `shouldBe` Right initialElementaryParsers
                   pending
 
 
@@ -102,21 +103,27 @@ withUserApp action =
 
 
 createElementaryParsers :: IO ()
-createElementaryParsers = mapM_ (save fileDbConfig) parsers
+createElementaryParsers = mapM_
+                            (save fileDbConfig)
+                            (reverse initialElementaryParsers)
 
   where dbPath = dbBasePath ++ elementaryParsersDbName
-        parsers = [ oneOfParser
-                  , timeParser
-                  , matchUntilIncludedParser
-                  , matchUntilExcludedParser
-                  , matchUntilEndParser
-                  ]
 
 
 fileDbConfig :: Configs.FileDbConfig
 fileDbConfig = Configs.FileDbConfig
                   (T.pack $ dbBasePath ++ elementaryParsersDbName)
                   (T.pack $ dbBasePath ++ logfileParsersDbName)
+
+
+initialElementaryParsers :: [ElementaryParser]
+initialElementaryParsers =  [ oneOfParser
+                            , timeParser
+                            , matchUntilIncludedParser
+                            , matchUntilExcludedParser
+                            , matchUntilEndParser
+                            ]
+
 
 oneOfParser :: ElementaryParser
 oneOfParser = OneOf "loglevelParser" ["INFO", "INCIDENT", "ERROR"]
