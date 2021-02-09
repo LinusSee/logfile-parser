@@ -163,6 +163,32 @@ logfileParsersDbName :: String
 logfileParsersDbName = "/logfile_parsers.txt"
 
 
+getLogfileParserNames :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [String]
+getLogfileParserNames (( parserNames :<|> _ ) :<|> (_)) = parserNames
+
+createLogfileParser :: ServC.Client ServC.ClientM Api.API -> (CreateLogfileParserRequest -> ServC.ClientM NoContent)
+createLogfileParser (( _ :<|> createParser :<|> _) :<|> (_)) = createParser
+
+applyLogfileParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParserByName (( _ :<|> _ :<|> applyByName :<|> _) :<|> (_)) = applyByName
+
+applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (LogfileParsingRequest -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) = applyParser
+
+
+getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [ElementaryParser]
+getElementaryParsers ((_) :<|> ( getParsers :<|> _)) = getParsers
+
+createElementaryParser :: ServC.Client ServC.ClientM Api.API -> (ElementaryParser -> ServC.ClientM NoContent)
+createElementaryParser ((_) :<|> ( _ :<|> createParser :<|> _)) = createParser
+
+applyElementaryParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM ParsingResponse)
+applyElementaryParserByName ((_) :<|> ( _ :<|> _ :<|> applyByName :<|> _)) = applyByName
+
+applyElementaryParser :: ServC.Client ServC.ClientM Api.API -> (ParsingRequest -> ServC.ClientM ParsingResponse)
+applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyParser)) = applyParser
+
+
 
 instance ToJSON ParsingRequest where
   toJSON (ParsingRequest target parser) =
