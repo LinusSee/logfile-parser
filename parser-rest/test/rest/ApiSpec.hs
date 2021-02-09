@@ -73,7 +73,7 @@ spec =  before_ createDbFiles $
         after_ clearDbFiles $ do
         around withUserApp $ do
           -- let getNames = ServC.client Api.api -- Change back to Proxy...
-          let (_) :<|> ( getNames :<|> _) = ServC.client Api.api
+          let client = ServC.client Api.api
           baseUrl <- runIO $ ServC.parseBaseUrl "http://localhost"
           manager <- runIO $ HttpClient.newManager HttpClient.defaultManagerSettings
 
@@ -84,7 +84,9 @@ spec =  before_ createDbFiles $
             describe "building-blocks" $ do
               describe "GET parser names as JSON" $ do
                 it "returns the names of the parsers added by before_ as a list" $ \port -> do
-                  result <- ServC.runClientM getNames (clientEnv port)
+                  result <- ServC.runClientM
+                              (getElementaryParsers client)
+                              (clientEnv port)
                   result `shouldBe` Right initialElementaryParsers
                   pending
 
