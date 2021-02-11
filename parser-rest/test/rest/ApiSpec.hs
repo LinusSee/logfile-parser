@@ -88,6 +88,39 @@ spec =  before_ createDbFiles $
                               (getElementaryParsers client)
                               (clientEnv port)
                   result `shouldBe` Right initialElementaryParsers
+
+
+              describe "POST parser as JSON creates the parser and" $ do
+                it "returns NoContent" $ \port -> do
+                  let parser = OneOf "newLoglevelParser" ["TRACE", "DEBUG", "INFO", "ERROR"]
+                  creationResult <- ServC.runClientM
+                              (createElementaryParser client parser)
+                              (clientEnv port)
+                  creationResult `shouldBe` Right NoContent
+
+                  getResult <- ServC.runClientM
+                              (getElementaryParsers client)
+                              (clientEnv port)
+                  getResult `shouldBe` Right (parser : initialElementaryParsers)
+
+
+              describe "GET parsing response for existing parser via URL params" $ do
+                it "returns the parsing response" $ \port -> do
+                  result <- ServC.runClientM
+                              (getElementaryParsers client)
+                              (clientEnv port)
+                  result `shouldBe` Right initialElementaryParsers
+
+                  pending
+
+
+              describe "POST parser and target as JSON applies the parser to the target and" $ do
+                it "returns the parsing response" $ \port -> do
+                  result <- ServC.runClientM
+                              (getElementaryParsers client)
+                              (clientEnv port)
+                  result `shouldBe` Right initialElementaryParsers
+
                   pending
 
 

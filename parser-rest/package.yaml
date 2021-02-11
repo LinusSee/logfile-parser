@@ -30,8 +30,9 @@ dependencies:
 - wai-cors
 - wai-extra
 - warp
-- text
 - parsec
+- strict
+- text
 - time
 
 library:

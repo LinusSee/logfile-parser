@@ -4,6 +4,7 @@ module ElementaryParserFileDb
   ) where
 
 import qualified Data.Text as T
+import Control.Monad (when)
 
 import CustomParsers ( ElementaryParser )
 import qualified Configs as Configs
@@ -22,8 +23,10 @@ readAll dbConfig = do
 save :: Configs.FileDbConfig -> ElementaryParser -> IO ()
 save dbConfig parser = do
   allParsers <- readAll dbConfig
-  putStr $ show allParsers
-  writeFile filePath $ show (parser:allParsers)
+
+  -- Needed because of lazy IO
+  when (length allParsers >= 0) $
+    writeFile filePath $ show (parser:allParsers)
 
   where filePath = T.unpack $ Configs.elementaryParserPath dbConfig
 
