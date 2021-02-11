@@ -106,12 +106,14 @@ spec =  before_ createDbFiles $
 
               describe "GET parsing response for existing parser via URL params" $ do
                 it "returns the parsing response" $ \port -> do
+                  let parserName = "loglevelParser"
+                  let target = Just "INCIDENT some message"
                   result <- ServC.runClientM
-                              (getElementaryParsers client)
+                              (applyElementaryParserByName client parserName target)
                               (clientEnv port)
-                  result `shouldBe` Right initialElementaryParsers
-
-                  pending
+                  result `shouldBe` (Right $ ParsingResponse
+                                              parserName
+                                              (OneOfResult "INCIDENT"))
 
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
