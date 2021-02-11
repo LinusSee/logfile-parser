@@ -108,9 +108,11 @@ spec =  before_ createDbFiles $
                 it "returns the parsing response" $ \port -> do
                   let parserName = "loglevelParser"
                   let target = Just "INCIDENT some message"
+
                   result <- ServC.runClientM
                               (applyElementaryParserByName client parserName target)
                               (clientEnv port)
+
                   result `shouldBe` (Right $ ParsingResponse
                                               parserName
                                               (OneOfResult "INCIDENT"))
@@ -118,12 +120,18 @@ spec =  before_ createDbFiles $
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns the parsing response" $ \port -> do
-                  result <- ServC.runClientM
-                              (getElementaryParsers client)
-                              (clientEnv port)
-                  result `shouldBe` Right initialElementaryParsers
+                  let parsingRequest = ParsingRequest
+                                          "DEBUG some message"
+                                          (OneOf "newLoglevelParser" ["TRACE", "DEBUG", "INFO", "ERROR"])
 
-                  pending
+                  result <- ServC.runClientM
+                              (applyElementaryParser client parsingRequest)
+                              (clientEnv port)
+
+                  result `shouldBe` (Right $ ParsingResponse
+                                              "newLoglevelParser"
+                                              (OneOfResult "DEBUG"))
+
 
 
           describe "logfile" $ do
