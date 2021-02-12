@@ -125,7 +125,10 @@ spec =  before_ createDbFiles $
             describe "logfile" $ do
               describe "GET logfile parser names as JSON" $ do
                 it "returns a list of parser names" $ \port -> do
-                  pending
+                  result <- ServC.runClientM
+                              (getLogfileParserNames client)
+                              (clientEnv port)
+                  result `shouldBe` Right ["myLogfileParser"]
 
 
               describe "POST parser as JSON creates the parser and" $ do
