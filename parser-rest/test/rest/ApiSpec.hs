@@ -133,7 +133,22 @@ spec =  before_ createDbFiles $
 
               describe "POST parser as JSON creates the parser and" $ do
                 it "returns NoContent" $ \port -> do
-                  pending
+                  let parser = CreateLogfileParserRequest
+                                  "newLogfileParser"
+                                  [ NamedParser "loglevel" oneOfParser
+                                  , NamedParser "space" spaceParser
+                                  , NamedParser "message" matchUntilEndParser
+                                  ]
+
+                  creationResult <- ServC.runClientM
+                              (createLogfileParser client parser)
+                              (clientEnv port)
+                  creationResult `shouldBe` Right NoContent
+
+                  getResult <- ServC.runClientM
+                              (getLogfileParserNames client)
+                              (clientEnv port)
+                  getResult `shouldBe` Right ["newLogfileParser", "myLogfileParser"]
 
 
               describe "GET parsing response for existing parser via URL params" $ do
