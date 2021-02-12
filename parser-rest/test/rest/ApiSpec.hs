@@ -17,31 +17,17 @@ import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 
 
 
--- import           Control.Concurrent.MVar
--- import           Control.Exception                (bracket)
--- import           Data.Text                        (Text, unpack)
--- import           GHC.Generics
+
 import qualified Network.HTTP.Client              as HttpClient
--- import           Network.HTTP.Types
--- import           Network.Wai
 import qualified Network.Wai.Handler.Warp         as Warp
---
 import           Servant
--- import           Servant.Client
--- import           Servant.Server
--- import           Servant.QuickCheck
--- import           Servant.QuickCheck.Internal (serverDoesntSatisfy)
---
--- import           Test.Hspec
--- import           Test.Hspec.Wai         hiding (pending)
--- import           Test.Hspec.Wai.Matcher
--- import Servant
 import qualified Servant.Client as ServC
 
 
 
 
 import CustomParsers ( ElementaryParser (..)
+                     , LogfileParser (..)
                      , LogfileParsingResponse (..)
                      , ParsingResponse (..)
                      , ParsingResult (..)
@@ -50,7 +36,8 @@ import CustomParsers ( ElementaryParser (..)
                      , NamedParser (..)
                      , ParsingRequest (..)
                      )
-import ElementaryParserFileDb (save) -- For initialising data
+import qualified ElementaryParserFileDb as ElemDb -- For initialising data
+import qualified LogfileParserFileDb as LogfileDb -- For initialising data
 import qualified Configs as Configs
 import qualified Api as Api
 
@@ -82,7 +69,7 @@ spec =  before_ createDbFiles $
 
           describe "api" $ do
             describe "building-blocks" $ do
-              describe "GET parser names as JSON" $ do
+              describe "GET elementary parsers as JSON" $ do
                 it "returns the names of the parsers added by before_ as a list" $ \port -> do
                   result <- ServC.runClientM
                               (getElementaryParsers client)
@@ -134,9 +121,26 @@ spec =  before_ createDbFiles $
 
 
 
-          describe "logfile" $ do
-            it "returns" $ \port -> do
-              pending
+          before_ createLogfileParsers $
+            describe "logfile" $ do
+              describe "GET logfile parser names as JSON" $ do
+                it "returns a list of parser names" $ \port -> do
+                  pending
+
+
+              describe "POST parser as JSON creates the parser and" $ do
+                it "returns NoContent" $ \port -> do
+                  pending
+
+
+              describe "GET parsing response for existing parser via URL params" $ do
+                it "returns the parsing response" $ \port -> do
+                  pending
+
+
+              describe "POST parser and target as JSON applies the parser to the target and" $ do
+                it "returns a list of parser names" $ \port -> do
+                  pending
 
 
 
@@ -149,10 +153,16 @@ withUserApp action =
 
 createElementaryParsers :: IO ()
 createElementaryParsers = mapM_
-                            (save fileDbConfig)
+                            (ElemDb.save fileDbConfig)
                             (reverse initialElementaryParsers)
 
   where dbPath = dbBasePath ++ elementaryParsersDbName
+
+
+createLogfileParsers :: IO ()
+createLogfileParsers = mapM_
+                        (LogfileDb.save fileDbConfig)
+                        [logfileParser]
 
 
 fileDbConfig :: Configs.FileDbConfig
@@ -164,8 +174,12 @@ fileDbConfig = Configs.FileDbConfig
 initialElementaryParsers :: [ElementaryParser]
 initialElementaryParsers =  [ oneOfParser
                             , timeParser
+                            , dateParser
+                            , spaceParser
+                            , charactersParser
                             , matchUntilIncludedParser
                             , matchUntilExcludedParser
+                            , matchForParser
                             , matchUntilEndParser
                             ]
 
@@ -176,15 +190,42 @@ oneOfParser = OneOf "loglevelParser" ["INFO", "INCIDENT", "ERROR"]
 timeParser :: ElementaryParser
 timeParser = Time "dashedTimeParser" "HH-MM"
 
+dateParser :: ElementaryParser
+dateParser = Date "dottedDateParser" "YYYY.MM.DD"
+
+spaceParser :: ElementaryParser
+spaceParser = Characters "spaceParser" " "
+
+charactersParser :: ElementaryParser
+charactersParser = Characters "correlationIdEndTag" "</correlationId>"
+
 matchUntilIncludedParser :: ElementaryParser
 matchUntilIncludedParser = MatchUntilIncluded "untilCorrelationId" "<correlationId>"
 
 matchUntilExcludedParser :: ElementaryParser
 matchUntilExcludedParser = MatchUntilExcluded "correlationId" "</correlationId>"
 
+matchForParser :: ElementaryParser
+matchForParser = MatchFor "for1Space" 1
+
 matchUntilEndParser :: ElementaryParser
 matchUntilEndParser = MatchUntilEnd "matchUntilEnd"
 
+
+logfileParser :: LogfileParser
+logfileParser = LogfileParser
+                  "myLogfileParser"
+                  [ ("LogLevel", oneOfParser)
+                  , ("space", spaceParser)
+                  , ("LogDate", dateParser)
+                  , ("space", spaceParser)
+                  , ("LogTime", timeParser)
+                  , ("UntilCorrelationId", matchUntilIncludedParser)
+                  , ("CorrelationId", matchUntilExcludedParser)
+                  , ("CorrelationIdEndTag", charactersParser)
+                  , ("forSpace", matchForParser)
+                  , ("restOfTheMessage", matchUntilEndParser)
+                  ]
 -- data Config = Config
 --   { fileDbConfig :: FileDbConfig
 --   , apiConfig :: APIConfig

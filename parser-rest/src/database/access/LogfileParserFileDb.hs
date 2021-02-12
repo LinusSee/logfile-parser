@@ -4,6 +4,7 @@ module LogfileParserFileDb
 ) where
 
 import qualified Data.Text as T
+import Control.Monad (when)
 
 import CustomParsers (LogfileParser)
 import qualified Configs as Configs
@@ -22,8 +23,10 @@ readAll dbConfig = do
 save :: Configs.FileDbConfig -> LogfileParser -> IO ()
 save dbConfig logfileParser = do
   allParsers <- readAll dbConfig
-  putStr $ show allParsers
-  writeFile filePath $ show (logfileParser:allParsers)
+
+  -- Needed because of lazy IO
+  when (length allParsers >= 0) $
+    writeFile filePath $ show (logfileParser:allParsers)
 
   where filePath = T.unpack $ Configs.logfileParserPath dbConfig
 

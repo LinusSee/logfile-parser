@@ -31,7 +31,6 @@ dependencies:
 - wai-extra
 - warp
 - parsec
-- strict
 - text
 - time
 
