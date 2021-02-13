@@ -147,9 +147,8 @@ spec = do
         context "when provided with an invalid input and a MatchUntilIncluded parser" $ do
             prop "doesn't match the provided string" $ do
                 \name before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    -- Testdata could be incorrect in some rare constellations (check if problems occur)
                     let parser = MatchUntilIncluded name target
-                    let stringToParse = takeUntilSubstring before target ++ drop 1 target
+                    let stringToParse = takeUntilSubstring before target
 
                     applyParser stringToParse parser `shouldSatisfy` isLeft
 
@@ -170,9 +169,8 @@ spec = do
         context "when provided with an invalid input and a MatchUntilExcluded parser" $ do
             prop "doesn't match the provided string" $ do
                 \name before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    -- Testdata could be incorrect in some rare constellations (check if problems occur)
                     let parser = MatchUntilExcluded name target
-                    let stringToParse = takeUntilSubstring before target ++ drop 1 target
+                    let stringToParse = takeUntilSubstring before target
 
                     applyParser stringToParse parser `shouldSatisfy` isLeft
 
