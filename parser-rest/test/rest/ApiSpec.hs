@@ -178,7 +178,30 @@ spec =  before_ createDbFiles $
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns a list of parser names" $ \port -> do
-                  pending
+                  let parsingRequest = LogfileParsingRequest
+                                  "ERROR some message describing the error\n\
+                                  \INFO some info"
+                                  (CreateLogfileParserRequest
+                                    "newLogfileParser"
+                                    [ NamedParser "loglevel" oneOfParser
+                                    , NamedParser "space" spaceParser
+                                    , NamedParser "message" matchUntilEndParser
+                                    ])
+
+                  result <- ServC.runClientM
+                              (applyLogfileParser client parsingRequest)
+                              (clientEnv port)
+
+                  result `shouldBe` (Right $ LogfileParsingResponse
+                                              [ [ ParsingResponse "loglevel" (OneOfResult "ERROR")
+                                                , ParsingResponse "space" (OneOfResult " ")
+                                                , ParsingResponse "message" (OneOfResult "some message describing the error")
+                                                ]
+                                              , [ ParsingResponse "loglevel" (OneOfResult "INFO")
+                                                , ParsingResponse "space" (OneOfResult " ")
+                                                , ParsingResponse "message" (OneOfResult "some info")
+                                                ]
+                                              ])
 
 
 
