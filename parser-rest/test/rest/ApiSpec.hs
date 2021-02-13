@@ -153,7 +153,27 @@ spec =  before_ createDbFiles $
 
               describe "GET parsing response for existing parser via URL params" $ do
                 it "returns the parsing response" $ \port -> do
-                  pending
+                  let parserName = "myLogfileParser"
+                  let target = Just "INCIDENT 2021.02.13 16-13 some stuff before id <correlationId>asg-qwta123-fd</correlationId> error message"
+
+                  result <- ServC.runClientM
+                              (applyLogfileParserByName client parserName target)
+                              (clientEnv port)
+
+                  result `shouldBe` (Right $ LogfileParsingResponse [
+                                              [ ParsingResponse "LogLevel" (OneOfResult "INCIDENT")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "LogDate" (OneOfResult "2021-02-13")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "LogTime" (OneOfResult "16:13:00")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "UntilCorrelationId" (OneOfResult "some stuff before id <correlationId>")
+                                              , ParsingResponse "CorrelationId" (OneOfResult "asg-qwta123-fd")
+                                              , ParsingResponse "CorrelationIdEndTag" (OneOfResult "</correlationId>")
+                                              , ParsingResponse "forSpace" (OneOfResult " ")
+                                              , ParsingResponse "restOfTheMessage" (OneOfResult "error message")
+                                              ]])
+
 
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
@@ -238,6 +258,7 @@ logfileParser = LogfileParser
                   , ("LogDate", dateParser)
                   , ("space", spaceParser)
                   , ("LogTime", timeParser)
+                  , ("space", spaceParser)
                   , ("UntilCorrelationId", matchUntilIncludedParser)
                   , ("CorrelationId", matchUntilExcludedParser)
                   , ("CorrelationIdEndTag", charactersParser)
@@ -328,8 +349,10 @@ instance FromJSON ParsingResponse where
 instance FromJSON LogfileParsingResponse where
   parseJSON (Object o) =
     do parserType <- o .:? "result"
-       case parserType of Just (String result) ->
-                              LogfileParsingResponse <$> o .: "result"
+       let maybeResponse = fmap LogfileParsingResponse parserType
+       case maybeResponse of
+          Just response ->
+            return response
 
-                          Nothing ->
-                              LogfileParsingError <$> o .: "error"
+          Nothing ->
+            LogfileParsingError <$> o .: "error"
