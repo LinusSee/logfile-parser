@@ -20,11 +20,11 @@ spec =
                 it "returns the parsed result" $ do
                     let parser = LogfileParser
                                     "someName"
-                                    [ ("loglevel", OneOf "oneOfP" ["INFO", "INCIDENT", "ERROR"])
-                                    , ("whitespace", Characters "whitespaceP" " ")
-                                    , ("date", Date "dateP" "YYYY.MM.DD")
-                                    , ("whitespace", Characters "whitespaceP" " ")
-                                    , ("message", MatchUntilEnd "endP")
+                                    [ NamedElementaryParser "loglevel" (ElementaryParser "oneOfP" (OneOf ["INFO", "INCIDENT", "ERROR"]))
+                                    , NamedElementaryParser "whitespace" (ElementaryParser "whitespaceP" (Characters " "))
+                                    , NamedElementaryParser "date" (ElementaryParser "dateP" (Date "YYYY.MM.DD"))
+                                    , NamedElementaryParser "whitespace" (ElementaryParser "whitespaceP" (Characters " "))
+                                    , NamedElementaryParser "message" (ElementaryParser "endP" MatchUntilEnd)
                                     ]
                     let target = "INFO 2020.12.21 some message stuff\n\
                                   \INCIDENT 2021.11.21 msg2\n\
@@ -57,15 +57,15 @@ spec =
                 it "returns the parsed result" $ do
                     let parser = LogfileParser
                                     "someName"
-                                    [ ("time", Time "timeP" "HH:MM")
-                                    , ("whitespace", Characters "whitespaceP" " ")
-                                    , ("untilCorrelationId", MatchUntilIncluded "untilIdP" "<correlationId>")
-                                    , ("correlationId", MatchUntilExcluded "idP" "</correlationId>")
-                                    , ("closingIdTag", Characters "closingIdP" "</correlationId>")
-                                    , ("whitespace", Characters "whitespaceP" " ")
-                                    , ("4Chars", MatchFor "4CharP" 4)
-                                    , ("whitespace", Characters "whitespaceP" " ")
-                                    , ("message", MatchUntilEnd "endP")
+                                    [ NamedElementaryParser "time" (ElementaryParser "timeP" (Time "HH:MM"))
+                                    , NamedElementaryParser "whitespace" (ElementaryParser "whitespaceP" (Characters " "))
+                                    , NamedElementaryParser "untilCorrelationId" (ElementaryParser "untilIdP" (MatchUntilIncluded "<correlationId>"))
+                                    , NamedElementaryParser "correlationId" (ElementaryParser "idP" (MatchUntilExcluded "</correlationId>"))
+                                    , NamedElementaryParser "closingIdTag" (ElementaryParser "closingIdP" (Characters "</correlationId>"))
+                                    , NamedElementaryParser "whitespace" (ElementaryParser "whitespaceP" (Characters " "))
+                                    , NamedElementaryParser "4Chars" (ElementaryParser "4CharP" (MatchFor 4))
+                                    , NamedElementaryParser "whitespace" (ElementaryParser "whitespaceP" (Characters " "))
+                                    , NamedElementaryParser "message" (ElementaryParser "endP" MatchUntilEnd)
                                     ]
                     let target = "5:38 stuff before <correlationId>myCorrelationId1</correlationId> 4cha some message stuff\n\
                                  \9:45 prelude to the <correlationId>myCorrelationId42</correlationId> same another message till the end!\n\

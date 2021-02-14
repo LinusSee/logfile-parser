@@ -29,9 +29,7 @@ validateCreateLogfileParserRequest request@(CreateLogfileParserRequest name pars
     where validatedParser = Validation.validateLogfileParser logfileParser
           isValidRequest = isRight validatedParser
 
-          logfileParser = LogfileParser name mappedParsers
-          mapParser ( NamedParser name parser ) = (name, parser)
-          mappedParsers = map mapParser parsers
+          logfileParser = LogfileParser name parsers
 
 
 validateLogfileParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
@@ -72,9 +70,7 @@ validateLogfileParsingRequest request@(LogfileParsingRequest target (CreateLogfi
         validatedParser = Validation.validateLogfileParser logfileParser
         isValidRequest = isRight validatedTarget && isRight validatedParser
 
-        logfileParser = LogfileParser name mappedParsers
-        mapParser ( NamedParser name parser ) = (name, parser)
-        mappedParsers = map mapParser parsers
+        logfileParser = LogfileParser name parsers
 
 
 

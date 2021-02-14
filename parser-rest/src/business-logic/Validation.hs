@@ -20,6 +20,8 @@ import ValidationModels
 import CustomParsers
   ( LogfileParser (..)
   , ElementaryParser (..)
+  , NamedElementaryParser (..)
+  , BasicParser (..)
   )
 
 
@@ -54,45 +56,39 @@ validateLogfileParserExists name = Right $ Valid name
 
 
 validateElementaryParser :: ElementaryParser -> Either [ValidationError] (Valid ElementaryParser)
-validateElementaryParser parser =
-    case parser of
-      OneOf name values ->
-          let validatedName = validateParserName name
-              validatedValues = validateOneOfValues values
-          in  gatherResult validatedName validatedValues
+validateElementaryParser parser@(ElementaryParser name basicParser) =
+    let validatedName = validateParserName name
+    in  case basicParser of
+          OneOf values ->
+              let validatedValues = validateOneOfValues values
+              in  gatherResult validatedName validatedValues
 
-      Time name pattern ->
-          let validatedName = validateParserName name
-              validatedPattern = validateTimePattern pattern
-          in  gatherResult validatedName validatedPattern
+          Time pattern ->
+              let validatedPattern = validateTimePattern pattern
+              in  gatherResult validatedName validatedPattern
 
-      Date name pattern ->
-          let validatedName = validateParserName name
-              validatedPattern = validateDatePattern pattern
-          in  gatherResult validatedName validatedPattern
+          Date pattern ->
+              let validatedPattern = validateDatePattern pattern
+              in  gatherResult validatedName validatedPattern
 
-      Characters name value ->
-          let validatedName = validateParserName name
-              validatedValue = validateCharactersValue value
-          in  gatherResult validatedName validatedValue
+          Characters value ->
+              let validatedValue = validateCharactersValue value
+              in  gatherResult validatedName validatedValue
 
-      MatchUntilIncluded name value ->
-          let validatedName = validateParserName name
-              validatedValue = validateMatchUntilIncludedValue value
-          in  gatherResult validatedName validatedValue
+          MatchUntilIncluded value ->
+              let validatedValue = validateMatchUntilIncludedValue value
+              in  gatherResult validatedName validatedValue
 
-      MatchUntilExcluded name value ->
-          let validatedName = validateParserName name
-              validatedValue = validateMatchUntilExcludedValue value
-          in  gatherResult validatedName validatedValue
+          MatchUntilExcluded value ->
+              let validatedValue = validateMatchUntilExcludedValue value
+              in  gatherResult validatedName validatedValue
 
-      MatchFor name count ->
-          let validatedName = validateParserName name
-              validatedCount = validateMatchForCount count
-          in  gatherResult validatedName validatedCount
+          MatchFor count ->
+              let validatedCount = validateMatchForCount count
+              in  gatherResult validatedName validatedCount
 
-      MatchUntilEnd _ ->
-          Right $ Valid parser
+          MatchUntilEnd ->
+              Right $ Valid parser
 
     where gatherResult r1 r2 =
             let isValidResult = isRight r1 && isRight r2
@@ -137,7 +133,7 @@ validateParserName name =
   where nameIsValid = not $ null name
 
 
-validateParsersList :: [(String, ElementaryParser)] -> Either ValidationError (Valid [(String, ElementaryParser)])
+validateParsersList :: [NamedElementaryParser] -> Either ValidationError (Valid [NamedElementaryParser])
 validateParsersList parsers =
   case parsersIsValid of
     True ->
@@ -162,17 +158,17 @@ validateParsersList parsers =
         validatedParsers = map validateNamedParser parsers
 
 
-validateNamedParser :: (String, ElementaryParser) -> Either [ValidationError] (Valid (String, ElementaryParser))
-validateNamedParser (name, parser) =
+validateNamedParser :: NamedElementaryParser -> Either [ValidationError] (Valid NamedElementaryParser)
+validateNamedParser namedParser@(NamedElementaryParser name elementaryParser) =
   case isValid of
     True ->
-      Right $ Valid (name, parser)
+      Right $ Valid namedParser
 
     False ->
       Left $ appendError validatedName (fromLeft [] validatedParser)
 
   where validatedName = validateParserName name
-        validatedParser = validateElementaryParser parser
+        validatedParser = validateElementaryParser elementaryParser
         isValid = isRight validatedName && isRight validatedParser
 
 

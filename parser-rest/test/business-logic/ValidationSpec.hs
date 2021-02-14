@@ -70,12 +70,12 @@ spec = do
     describe "validateElementaryParser" $ do
       context "when provided with a valid OneOf ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-            let parser = OneOf "some parser name" ["elem1", "elem2"]
+            let parser = ElementaryParser "some parser name" (OneOf ["elem1", "elem2"])
             fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (empty list)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = OneOf "some parser name" []
+            let parser = ElementaryParser "some parser name" (OneOf [])
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                             (FieldValidation "values")
                                                             "A oneOf parser must contain at least one nonempty value/string to match."
@@ -84,7 +84,7 @@ spec = do
       context "properties" $ do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName elements -> do
-              let parser = OneOf parserName elements
+              let parser = ElementaryParser parserName (OneOf elements)
               let validationResult = validateElementaryParser parser
 
               if null parserName && (null elements || (not . null) (filter null elements))
@@ -113,12 +113,12 @@ spec = do
 
       context "when provided with a valid Time ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = Time "some parser name" "HH.MM"
+          let parser = ElementaryParser "some parser name" (Time "HH.MM")
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (invalid pattern)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = Time "some parser name" ".HHMM"
+            let parser = ElementaryParser "some parser name" (Time ".HHMM")
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                                 (FieldValidation "pattern")
                                                                 ( "A time parser must match the following format: Two blocks of 'HH' and 'MM'"
@@ -129,7 +129,7 @@ spec = do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName pattern -> do
               let upperPattern = map Char.toUpper pattern
-              let parser = Time parserName pattern
+              let parser = ElementaryParser parserName (Time pattern)
               let validationResult = validateElementaryParser parser
 
               -- The second part of the condition is incorrect: Leave this until I know how to generate proper testdata
@@ -161,12 +161,12 @@ spec = do
 
       context "when provided with a valid Date ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = Date "some parser name" "YYYY-DD-MM"
+          let parser = ElementaryParser "some parser name" (Date "YYYY-DD-MM")
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (invalid pattern)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = Date "some parser name" "YYYY.MMDD."
+            let parser = ElementaryParser "some parser name" (Date "YYYY.MMDD.")
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                               (FieldValidation "pattern")
                                                               ( "A time parser must match the following format: Three blocks of 'YYYY', 'MM', and 'DD'"
@@ -177,7 +177,7 @@ spec = do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName pattern -> do
               let upperPattern = map Char.toUpper pattern
-              let parser = Date parserName pattern
+              let parser = ElementaryParser parserName (Date pattern)
               let validationResult = validateElementaryParser parser
 
               -- The second part of the condition is incorrect: Leave this until I know how to generate proper testdata
@@ -209,12 +209,12 @@ spec = do
 
       context "when provided with a valid Characters ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = Characters "some parser name" "stringToMatch"
+          let parser = ElementaryParser "some parser name" (Characters "stringToMatch")
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (empty string)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = Characters "some parser name" ""
+            let parser = ElementaryParser "some parser name" (Characters "")
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                                 (FieldValidation "value")
                                                                 "A characters parser must contain at least a single char to match."
@@ -223,7 +223,7 @@ spec = do
       context "properties" $ do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName value -> do
-              let parser = Characters parserName value
+              let parser = ElementaryParser parserName (Characters value)
               let validationResult = validateElementaryParser parser
 
               if null parserName && null value
@@ -251,12 +251,12 @@ spec = do
 
       context "when provided with a valid MatchUntilIncluded ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = MatchUntilIncluded "some parser name" "includedValue"
+          let parser = ElementaryParser "some parser name" (MatchUntilIncluded "includedValue")
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (empty string)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = MatchUntilIncluded "some parser name" ""
+            let parser = ElementaryParser "some parser name" (MatchUntilIncluded "")
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                               (FieldValidation "value")
                                                               "A matchUntilIncluded parser must contain at least a single char to match."
@@ -265,7 +265,7 @@ spec = do
       context "properties" $ do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName value -> do
-              let parser = MatchUntilIncluded parserName value
+              let parser = ElementaryParser parserName (MatchUntilIncluded value)
               let validationResult = validateElementaryParser parser
 
               if null parserName && null value
@@ -293,12 +293,12 @@ spec = do
 
       context "when provided with a valid MatchUntilExcluded ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = MatchUntilExcluded "some parser name" "excludedValue"
+          let parser = ElementaryParser "some parser name" (MatchUntilExcluded "excludedValue")
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (empty string)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = MatchUntilExcluded "some parser name" ""
+            let parser = ElementaryParser "some parser name" (MatchUntilExcluded "")
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                                 (FieldValidation "value")
                                                                 "A matchUntilExcluded parser must contain at least a single char to match."
@@ -307,7 +307,7 @@ spec = do
       context "properties" $ do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName value -> do
-              let parser = MatchUntilExcluded parserName value
+              let parser = ElementaryParser parserName (MatchUntilExcluded value)
               let validationResult = validateElementaryParser parser
 
               if null parserName && null value
@@ -335,12 +335,12 @@ spec = do
 
       context "when provided with a valid MatchFor ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = MatchFor "some parser name" 5
+          let parser = ElementaryParser "some parser name" (MatchFor 5)
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
       context "when provided with an invalid input (count <= 0)" $ do
         it "returns a correct <ValidationError> list" $ do
-            let parser = MatchFor "some parser name" 0
+            let parser = ElementaryParser "some parser name" (MatchFor 0)
             validateElementaryParser parser `shouldBe` Left [ ValidationError
                                                               (FieldValidation "count")
                                                               "A matchFor parser must have a count greater 0."
@@ -349,7 +349,7 @@ spec = do
       context "properties" $ do
         prop "returns a <ValidationError> list if invalid and a <Valid> containing the parser otherwise" $
           \parserName count -> do
-              let parser = MatchFor parserName count
+              let parser = ElementaryParser parserName (MatchFor count)
               let validationResult = validateElementaryParser parser
 
               if null parserName && count <= 0
@@ -377,7 +377,7 @@ spec = do
 
       context "when provided with a valid MatchUntilEnd ElementaryParser" $ do
         it "returns a <Valid> type containing the parser" $ do
-          let parser = MatchUntilEnd "any name is valid"
+          let parser = ElementaryParser "any name is valid" MatchUntilEnd
           fromRight' (validateElementaryParser parser) `shouldBe` Just parser
 
 
@@ -387,9 +387,10 @@ spec = do
       context "when provided with a valid LogfileParser" $ do
           it "returns a <Valid> type containing the parser" $ do
             let parser = LogfileParser "logfileParserName"
-                                      [( "colName"
-                                       , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
-                                      )]
+                                      [ NamedElementaryParser
+                                          "colName"
+                                          (ElementaryParser "loglevelParser" (OneOf ["DEBUG", "INFO", "ERROR"]))
+                                      ]
             fromRight' (validateLogfileParser parser) `shouldBe` Just parser
 
 
@@ -403,9 +404,10 @@ spec = do
 
           it "returns a correct <ValidationError> list on empty elementary parser list" $ do
             let parser = LogfileParser ""
-                                      [( "colName"
-                                       , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
-                                      )]
+                                      [ NamedElementaryParser
+                                          "colName"
+                                          (ElementaryParser "loglevelParser" (OneOf ["DEBUG", "INFO", "ERROR"]))
+                                      ]
             validateLogfileParser parser `shouldBe` Left [
                                                             ValidationError
                                                               (FieldValidation "name")
@@ -414,12 +416,12 @@ spec = do
 
           it "returns a correct <ValidationError> list on 2 invalid elementary parsers" $ do
             let parser = LogfileParser ""
-                                      [ ( ""
-                                        , OneOf "loglevelParser" ["DEBUG", "INFO", "ERROR"]
-                                        ),
-                                        ( "colName"
-                                         , Time "timeParser" ".HHMM"
-                                        )
+                                      [ NamedElementaryParser
+                                          ""
+                                          (ElementaryParser "loglevelParser" (OneOf ["DEBUG", "INFO", "ERROR"]))
+                                      , NamedElementaryParser
+                                          "colName"
+                                          (ElementaryParser "timeParser" (Time ".HHMM"))
                                       ]
             validateLogfileParser parser `shouldBe` Left [ ValidationError
                                                              (FieldValidation "name")

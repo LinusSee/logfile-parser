@@ -27,13 +27,14 @@ import qualified Servant.Client as ServC
 
 
 import CustomParsers ( ElementaryParser (..)
+                     , BasicParser (..)
                      , LogfileParser (..)
                      , LogfileParsingResponse (..)
                      , ParsingResponse (..)
                      , ParsingResult (..)
                      , CreateLogfileParserRequest (..)
                      , LogfileParsingRequest (..)
-                     , NamedParser (..)
+                     , NamedElementaryParser (..)
                      , ParsingRequest (..)
                      )
 import qualified ElementaryParserFileDb as ElemDb -- For initialising data
@@ -79,7 +80,7 @@ spec =  before_ createDbFiles $
 
               describe "POST parser as JSON creates the parser and" $ do
                 it "returns NoContent" $ \port -> do
-                  let parser = OneOf "newLoglevelParser" ["TRACE", "DEBUG", "INFO", "ERROR"]
+                  let parser = ElementaryParser "newLoglevelParser" (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"])
                   creationResult <- ServC.runClientM
                               (createElementaryParser client parser)
                               (clientEnv port)
@@ -109,7 +110,7 @@ spec =  before_ createDbFiles $
                 it "returns the parsing response" $ \port -> do
                   let parsingRequest = ParsingRequest
                                           "DEBUG some message"
-                                          (OneOf "newLoglevelParser" ["TRACE", "DEBUG", "INFO", "ERROR"])
+                                          (ElementaryParser "newLoglevelParser" (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"]))
 
                   result <- ServC.runClientM
                               (applyElementaryParser client parsingRequest)
@@ -135,9 +136,9 @@ spec =  before_ createDbFiles $
                 it "returns NoContent" $ \port -> do
                   let parser = CreateLogfileParserRequest
                                   "newLogfileParser"
-                                  [ NamedParser "loglevel" oneOfParser
-                                  , NamedParser "space" spaceParser
-                                  , NamedParser "message" matchUntilEndParser
+                                  [ NamedElementaryParser "loglevel" oneOfParser
+                                  , NamedElementaryParser "space" spaceParser
+                                  , NamedElementaryParser "message" matchUntilEndParser
                                   ]
 
                   creationResult <- ServC.runClientM
@@ -183,9 +184,9 @@ spec =  before_ createDbFiles $
                                   \INFO some info"
                                   (CreateLogfileParserRequest
                                     "newLogfileParser"
-                                    [ NamedParser "loglevel" oneOfParser
-                                    , NamedParser "space" spaceParser
-                                    , NamedParser "message" matchUntilEndParser
+                                    [ NamedElementaryParser "loglevel" oneOfParser
+                                    , NamedElementaryParser "space" spaceParser
+                                    , NamedElementaryParser "message" matchUntilEndParser
                                     ])
 
                   result <- ServC.runClientM
@@ -246,47 +247,47 @@ initialElementaryParsers =  [ oneOfParser
 
 
 oneOfParser :: ElementaryParser
-oneOfParser = OneOf "loglevelParser" ["INFO", "INCIDENT", "ERROR"]
+oneOfParser = ElementaryParser "loglevelParser" (OneOf ["INFO", "INCIDENT", "ERROR"])
 
 timeParser :: ElementaryParser
-timeParser = Time "dashedTimeParser" "HH-MM"
+timeParser = ElementaryParser "dashedTimeParser" (Time "HH-MM")
 
 dateParser :: ElementaryParser
-dateParser = Date "dottedDateParser" "YYYY.MM.DD"
+dateParser = ElementaryParser "dottedDateParser" (Date "YYYY.MM.DD")
 
 spaceParser :: ElementaryParser
-spaceParser = Characters "spaceParser" " "
+spaceParser = ElementaryParser "spaceParser" (Characters " ")
 
 charactersParser :: ElementaryParser
-charactersParser = Characters "correlationIdEndTag" "</correlationId>"
+charactersParser = ElementaryParser "correlationIdEndTag" (Characters "</correlationId>")
 
 matchUntilIncludedParser :: ElementaryParser
-matchUntilIncludedParser = MatchUntilIncluded "untilCorrelationId" "<correlationId>"
+matchUntilIncludedParser = ElementaryParser "untilCorrelationId" (MatchUntilIncluded "<correlationId>")
 
 matchUntilExcludedParser :: ElementaryParser
-matchUntilExcludedParser = MatchUntilExcluded "correlationId" "</correlationId>"
+matchUntilExcludedParser = ElementaryParser "correlationId" (MatchUntilExcluded "</correlationId>")
 
 matchForParser :: ElementaryParser
-matchForParser = MatchFor "for1Space" 1
+matchForParser = ElementaryParser "for1Space" (MatchFor 1)
 
 matchUntilEndParser :: ElementaryParser
-matchUntilEndParser = MatchUntilEnd "matchUntilEnd"
+matchUntilEndParser = ElementaryParser "matchUntilEnd" MatchUntilEnd
 
 
 logfileParser :: LogfileParser
 logfileParser = LogfileParser
                   "myLogfileParser"
-                  [ ("LogLevel", oneOfParser)
-                  , ("space", spaceParser)
-                  , ("LogDate", dateParser)
-                  , ("space", spaceParser)
-                  , ("LogTime", timeParser)
-                  , ("space", spaceParser)
-                  , ("UntilCorrelationId", matchUntilIncludedParser)
-                  , ("CorrelationId", matchUntilExcludedParser)
-                  , ("CorrelationIdEndTag", charactersParser)
-                  , ("forSpace", matchForParser)
-                  , ("restOfTheMessage", matchUntilEndParser)
+                  [ NamedElementaryParser "LogLevel" oneOfParser
+                  , NamedElementaryParser "space" spaceParser
+                  , NamedElementaryParser "LogDate" dateParser
+                  , NamedElementaryParser "space" spaceParser
+                  , NamedElementaryParser "LogTime" timeParser
+                  , NamedElementaryParser "space" spaceParser
+                  , NamedElementaryParser "UntilCorrelationId" matchUntilIncludedParser
+                  , NamedElementaryParser "CorrelationId" matchUntilExcludedParser
+                  , NamedElementaryParser "CorrelationIdEndTag" charactersParser
+                  , NamedElementaryParser "forSpace" matchForParser
+                  , NamedElementaryParser "restOfTheMessage" matchUntilEndParser
                   ]
 -- data Config = Config
 --   { fileDbConfig :: FileDbConfig
@@ -353,8 +354,8 @@ instance ToJSON CreateLogfileParserRequest where
     object [ "name" .= name, "parsers" .= parsers]
 
 
-instance ToJSON NamedParser where
-  toJSON (NamedParser name parser) =
+instance ToJSON NamedElementaryParser where
+  toJSON (NamedElementaryParser name parser) =
     object [ "name" .= name, "parser" .= parser]
 
 

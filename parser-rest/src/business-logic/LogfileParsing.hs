@@ -9,6 +9,7 @@ import qualified Text.Parsec as Parsec
 
 import CustomParsers
   ( ElementaryParser (..)
+  , NamedElementaryParser (..)
   , LogfileParser (..)
   , ParsingResponse (..)
   , LogfileParsingResponse (..)
@@ -26,7 +27,7 @@ applyLogfileParser target (LogfileParser _ parsers) =
   parse (fileParser parsers) target
 
 
-fileParser :: [(String, ElementaryParser)] -> Parsec.Parsec String () LogfileParsingResponse
+fileParser :: [NamedElementaryParser] -> Parsec.Parsec String () LogfileParsingResponse
 fileParser parsers = do
   result <- Parsec.manyTill (applyListOfParsers parsers) Parsec.eof
 
@@ -45,7 +46,7 @@ eolParser = do
   return ()
 
 
-applyListOfParsers :: [(String, ElementaryParser)] -> Parsec.Parsec String () [ParsingResponse]
+applyListOfParsers :: [NamedElementaryParser] -> Parsec.Parsec String () [ParsingResponse]
 applyListOfParsers parsers = do
   result <- runThroughList parsers
   _ <- eolParser
@@ -53,11 +54,13 @@ applyListOfParsers parsers = do
   return result
 
 
-runThroughList :: [ (String, ElementaryParser) ] -> Parsec.Parsec String () [ParsingResponse]
+runThroughList :: [NamedElementaryParser] -> Parsec.Parsec String () [ParsingResponse]
 runThroughList [] = do
   return []
-runThroughList ((resultName, parser):xs) = do
-  result <- ElementaryParsing.chooseParser parser
+runThroughList (x:xs) = do
+  result <- ElementaryParsing.chooseParser basicParser
   let namedResult = ParsingResponse resultName result
   next <- runThroughList xs
   return (namedResult : next)
+
+  where NamedElementaryParser resultName (ElementaryParser name basicParser) = x

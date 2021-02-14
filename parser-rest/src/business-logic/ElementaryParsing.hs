@@ -12,6 +12,7 @@ import Data.List
 import Data.Time
 import CustomParsers
   ( ElementaryParser (..)
+  , BasicParser (..)
   , ParsingResult (..)
   )
 
@@ -20,38 +21,38 @@ import CustomParsers
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyParser :: String -> ElementaryParser -> Either Parsec.ParseError ParsingResult
+applyParser :: String -> BasicParser -> Either Parsec.ParseError ParsingResult
 applyParser target parser =
     parse chosenParser target
 
     where chosenParser = chooseParser parser
 
 
-chooseParser :: ElementaryParser -> Parsec.Parsec String () ParsingResult
-chooseParser parser =
-  case parser of
-    OneOf _ xs ->
+chooseParser :: BasicParser -> Parsec.Parsec String () ParsingResult
+chooseParser basicParser =
+  case basicParser of
+    OneOf xs ->
       applyOneOf xs
 
-    Time _ pattern ->
+    Time pattern ->
       applyTime pattern
 
-    Date _ pattern ->
+    Date pattern ->
       applyDate pattern
 
-    Characters _ chars ->
+    Characters chars ->
       applyCharacters chars
 
-    MatchUntilIncluded _ chars ->
+    MatchUntilIncluded chars ->
       applyMatchUntilIncluded chars
 
-    MatchUntilExcluded _ chars ->
+    MatchUntilExcluded chars ->
       applyMatchUntilExcluded chars
 
-    MatchFor _ count ->
+    MatchFor count ->
       applyMatchFor count
 
-    MatchUntilEnd _ ->
+    MatchUntilEnd ->
       applyMatchUntilEnd
 
 

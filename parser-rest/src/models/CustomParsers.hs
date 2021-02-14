@@ -3,6 +3,7 @@
 
 module CustomParsers
 ( ElementaryParser (..)
+, BasicParser (..)
 , LogfileParser (..)
 , ParsingResult (..)
 , ParsingRequest (..)
@@ -10,55 +11,75 @@ module CustomParsers
 , LogfileParsingRequest (..)
 , LogfileParsingResponse (..)
 , CreateLogfileParserRequest (..)
-, NamedParser (..)
+, NamedElementaryParser (..)
 ) where
 
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Text (Text)
 
-type TimePattern = String
-type DatePattern = String
-
 
 
 -- MODELS
-
-
 data ElementaryParser =
-    OneOf String [String]
-  | Time String TimePattern
-  | Date String DatePattern
-  | Characters String String
-  | MatchUntilIncluded String String
-  | MatchUntilExcluded String String
-  | MatchFor String Int
-  | MatchUntilEnd String
+  ElementaryParser String BasicParser
+  deriving (Show, Read, Eq)
+
+type TimePattern = String
+type DatePattern = String
+
+data BasicParser =
+    OneOf [String]
+  | Time TimePattern
+  | Date DatePattern
+  | Characters String
+  | MatchUntilIncluded String
+  | MatchUntilExcluded String
+  | MatchFor Int
+  | MatchUntilEnd
   deriving (Show, Read, Eq)
 
 
 instance ToJSON ElementaryParser where
-  toJSON (OneOf n xs)             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
-  toJSON (Time n p)               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
-  toJSON (Date n p)               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
-  toJSON (Characters n s)         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
-  toJSON (MatchUntilIncluded n s) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
-  toJSON (MatchUntilExcluded n s) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
-  toJSON (MatchFor n i)           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
-  toJSON (MatchUntilEnd _)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
+  toJSON (ElementaryParser n (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
+  toJSON (ElementaryParser n (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
+  toJSON (ElementaryParser n (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
+  toJSON (ElementaryParser n (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
+  toJSON (ElementaryParser n (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
+  toJSON (ElementaryParser n (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
+  toJSON (ElementaryParser n (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
+  toJSON (ElementaryParser n MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
+
 
 instance FromJSON ElementaryParser where
   parseJSON (Object o) =
     do parserType <- o .: "type"
-       case parserType of String "oneOf"      -> OneOf      <$> o .: "name" <*> o .: "values"
-                          String "time"       -> Time       <$> o .: "name" <*> o .: "pattern"
-                          String "date"       -> Date       <$> o .: "name" <*> o .: "pattern"
-                          String "characters" -> Characters <$> o .: "name" <*> o .: "value"
-                          String "matchUntilIncluded" -> MatchUntilIncluded <$> o.: "name" <*> o .: "value"
-                          String "matchUntilExcluded" -> MatchUntilExcluded <$> o.: "name" <*> o .: "value"
-                          String "matchFor" -> MatchFor <$> o.: "name" <*> o .: "count"
-                          String "matchUntilEnd" -> MatchUntilEnd <$> pure "matchUntilEnd"
-                          --_                   -> empty
+       case parserType of
+          String "oneOf"      ->
+            ElementaryParser <$> o.: "name" <*> (fmap OneOf (o .: "values"))
+
+          String "time"       ->
+            ElementaryParser <$> o.: "name" <*> (fmap Time (o .: "pattern"))
+
+          String "date"       ->
+            ElementaryParser <$> o.: "name" <*> (fmap Date (o .: "pattern"))
+
+          String "characters" ->
+            ElementaryParser <$> o.: "name" <*> (fmap Characters (o .: "value"))
+
+          String "matchUntilIncluded" ->
+            ElementaryParser <$> o.: "name" <*> (fmap MatchUntilIncluded (o .: "value"))
+
+          String "matchUntilExcluded" ->
+            ElementaryParser <$> o.: "name" <*> (fmap MatchUntilExcluded (o .: "value"))
+
+          String "matchFor" ->
+            ElementaryParser <$> o.: "name" <*> (fmap MatchFor (o .: "count"))
+
+          String "matchUntilEnd" ->
+            -- TODO: Simple return should suffice
+            ElementaryParser <$> pure "matchUntilEnd" <*> pure MatchUntilEnd
+          --_                   -> empty
 
 
 data ParsingResult =
@@ -75,7 +96,7 @@ data ParsingResult =
 
 
 data LogfileParser =
-  LogfileParser String [(String, ElementaryParser)]
+  LogfileParser String [NamedElementaryParser]
   deriving (Show, Read, Eq)
 
 instance FromJSON LogfileParser where
@@ -84,18 +105,20 @@ instance FromJSON LogfileParser where
 
 
 data CreateLogfileParserRequest =
-  CreateLogfileParserRequest String [ NamedParser ]
+  CreateLogfileParserRequest String [ NamedElementaryParser ]
 
 instance FromJSON CreateLogfileParserRequest where
   parseJSON (Object o) =
     CreateLogfileParserRequest <$> o .: "name" <*> o .: "parsers"
 
 
-data NamedParser = NamedParser String ElementaryParser
+data NamedElementaryParser =
+    NamedElementaryParser String ElementaryParser
+    deriving (Show, Read, Eq)
 
-instance FromJSON NamedParser where
+instance FromJSON NamedElementaryParser where
   parseJSON (Object o) =
-    NamedParser <$> o .: "name" <*> o .: "parser"
+    NamedElementaryParser <$> o .: "name" <*> o .: "parser"
 
 
 data ParsingRequest =
