@@ -6,6 +6,8 @@ module CustomParsers
 , BasicParser (..)
 , LogfileParser (..)
 , ParsingResult (..)
+, NamedParsingResult (..)
+, LogfileParsingResult (..)
 , ParsingRequest (..)
 , ParsingResponse (..)
 , LogfileParsingRequest (..)
@@ -92,7 +94,12 @@ data ParsingResult =
   | MatchForResult String
   | MatchUntilEndResult String
   | ParsingError String
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
+
+
+data NamedParsingResult =
+    NamedParsingResult String ParsingResult
+    deriving (Show, Read, Eq)
 
 
 data LogfileParser =
@@ -102,6 +109,12 @@ data LogfileParser =
 instance FromJSON LogfileParser where
   parseJSON (Object o) =
     LogfileParser <$> o .: "name" <*> o .: "parsers"
+
+
+data LogfileParsingResult =
+    LogfileParsingSuccess [[NamedParsingResult]]
+  | LogfileParsingFailure String
+  deriving (Show, Read, Eq)
 
 
 data CreateLogfileParserRequest =
@@ -131,7 +144,7 @@ instance FromJSON ParsingRequest where
 
 data ParsingResponse =
   ParsingResponse String ParsingResult
-  deriving (Eq, Show)
+  deriving (Eq, Show, Read)
 
   --   OneOfResponse String
   -- | TimeResponse String -- TODO: Will be some time format

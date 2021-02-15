@@ -13,9 +13,11 @@ import CustomParsers
   ( ElementaryParser (..)
   , BasicParser (..)
   , ParsingResult (..)
+  , NamedParsingResult (..)
   , ParsingRequest (..)
   , ParsingResponse (..)
   , LogfileParser (..)
+  , LogfileParsingResult (..)
   , LogfileParsingRequest (..)
   , LogfileParsingResponse (..)
   , CreateLogfileParserRequest (..)
@@ -90,7 +92,7 @@ applyLogfileParser ( LogfileParsingRequest target (CreateLogfileParserRequest na
       LogfileParsingError (show err)
 
     Right result ->
-      result
+      toLogfileParsingResponse result
 
   where logfileParser = LogfileParser name parsers
         parsingResult = LogfileParsing.applyLogfileParser target logfileParser
@@ -107,6 +109,14 @@ applyLogfileParserByName dbConfig parserName target = do
       return $ LogfileParsingError (show err)
 
     Right result ->
-      return result
+      return $ toLogfileParsingResponse result
 
   where byName (LogfileParser name _ ) = name == parserName
+
+
+toLogfileParsingResponse :: LogfileParsingResult -> LogfileParsingResponse
+toLogfileParsingResponse (LogfileParsingSuccess result) =
+    let toParsingResult (NamedParsingResult n r) = ParsingResponse n r
+    in  LogfileParsingResponse $ map (map toParsingResult) result
+toLogfileParsingResponse (LogfileParsingFailure err) =
+    LogfileParsingError err

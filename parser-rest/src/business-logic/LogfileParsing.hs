@@ -11,8 +11,8 @@ import CustomParsers
   ( ElementaryParser (..)
   , NamedElementaryParser (..)
   , LogfileParser (..)
-  , ParsingResponse (..)
-  , LogfileParsingResponse (..)
+  , NamedParsingResult (..)
+  , LogfileParsingResult (..)
   )
 
 import ElementaryParsing as ElementaryParsing
@@ -22,16 +22,18 @@ import ElementaryParsing as ElementaryParsing
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResponse
+applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResult
 applyLogfileParser target (LogfileParser _ parsers) =
   parse (fileParser parsers) target
 
 
-fileParser :: [NamedElementaryParser] -> Parsec.Parsec String () LogfileParsingResponse
+fileParser :: [NamedElementaryParser] -> Parsec.Parsec String () LogfileParsingResult
 fileParser parsers = do
   result <- Parsec.manyTill (applyListOfParsers parsers) Parsec.eof
 
-  return $ LogfileParsingResponse result
+  return $ LogfileParsingSuccess result
+  -- TODO: If a single parser returns an error -> LogfileParsingFailure
+  -- Can this even happen or is the error throw to the orchestration?
 
 
 newlineParser :: Parsec.Parsec String () ()
@@ -46,7 +48,7 @@ eolParser = do
   return ()
 
 
-applyListOfParsers :: [NamedElementaryParser] -> Parsec.Parsec String () [ParsingResponse]
+applyListOfParsers :: [NamedElementaryParser] -> Parsec.Parsec String () [NamedParsingResult]
 applyListOfParsers parsers = do
   result <- runThroughList parsers
   _ <- eolParser
@@ -54,12 +56,12 @@ applyListOfParsers parsers = do
   return result
 
 
-runThroughList :: [NamedElementaryParser] -> Parsec.Parsec String () [ParsingResponse]
+runThroughList :: [NamedElementaryParser] -> Parsec.Parsec String () [NamedParsingResult]
 runThroughList [] = do
   return []
 runThroughList (x:xs) = do
   result <- ElementaryParsing.chooseParser basicParser
-  let namedResult = ParsingResponse resultName result
+  let namedResult = NamedParsingResult resultName result
   next <- runThroughList xs
   return (namedResult : next)
 
