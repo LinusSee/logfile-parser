@@ -7,6 +7,7 @@ import Data.Either (isLeft)
 import Test.Hspec
 import Test.Hspec.QuickCheck (prop)
 import qualified Test.QuickCheck as QC
+import Data.Time (TimeOfDay (..), Day)
 
 import CustomParsers
 import ElementaryParsing
@@ -50,21 +51,21 @@ spec = do
                 let target = "11:59 and some more text"
                 let parser = Time "HH:MM"
 
-                applyParser target parser `shouldBe` Right (TimeResult "11:59:00")
+                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 11 59 00 )
 
 
             it "returns a time by matching the pattern HH_MM" $ do
                 let target = "14_01"
                 let parser = Time "HH_MM"
 
-                applyParser target parser `shouldBe` Right (TimeResult "14:01:00")
+                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 14 01 00)
 
 
             it "returns a time by matching the pattern MM-HH" $ do
                 let target = "00-0 and some more text"
                 let parser = Time "MM-HH"
 
-                applyParser target parser `shouldBe` Right (TimeResult "00:00:00")
+                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 0 0 0)
 
 
         context "when provided with an invalid target value and a Time parser" $ do
@@ -104,12 +105,7 @@ spec = do
                 QC.forAll validDatePattern $
                   \pattern -> QC.forAll (simpleDateFromPattern pattern) $ \date -> do
                     let parser = Date pattern
-                    let result = Right ( DateResult
-                                          ( extractDatePattern "YYYY" pattern date ++ "-"
-                                          ++ extractDatePattern "MM" pattern date   ++ "-"
-                                          ++ extractDatePattern "DD" pattern date
-                                          )
-                                       )
+                    let result = Right ( DateResult $ toDate pattern date )
 
                     applyParser date parser `shouldBe` result
 
@@ -307,6 +303,13 @@ extractAtPattern toExtract pattern target
     | toExtract `isPrefixOf` pattern = take (length toExtract) target
     | otherwise                      = extractAtPattern toExtract (tail pattern) (tail target)
 
+
+toDate :: String -> String -> Day
+toDate pattern date = read $
+  ( extractDatePattern "YYYY" pattern date ++ "-"
+  ++ extractDatePattern "MM" pattern date   ++ "-"
+  ++ extractDatePattern "DD" pattern date
+  )
 
 extractDatePattern :: String -> String -> String -> String
 extractDatePattern _ _ [] = []

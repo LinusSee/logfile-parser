@@ -79,3 +79,4 @@ tests:
     - http-client
     - http-types
     - directory
+    - time

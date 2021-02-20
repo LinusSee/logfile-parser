@@ -5,6 +5,7 @@ module LogfileParsingSpec
 
 import Data.Either (isRight)
 import Test.Hspec
+import Data.Time (TimeOfDay (..))
 
 import CustomParsers
 import ElementaryParsing
@@ -33,19 +34,19 @@ spec =
                     applyLogfileParser target parser `shouldBe` ( Right $ LogfileParsingSuccess
                                                                     [ [ NamedParsingResult "loglevel" (OneOfResult "INFO")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
-                                                                      , NamedParsingResult "date" (DateResult "2020-12-21")
+                                                                      , NamedParsingResult "date" (DateResult $ read "2020-12-21")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "message" (MatchUntilEndResult "some message stuff")
                                                                       ]
                                                                     , [ NamedParsingResult "loglevel" (OneOfResult "INCIDENT")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
-                                                                      , NamedParsingResult "date" (DateResult "2021-11-21")
+                                                                      , NamedParsingResult "date" (DateResult $ read "2021-11-21")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "message" (MatchUntilEndResult "msg2")
                                                                       ]
                                                                     , [ NamedParsingResult "loglevel" (OneOfResult "ERROR")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
-                                                                      , NamedParsingResult "date" (DateResult "2022-05-13")
+                                                                      , NamedParsingResult "date" (DateResult $ read "2022-05-13")
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "message" (MatchUntilEndResult "msg3")
                                                                       ]
@@ -72,7 +73,7 @@ spec =
                                  \14:09 prefix<correlationId>myCorrelationId15</correlationId> stuf untilTheEnd but again not into the next line"
 
                     applyLogfileParser target parser `shouldBe` ( Right $ LogfileParsingSuccess
-                                                                    [ [ NamedParsingResult "time" (TimeResult "05:38:00")
+                                                                    [ [ NamedParsingResult "time" (TimeResult $ TimeOfDay 5 38 0)
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "untilCorrelationId" (MatchUntilIncludedResult "stuff before <correlationId>")
                                                                       , NamedParsingResult "correlationId" (MatchUntilExcludedResult "myCorrelationId1")
@@ -82,7 +83,7 @@ spec =
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "message" (MatchUntilEndResult "some message stuff")
                                                                       ]
-                                                                    , [ NamedParsingResult "time" (TimeResult "09:45:00")
+                                                                    , [ NamedParsingResult "time" (TimeResult $ TimeOfDay 9 45 00)
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "untilCorrelationId" (MatchUntilIncludedResult "prelude to the <correlationId>")
                                                                       , NamedParsingResult "correlationId" (MatchUntilExcludedResult "myCorrelationId42")
@@ -92,7 +93,7 @@ spec =
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "message" (MatchUntilEndResult "another message till the end!")
                                                                       ]
-                                                                    , [ NamedParsingResult "time" (TimeResult "14:09:00")
+                                                                    , [ NamedParsingResult "time" (TimeResult $ TimeOfDay 14 09 00)
                                                                       , NamedParsingResult "whitespace" (CharactersResult " ")
                                                                       , NamedParsingResult "untilCorrelationId" (MatchUntilIncludedResult "prefix<correlationId>")
                                                                       , NamedParsingResult "correlationId" (MatchUntilExcludedResult "myCorrelationId15")

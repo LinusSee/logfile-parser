@@ -19,6 +19,7 @@ module CustomParsers
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Text (Text)
+import Data.Time (TimeOfDay, Day)
 
 
 
@@ -86,8 +87,8 @@ instance FromJSON ElementaryParser where
 
 data ParsingResult =
     OneOfResult String
-  | TimeResult String
-  | DateResult String
+  | TimeResult TimeOfDay
+  | DateResult Day
   | CharactersResult String
   | MatchUntilIncludedResult String
   | MatchUntilExcludedResult String

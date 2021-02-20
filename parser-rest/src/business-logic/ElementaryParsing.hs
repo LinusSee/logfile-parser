@@ -72,10 +72,10 @@ applyTime format = do
   let time = parseTimeM False defaultTimeLocale "%H:%M" result :: Maybe TimeOfDay
   case time of
     Just parsedTime ->
-      return $ TimeResult (show parsedTime)
+      return $ TimeResult parsedTime
 
     Nothing ->
-      return $ TimeResult (result ++ "-asString")
+      return $ ParsingError ("Could not convert '" ++ result ++ "' to a time'")
 
 
 applyDate :: String -> Parsec.Parsec String () ParsingResult
@@ -85,10 +85,10 @@ applyDate format = do
   let day = parseTimeM False defaultTimeLocale "%Y%m%d" result :: Maybe Day
   case day of
     Just parsedDay ->
-      return $ DateResult (show parsedDay)
+      return $ DateResult parsedDay
 
     Nothing ->
-      return $ DateResult (result ++ "-asString")
+      return $ ParsingError ("Could not convert '" ++ result ++ "' to a date'")
 
 
 applyCharacters :: String -> Parsec.Parsec String () ParsingResult
