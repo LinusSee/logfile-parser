@@ -21,6 +21,7 @@ import Network.Wai.Middleware.RequestLogger
 import Network.Wai.Middleware.Cors
 import Network.Wai.Middleware.Servant.Options
 import Servant
+import Servant.Multipart
 import Data.ByteString.Char8 (pack)
 import Data.CaseInsensitive (mk)
 
@@ -32,6 +33,7 @@ import CustomParsers
   , ParsingRequest
   , ParsingResponse (ParsingResponse)
   , LogfileParsingRequest
+  , LogfileParsingFileRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
 import qualified Configs as Configs
@@ -54,6 +56,7 @@ type API =
                 :<|> ReqBody '[JSON] CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
+                :<|> "apply" :> "file" :> MultipartForm Tmp LogfileParsingFileRequest :> Get '[JSON] LogfileParsingResponse
                 )
             )
             :<|>
@@ -88,6 +91,7 @@ server dbConfig =
   :<|> saveLogfileParserHandler dbConfig
   :<|> applyLogfileParserByName dbConfig
   :<|> applyLogfileParserHandler
+  :<|> applyLogfileParserToFileHandler dbConfig
   )
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
@@ -152,6 +156,24 @@ applyLogfileParserHandler request =
 
 
   where validatedRequest = ValidationOrchestration.validateLogfileParsingRequest request
+
+
+applyLogfileParserToFileHandler :: Configs.FileDbConfig -> LogfileParsingFileRequest -> Handler LogfileParsingResponse
+applyLogfileParserToFileHandler dbConfig request =
+  case validatedRequest of
+    Right validRequest -> do
+      response <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig request
+
+      return response
+
+    Left problem ->
+      throwError $ err400
+        { errBody = encode problem
+        , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
+        }
+
+
+  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [ElementaryParser]

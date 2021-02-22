@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -11,6 +12,7 @@ module CustomParsers
 , ParsingRequest (..)
 , ParsingResponse (..)
 , LogfileParsingRequest (..)
+, LogfileParsingFileRequest (..)
 , LogfileParsingResponse (..)
 , CreateLogfileParserRequest (..)
 , NamedElementaryParser (..)
@@ -19,7 +21,9 @@ module CustomParsers
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Time (TimeOfDay, Day)
+import Servant.Multipart
 
 
 
@@ -171,6 +175,18 @@ data LogfileParsingRequest =
 instance FromJSON LogfileParsingRequest where
   parseJSON (Object o) =
     LogfileParsingRequest <$> o .: "target" <*> o .: "parser"
+
+data LogfileParsingFileRequest =
+  LogfileParsingFileRequest { name :: String
+                            , logfile :: FilePath
+                            }
+
+instance FromMultipart Tmp LogfileParsingFileRequest where
+  fromMultipart form =
+      LogfileParsingFileRequest
+          <$> fmap T.unpack (lookupInput "name" form)
+          <*> fmap fdPayload (lookupFile "logfile" form)
+
 
 
 data LogfileParsingResponse =

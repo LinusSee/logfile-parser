@@ -6,6 +6,7 @@ module ParsingOrchestration
 , applyElementaryParser
 , applyElementaryParserByName
 , applyLogfileParser
+, applyLogfileParserToFile
 , applyLogfileParserByName
 ) where
 
@@ -19,6 +20,7 @@ import CustomParsers
   , LogfileParser (..)
   , LogfileParsingResult (..)
   , LogfileParsingRequest (..)
+  , LogfileParsingFileRequest (..)
   , LogfileParsingResponse (..)
   , CreateLogfileParserRequest (..)
   , NamedElementaryParser (..)
@@ -96,6 +98,24 @@ applyLogfileParser ( LogfileParsingRequest target (CreateLogfileParserRequest na
 
   where logfileParser = LogfileParser name parsers
         parsingResult = LogfileParsing.applyLogfileParser target logfileParser
+
+
+applyLogfileParserToFile :: Configs.FileDbConfig -> LogfileParsingFileRequest -> IO LogfileParsingResponse
+applyLogfileParserToFile dbConfig (LogfileParsingFileRequest parserName logfile) = do
+  parsers <- LogFileDb.readAll dbConfig
+  target <- readFile "./assets/sample_log4j.log"
+
+  let parser = head $ filter byName parsers
+  let parsingResult = LogfileParsing.applyLogfileParser target parser
+
+  case parsingResult of
+    Left err ->
+      return $ LogfileParsingError (show err)
+
+    Right result ->
+      return $ toLogfileParsingResponse result
+
+  where byName (LogfileParser name _ ) = name == parserName
 
 
 applyLogfileParserByName :: Configs.FileDbConfig -> String -> String -> IO LogfileParsingResponse

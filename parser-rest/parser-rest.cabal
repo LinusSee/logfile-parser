@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2eab575eb14b3ccd3b7be32a24d589bfbc73c365b2a54051882662ca63573a24
+-- hash: a0bf4b277773f612a44d7219376b68d07bce9af9f534e18755ad300eea269511
 
 name:           parser-rest
 version:        0.1.0.0
@@ -54,6 +54,7 @@ library
     , case-insensitive
     , config-ini
     , parsec
+    , servant-multipart
     , servant-options
     , servant-server
     , text
@@ -79,6 +80,7 @@ executable parser-rest-exe
     , config-ini
     , parsec
     , parser-rest
+    , servant-multipart
     , servant-options
     , servant-server
     , text
@@ -119,6 +121,7 @@ test-suite parser-rest-test
     , parsec
     , parser-rest
     , servant-client
+    , servant-multipart
     , servant-options
     , servant-quickcheck
     , servant-server

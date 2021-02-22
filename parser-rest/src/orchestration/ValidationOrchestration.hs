@@ -4,6 +4,7 @@ module ValidationOrchestration
 , validateLogfileParsingRequest
 , validateElementaryParserToCreate
 , validateParsingRequest
+, validateLogfileParsingFileRequest
 , validateParsingUrlRequest
 ) where
 
@@ -71,6 +72,20 @@ validateLogfileParsingRequest request@(LogfileParsingRequest target (CreateLogfi
         isValidRequest = isRight validatedTarget && isRight validatedParser
 
         logfileParser = LogfileParser name parsers
+
+
+validateLogfileParsingFileRequest :: LogfileParsingFileRequest -> Either Problem LogfileParsingFileRequest
+validateLogfileParsingFileRequest request@(LogfileParsingFileRequest parserName logfile) =
+  case isValidRequest of
+    True ->
+      Right request
+
+    False ->
+      Left $ errorsToValidationProblem $
+        Validation.appendError validatedName []
+
+  where validatedName = Validation.validateLogfileParserExists parserName
+        isValidRequest = isRight validatedName
 
 
 
