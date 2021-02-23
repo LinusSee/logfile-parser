@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "8d790e1a-55a4-4930-a532-ddecbd90ede6",
+		"_postman_id": "bcb7a5b2-c3a4-48b1-b0f2-5c4e03d61205",
 		"name": "parser-rest",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -228,6 +228,41 @@
 								"parsers",
 								"logfile",
 								"apply"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Apply logfile parser to file",
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "multipart/form-data; boundary=foo_bar_baz",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "--foo_bar_baz\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\nLoglevelDateTime\r\n--foo_bar_baz\r\nContent-Disposition: form-data; name=\"logfile\"; filename=\"mylogfile.log\"\r\nContent-Type: text/plain\r\n\r\nDEBUG 2021-02-20 11:31\r\nINFO 2021-02-21 13:14\r\nINFO 2021-02-21 19:48\r\nERROR 2021-02-22 20:31\r\n--foo_bar_baz--"
+						},
+						"url": {
+							"raw": "localhost:8080/api/parsers/logfile/apply/file",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"logfile",
+								"apply",
+								"file"
 							]
 						}
 					},
