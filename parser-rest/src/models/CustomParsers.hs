@@ -180,6 +180,7 @@ data LogfileParsingFileRequest =
   LogfileParsingFileRequest { name :: String
                             , logfile :: FilePath
                             }
+  deriving (Show)
 
 instance FromMultipart Tmp LogfileParsingFileRequest where
   fromMultipart form =

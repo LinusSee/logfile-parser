@@ -103,7 +103,8 @@ applyLogfileParser ( LogfileParsingRequest target (CreateLogfileParserRequest na
 applyLogfileParserToFile :: Configs.FileDbConfig -> LogfileParsingFileRequest -> IO LogfileParsingResponse
 applyLogfileParserToFile dbConfig (LogfileParsingFileRequest parserName logfile) = do
   parsers <- LogFileDb.readAll dbConfig
-  target <- readFile "./assets/sample_log4j.log"
+
+  target <- readFile logfile
 
   let parser = head $ filter byName parsers
   let parsingResult = LogfileParsing.applyLogfileParser target parser

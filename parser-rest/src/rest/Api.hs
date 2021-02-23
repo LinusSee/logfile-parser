@@ -56,7 +56,7 @@ type API =
                 :<|> ReqBody '[JSON] CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
-                :<|> "apply" :> "file" :> MultipartForm Tmp LogfileParsingFileRequest :> Get '[JSON] LogfileParsingResponse
+                :<|> "apply" :> "file" :> MultipartForm Tmp LogfileParsingFileRequest :> Post '[JSON] LogfileParsingResponse
                 )
             )
             :<|>
