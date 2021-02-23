@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module ApiSpec
@@ -21,6 +22,7 @@ import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 import qualified Network.HTTP.Client              as HttpClient
 import qualified Network.Wai.Handler.Warp         as Warp
 import           Servant
+import           Servant.Multipart
 import qualified Servant.Client as ServC
 
 
@@ -34,6 +36,7 @@ import CustomParsers ( ElementaryParser (..)
                      , ParsingResult (..)
                      , CreateLogfileParserRequest (..)
                      , LogfileParsingRequest (..)
+                     , LogfileParsingFileRequest (..)
                      , NamedElementaryParser (..)
                      , ParsingRequest (..)
                      )
@@ -322,7 +325,7 @@ applyLogfileParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> May
 applyLogfileParserByName (( _ :<|> _ :<|> applyByName :<|> _) :<|> (_)) = applyByName
 
 applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (LogfileParsingRequest -> ServC.ClientM LogfileParsingResponse)
-applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) = applyParser
+applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser :<|> _) :<|> (_)) = applyParser
 
 
 getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [ElementaryParser]
@@ -347,6 +350,17 @@ instance ToJSON ParsingRequest where
 instance ToJSON LogfileParsingRequest where
   toJSON (LogfileParsingRequest target parser) =
     object [ "target" .= target, "parser" .= parser ]
+
+
+instance ToMultipart Tmp LogfileParsingFileRequest where
+  toMultipart (LogfileParsingFileRequest name logfile) =
+      MultipartData [ Input "name" (T.pack name) ]
+                    [ FileData
+                        "logfile"
+                        (T.pack logfile)
+                        "text/plain"
+                        logfile
+                    ]
 
 
 instance ToJSON CreateLogfileParserRequest where
