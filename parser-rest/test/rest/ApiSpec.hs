@@ -12,6 +12,7 @@ import Data.Aeson
 import Data.Aeson.TH
 import Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
+import Data.ByteString.Lazy (ByteString)
 import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 
 
@@ -208,6 +209,33 @@ spec =  before_ createDbFiles $
                                               ])
 
 
+              describe "POST parser and target as JSON applies the parser to the target and" $ do
+                it "returns a list of parser names" $ \port -> do
+                  let path = "foo_bar_baz"
+                  let parsingRequest = LogfileParsingFileRequest
+                                        "myLogfileParser"
+                                        "assets\\sample_logfiles\\test_logfile.log"
+                                        --"./assets/sample-logfiles/test_logfile.log"
+
+
+                  result <- ServC.runClientM
+                              (applyLogfileParserToFile client (path, parsingRequest))
+                              (clientEnv port)
+
+                  result `shouldBe` (Right $ LogfileParsingResponse [
+                                              [ ParsingResponse "LogLevel" (OneOfResult "INCIDENT")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "LogDate" (OneOfResult "2021-02-13")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "LogTime" (OneOfResult "16:13:00")
+                                              , ParsingResponse "space" (OneOfResult " ")
+                                              , ParsingResponse "UntilCorrelationId" (OneOfResult "some stuff before id <correlationId>")
+                                              , ParsingResponse "CorrelationId" (OneOfResult "asg-qwta123-fd")
+                                              , ParsingResponse "CorrelationIdEndTag" (OneOfResult "</correlationId>")
+                                              , ParsingResponse "forSpace" (OneOfResult " ")
+                                              , ParsingResponse "restOfTheMessage" (OneOfResult "error message")
+                                              ]])
+
 
 
 
@@ -326,6 +354,9 @@ applyLogfileParserByName (( _ :<|> _ :<|> applyByName :<|> _) :<|> (_)) = applyB
 
 applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (LogfileParsingRequest -> ServC.ClientM LogfileParsingResponse)
 applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser :<|> _) :<|> (_)) = applyParser
+
+applyLogfileParserToFile :: ServC.Client ServC.ClientM Api.API -> ((ByteString, LogfileParsingFileRequest) -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParserToFile (( _ :<|> _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) = applyParser
 
 
 getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [ElementaryParser]
