@@ -1,6 +1,6 @@
 module Page.LogfileParserApplication exposing (..)
 
-import Html exposing (Html, a, article, button, div, h2, label, option, p, select, table, tbody, td, text, textarea, th, thead, tr)
+import Html exposing (Html, a, article, button, div, h2, input, label, option, p, select, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
@@ -167,7 +167,9 @@ viewParserApplication : String -> List (Html Msg)
 viewParserApplication stringToParse =
     [ div [ class "input-group", class "input-group--centered-content" ]
         [ label [] [ text "Target string" ]
-        , textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
+        , input [ type_ "file" ] []
+
+        --, textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
         ]
     , div [ class "button-group button-group--centered-content" ]
         [ button [ onClick ApplyParser, class "standard-button standard-button--long" ] [ text "Apply" ] ]
