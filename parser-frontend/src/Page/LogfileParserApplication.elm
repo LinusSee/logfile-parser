@@ -1,5 +1,7 @@
 module Page.LogfileParserApplication exposing (..)
 
+import File exposing (File)
+import File.Select as Select
 import Html exposing (Html, a, article, button, div, h2, input, label, option, p, select, table, tbody, td, text, textarea, th, thead, tr)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -23,6 +25,7 @@ type alias ApplyLogfileParserModel =
     , existingParsers : List String
     , chosenParser : String
     , stringToParse : String
+    , selectedLogfile : Maybe File
     , parsingResult : List (List ( String, String ))
     }
 
@@ -40,6 +43,7 @@ init session =
         , existingParsers = []
         , chosenParser = ""
         , stringToParse = ""
+        , selectedLogfile = Nothing
         , parsingResult = []
         }
     , Http.get
@@ -57,6 +61,8 @@ type Msg
     = NoMsgYet
     | SelectLogfileParser String
     | ChangeStringToParse String
+    | LogfileRequested
+    | LogfileSelected File
     | ApplyParser
     | GotLogfileParserNames (Result Http.Error (List String))
     | GotParsingResult (Result Http.Error (List (List ( String, String ))))
@@ -75,6 +81,16 @@ update msg (ApplyLogfileParser session model) =
 
         ChangeStringToParse newString ->
             ( ApplyLogfileParser session { model | stringToParse = newString }
+            , Cmd.none
+            )
+
+        LogfileRequested ->
+            ( ApplyLogfileParser session model
+            , Select.file [ "text/plain" ] LogfileSelected
+            )
+
+        LogfileSelected file ->
+            ( ApplyLogfileParser session { model | selectedLogfile = Just file }
             , Cmd.none
             )
 
@@ -104,6 +120,7 @@ update msg (ApplyLogfileParser session model) =
 
                                 Nothing ->
                                     model.chosenParser
+                        , selectedLogfile = model.selectedLogfile
                         , stringToParse = model.stringToParse
                         , parsingResult = model.parsingResult
                         }
@@ -121,6 +138,7 @@ update msg (ApplyLogfileParser session model) =
                         { requestState = Success
                         , existingParsers = model.existingParsers
                         , chosenParser = model.chosenParser
+                        , selectedLogfile = model.selectedLogfile
                         , stringToParse = model.stringToParse
                         , parsingResult = data
                         }
