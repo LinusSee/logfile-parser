@@ -86,7 +86,7 @@ update msg (ApplyLogfileParser session model) =
 
         LogfileRequested ->
             ( ApplyLogfileParser session model
-            , Select.file [ "text/plain" ] LogfileSelected
+            , Select.file [] LogfileSelected
             )
 
         LogfileSelected file ->
@@ -168,6 +168,13 @@ view model =
                     ++ [ viewLogfileParserDropdown model.chosenParser model.existingParsers ]
                     ++ viewParserApplication model.stringToParse
                     ++ viewParsingResult model
+                    ++ (case model.selectedLogfile of
+                            Just file ->
+                                [ text (File.name file) ]
+
+                            Nothing ->
+                                []
+                       )
                 )
 
 
@@ -185,7 +192,7 @@ viewParserApplication : String -> List (Html Msg)
 viewParserApplication stringToParse =
     [ div [ class "input-group", class "input-group--centered-content" ]
         [ label [] [ text "Target string" ]
-        , input [ type_ "file" ] []
+        , button [ onClick LogfileRequested, class "standard-button standard-button--long" ] [ text "Upload file" ]
 
         --, textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
         ]
