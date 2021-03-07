@@ -24,7 +24,6 @@ type alias ApplyLogfileParserModel =
     { requestState : HttpRequestState
     , existingParsers : List String
     , chosenParser : String
-    , stringToParse : String
     , selectedLogfile : Maybe File
     , parsingResult : List (List ( String, String ))
     }
@@ -42,7 +41,6 @@ init session =
         { requestState = Success
         , existingParsers = []
         , chosenParser = ""
-        , stringToParse = ""
         , selectedLogfile = Nothing
         , parsingResult = []
         }
@@ -60,7 +58,6 @@ init session =
 type Msg
     = NoMsgYet
     | SelectLogfileParser String
-    | ChangeStringToParse String
     | LogfileRequested
     | LogfileSelected File
     | ApplyParser
@@ -79,11 +76,6 @@ update msg (ApplyLogfileParser session model) =
             , Cmd.none
             )
 
-        ChangeStringToParse newString ->
-            ( ApplyLogfileParser session { model | stringToParse = newString }
-            , Cmd.none
-            )
-
         LogfileRequested ->
             ( ApplyLogfileParser session model
             , Select.file [] LogfileSelected
@@ -95,17 +87,33 @@ update msg (ApplyLogfileParser session model) =
             )
 
         ApplyParser ->
-            ( ApplyLogfileParser session model
-            , Http.get
-                { url =
-                    UrlBuilder.crossOrigin
-                        "http://localhost:8080/api/parsers/logfile/apply"
-                        [ model.chosenParser ]
-                        [ UrlBuilder.string "target" model.stringToParse ]
-                , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
-                }
-            )
+            case model.selectedLogfile of
+                Just logfile ->
+                    ( ApplyLogfileParser session model
+                    , Http.post
+                        { url = "http://localhost:8080/api/parsers/logfile/apply/file"
+                        , body =
+                            Http.multipartBody
+                                [ Http.stringPart "name" model.chosenParser
+                                , Http.filePart "logfile" logfile
+                                ]
+                        , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
+                        }
+                    )
 
+                Nothing ->
+                    Debug.todo "No file selected: Should not be possible and the user should be given a message"
+
+        -- ( ApplyLogfileParser session model
+        -- , Http.get
+        --     { url =
+        --         UrlBuilder.crossOrigin
+        --             "http://localhost:8080/api/parsers/logfile/apply"
+        --             [ model.chosenParser ]
+        --             [ UrlBuilder.string "target" "TODO" ]
+        --     , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
+        --     }
+        -- )
         GotLogfileParserNames response ->
             case response of
                 Ok data ->
@@ -121,7 +129,6 @@ update msg (ApplyLogfileParser session model) =
                                 Nothing ->
                                     model.chosenParser
                         , selectedLogfile = model.selectedLogfile
-                        , stringToParse = model.stringToParse
                         , parsingResult = model.parsingResult
                         }
                     , Cmd.none
@@ -139,7 +146,6 @@ update msg (ApplyLogfileParser session model) =
                         , existingParsers = model.existingParsers
                         , chosenParser = model.chosenParser
                         , selectedLogfile = model.selectedLogfile
-                        , stringToParse = model.stringToParse
                         , parsingResult = data
                         }
                     , Cmd.none
@@ -166,15 +172,8 @@ view model =
             article [ class "article" ]
                 ([ h2 [ class "header2--centered" ] [ text "Apply an existing parser to a logfile" ] ]
                     ++ [ viewLogfileParserDropdown model.chosenParser model.existingParsers ]
-                    ++ viewParserApplication model.stringToParse
+                    ++ viewParserApplication model.selectedLogfile
                     ++ viewParsingResult model
-                    ++ (case model.selectedLogfile of
-                            Just file ->
-                                [ text (File.name file) ]
-
-                            Nothing ->
-                                []
-                       )
                 )
 
 
@@ -188,11 +187,17 @@ viewLogfileParserDropdown selection parserNames =
         ]
 
 
-viewParserApplication : String -> List (Html Msg)
-viewParserApplication stringToParse =
+viewParserApplication : Maybe File -> List (Html Msg)
+viewParserApplication maybeFile =
     [ div [ class "input-group", class "input-group--centered-content" ]
-        [ label [] [ text "Target string" ]
+        [ label [] [ text "Target file" ]
         , button [ onClick LogfileRequested, class "standard-button standard-button--long" ] [ text "Upload file" ]
+        , case maybeFile of
+            Just file ->
+                text ("Selected file: " ++ File.name file)
+
+            Nothing ->
+                text ""
 
         --, textarea [ placeholder "String to parse", value stringToParse, onInput ChangeStringToParse ] []
         ]
