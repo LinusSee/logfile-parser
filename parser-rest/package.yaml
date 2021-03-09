@@ -27,6 +27,7 @@ dependencies:
 - servant-server
 - servant-multipart
 - servant-options
+- unordered-containers
 - wai
 - wai-cors
 - wai-extra

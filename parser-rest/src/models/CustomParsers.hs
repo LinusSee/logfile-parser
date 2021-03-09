@@ -19,7 +19,9 @@ module CustomParsers
 ) where
 
 import Data.Aeson
+import Data.Aeson(Value(Object))
 import Data.Aeson.TH
+import qualified Data.HashMap.Lazy as HML
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (TimeOfDay, Day)
@@ -31,6 +33,11 @@ import Servant.Multipart
 data ElementaryParser =
   ElementaryParser String BasicParser
   deriving (Show, Read, Eq)
+
+data ParsingOptions = ParsingOptions [ParsingOption]
+
+data ParsingOption =
+  KeepResult Bool
 
 type TimePattern = String
 type DatePattern = String
@@ -47,6 +54,15 @@ data BasicParser =
   deriving (Show, Read, Eq)
 
 
+instance ToJSON ParsingOption where
+  toJSON (KeepResult bool) = object [ "keepResult" .= bool ]
+
+instance ToJSON ParsingOptions where
+  toJSON (ParsingOptions xs) = mergeOptions (map toJSON xs)
+
+    where mergeOptions = (Object . HML.unions . map (\(Object x) -> x))
+
+
 instance ToJSON ElementaryParser where
   toJSON (ElementaryParser n (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
   toJSON (ElementaryParser n (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
@@ -56,6 +72,15 @@ instance ToJSON ElementaryParser where
   toJSON (ElementaryParser n (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
   toJSON (ElementaryParser n (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
   toJSON (ElementaryParser n MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
+
+  -- toJSON (ElementaryParser n os (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
+  -- toJSON (ElementaryParser n os (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
+  -- toJSON (ElementaryParser n os (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
+  -- toJSON (ElementaryParser n os (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n os (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n os (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n os (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
+  -- toJSON (ElementaryParser n os MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
 
 
 instance FromJSON ElementaryParser where
