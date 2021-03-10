@@ -82,6 +82,13 @@ instance ToJSON ElementaryParser where
   -- toJSON (ElementaryParser n os (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
   -- toJSON (ElementaryParser n os MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
 
+instance FromJSON ParsingOptions where
+  parseJSON (Object o) = do
+    keep1 <- fmap KeepResult (o .: "keepResult")
+
+    return $ ParsingOptions [ keep1
+                            ]
+
 
 instance FromJSON ElementaryParser where
   parseJSON (Object o) =
