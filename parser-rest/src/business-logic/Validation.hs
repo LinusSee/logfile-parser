@@ -56,7 +56,7 @@ validateLogfileParserExists name = Right $ Valid name
 
 
 validateElementaryParser :: ElementaryParser -> Either [ValidationError] (Valid ElementaryParser)
-validateElementaryParser parser@(ElementaryParser name basicParser) =
+validateElementaryParser parser@(ElementaryParser name options basicParser) =
     let validatedName = validateParserName name
     in  case basicParser of
           OneOf values ->

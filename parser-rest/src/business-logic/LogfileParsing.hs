@@ -65,4 +65,4 @@ runThroughList (x:xs) = do
   next <- runThroughList xs
   return (namedResult : next)
 
-  where NamedElementaryParser resultName (ElementaryParser name basicParser) = x
+  where NamedElementaryParser resultName (ElementaryParser name options basicParser) = x

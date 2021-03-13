@@ -31,13 +31,16 @@ import Servant.Multipart
 
 -- MODELS
 data ElementaryParser =
-  ElementaryParser String BasicParser
+  ElementaryParser String ParsingOptions BasicParser
   deriving (Show, Read, Eq)
 
-data ParsingOptions = ParsingOptions [ParsingOption]
+data ParsingOptions =
+  ParsingOptions [ParsingOption]
+  deriving (Show, Read, Eq)
 
 data ParsingOption =
   KeepResult Bool
+  deriving (Show, Read, Eq)
 
 type TimePattern = String
 type DatePattern = String
@@ -64,29 +67,29 @@ instance ToJSON ParsingOptions where
 
 
 instance ToJSON ElementaryParser where
-  toJSON (ElementaryParser n (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
-  toJSON (ElementaryParser n (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
-  toJSON (ElementaryParser n (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
-  toJSON (ElementaryParser n (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
-  toJSON (ElementaryParser n (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
-  toJSON (ElementaryParser n (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
-  toJSON (ElementaryParser n (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
-  toJSON (ElementaryParser n MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
+  -- toJSON (ElementaryParser n (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
+  -- toJSON (ElementaryParser n (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
+  -- toJSON (ElementaryParser n (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
+  -- toJSON (ElementaryParser n (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
+  -- toJSON (ElementaryParser n (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
+  -- toJSON (ElementaryParser n MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
 
-  -- toJSON (ElementaryParser n os (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "values" .= xs ]
-  -- toJSON (ElementaryParser n os (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "pattern" .= p ]
-  -- toJSON (ElementaryParser n os (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "pattern" .= p ]
-  -- toJSON (ElementaryParser n os (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "value" .= s ]
-  -- toJSON (ElementaryParser n os (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "value" .= s ]
-  -- toJSON (ElementaryParser n os (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "value" .= s ]
-  -- toJSON (ElementaryParser n os (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "count" .= i ]
-  -- toJSON (ElementaryParser n os MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text) ]
+  toJSON (ElementaryParser n os (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "options" .= os, "values" .= xs ]
+  toJSON (ElementaryParser n os (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "options" .= os, "pattern" .= p ]
+  toJSON (ElementaryParser n os (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "options" .= os, "pattern" .= p ]
+  toJSON (ElementaryParser n os (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "options" .= os, "count" .= i ]
+  toJSON (ElementaryParser n os MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text), "options" .= os ]
 
 instance FromJSON ParsingOptions where
   parseJSON (Object o) = do
-    keep1 <- fmap KeepResult (o .: "keepResult")
+    keepResult <- fmap KeepResult (o .: "keepResult")
 
-    return $ ParsingOptions [ keep1
+    return $ ParsingOptions [ keepResult
                             ]
 
 
@@ -95,29 +98,29 @@ instance FromJSON ElementaryParser where
     do parserType <- o .: "type"
        case parserType of
           String "oneOf"      ->
-            ElementaryParser <$> o.: "name" <*> (fmap OneOf (o .: "values"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap OneOf (o .: "values"))
 
           String "time"       ->
-            ElementaryParser <$> o.: "name" <*> (fmap Time (o .: "pattern"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Time (o .: "pattern"))
 
           String "date"       ->
-            ElementaryParser <$> o.: "name" <*> (fmap Date (o .: "pattern"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Date (o .: "pattern"))
 
           String "characters" ->
-            ElementaryParser <$> o.: "name" <*> (fmap Characters (o .: "value"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Characters (o .: "value"))
 
           String "matchUntilIncluded" ->
-            ElementaryParser <$> o.: "name" <*> (fmap MatchUntilIncluded (o .: "value"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchUntilIncluded (o .: "value"))
 
           String "matchUntilExcluded" ->
-            ElementaryParser <$> o.: "name" <*> (fmap MatchUntilExcluded (o .: "value"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchUntilExcluded (o .: "value"))
 
           String "matchFor" ->
-            ElementaryParser <$> o.: "name" <*> (fmap MatchFor (o .: "count"))
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchFor (o .: "count"))
 
           String "matchUntilEnd" ->
             -- TODO: Simple return should suffice
-            ElementaryParser <$> pure "matchUntilEnd" <*> pure MatchUntilEnd
+            ElementaryParser <$> pure "matchUntilEnd" <*> o .: "options" <*> pure MatchUntilEnd
           --_                   -> empty
 
 

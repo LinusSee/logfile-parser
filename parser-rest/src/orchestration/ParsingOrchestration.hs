@@ -60,7 +60,7 @@ createElementaryParser dbConfig elementaryParser =
 
 
 applyElementaryParser :: ParsingRequest -> ParsingResponse
-applyElementaryParser ( ParsingRequest target (ElementaryParser name parser) ) = do
+applyElementaryParser ( ParsingRequest target (ElementaryParser name options parser) ) = do
   case parsingResult of
     Left err ->
       ParsingResponse name (ParsingError (show err))
@@ -74,7 +74,7 @@ applyElementaryParser ( ParsingRequest target (ElementaryParser name parser) ) =
 applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO ParsingResponse
 applyElementaryParserByName dbConfig parserName target = do
   parsers <- ElemFileDb.readAll dbConfig
-  let (ElementaryParser _ parser) = head $ filter byName parsers
+  let (ElementaryParser _ _ parser) = head $ filter byName parsers
   let parsingResult = ElementaryParsing.applyParser target parser
 
   case parsingResult of
@@ -84,7 +84,7 @@ applyElementaryParserByName dbConfig parserName target = do
     Right result ->
       return $ ParsingResponse parserName result
 
-    where byName (ElementaryParser name _) = name == parserName
+    where byName (ElementaryParser name _ _) = name == parserName
 
 
 applyLogfileParser :: LogfileParsingRequest -> LogfileParsingResponse
