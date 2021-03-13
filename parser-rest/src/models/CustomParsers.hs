@@ -16,6 +16,8 @@ module CustomParsers
 , LogfileParsingResponse (..)
 , CreateLogfileParserRequest (..)
 , NamedElementaryParser (..)
+, ParsingOptions (..)
+, ParsingOption (..)
 ) where
 
 import Data.Aeson

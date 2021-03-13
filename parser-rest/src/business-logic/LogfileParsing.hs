@@ -13,6 +13,8 @@ import CustomParsers
   , LogfileParser (..)
   , NamedParsingResult (..)
   , LogfileParsingResult (..)
+  , ParsingOptions (..)
+  , ParsingOption (..)
   )
 
 import ElementaryParsing as ElementaryParsing
@@ -63,6 +65,10 @@ runThroughList (x:xs) = do
   result <- ElementaryParsing.chooseParser basicParser
   let namedResult = NamedParsingResult resultName result
   next <- runThroughList xs
-  return (namedResult : next)
+  return $ if keepResult options then (namedResult : next)
+                                 else next
 
-  where NamedElementaryParser resultName (ElementaryParser name options basicParser) = x
+  where NamedElementaryParser resultName (ElementaryParser name (ParsingOptions options) basicParser) = x
+        keepResult [] = False
+        keepResult ((KeepResult x):xs) = x
+        keepResult (x:xs) = keepResult xs
