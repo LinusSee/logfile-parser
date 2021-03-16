@@ -1,5 +1,6 @@
 module Models.Shared.ElementaryParser exposing
-    ( ElementaryParser(..)
+    ( BasicParser(..)
+    , ElementaryParser(..)
     , charactersEncoder
     , dateEncoder
     , elementaryParserEncoder
@@ -29,15 +30,27 @@ type alias DatePattern =
     String
 
 
+type ParsingOptions
+    = ParsingOptions (List ParsingOption)
+
+
+type ParsingOption
+    = KeepResult Bool
+
+
+type BasicParser
+    = OneOf (List String)
+    | Time TimePattern
+    | Date DatePattern
+    | Characters String
+    | MatchUntilIncluded String
+    | MatchUntilExcluded String
+    | MatchFor Int
+    | MatchUntilEnd
+
+
 type ElementaryParser
-    = OneOf String (List String)
-    | Time String TimePattern
-    | Date String DatePattern
-    | Characters String String
-    | MatchUntilIncluded String String
-    | MatchUntilExcluded String String
-    | MatchFor String Int
-    | MatchUntilEnd String
+    = ElementaryParser String BasicParser
 
 
 
@@ -45,30 +58,30 @@ type ElementaryParser
 
 
 elementaryParserEncoder : ElementaryParser -> Encode.Value
-elementaryParserEncoder parser =
+elementaryParserEncoder (ElementaryParser name parser) =
     case parser of
-        OneOf name values ->
+        OneOf values ->
             oneOfEncoder name values
 
-        Time name pattern ->
+        Time pattern ->
             timeEncoder name pattern
 
-        Date name pattern ->
+        Date pattern ->
             dateEncoder name pattern
 
-        Characters name value ->
+        Characters value ->
             charactersEncoder name value
 
-        MatchUntilIncluded name value ->
+        MatchUntilIncluded value ->
             matchUntilIncludedEncoder name value
 
-        MatchUntilExcluded name value ->
+        MatchUntilExcluded value ->
             matchUntilExcludedEncoder name value
 
-        MatchFor name number ->
+        MatchFor number ->
             matchForEncoder name number
 
-        MatchUntilEnd name ->
+        MatchUntilEnd ->
             matchUntilEndEncoder name
 
 
@@ -162,28 +175,28 @@ parserDataDecoderHelp : String -> Decoder ElementaryParser
 parserDataDecoderHelp typeName =
     case typeName of
         "oneOf" ->
-            oneOfParserDecoder
+            decodeElementaryParser oneOfParserDecoder
 
         "time" ->
-            timeParserDecoder
+            decodeElementaryParser timeParserDecoder
 
         "date" ->
-            dateParserDecoder
+            decodeElementaryParser dateParserDecoder
 
         "characters" ->
-            charactersParserDecoder
+            decodeElementaryParser charactersParserDecoder
 
         "matchUntilIncluded" ->
-            matchUntilIncludedParserDecoder
+            decodeElementaryParser matchUntilIncludedParserDecoder
 
         "matchUntilExcluded" ->
-            matchUntilExcludedParserDecoder
+            decodeElementaryParser matchUntilExcludedParserDecoder
 
         "matchFor" ->
-            matchForParserDecoder
+            decodeElementaryParser matchForParserDecoder
 
         "matchUntilEnd" ->
-            matchUntilEndParserDecoder
+            decodeElementaryParser matchUntilEndParserDecoder
 
         _ ->
             Decode.fail <|
@@ -197,41 +210,46 @@ parserDataDecoderHelp typeName =
                     ++ " ]"
 
 
-oneOfParserDecoder : Decoder ElementaryParser
+decodeElementaryParser : Decoder BasicParser -> Decoder ElementaryParser
+decodeElementaryParser basicParserDecoder =
+    Decode.map2 ElementaryParser (field "name" string) basicParserDecoder
+
+
+oneOfParserDecoder : Decoder BasicParser
 oneOfParserDecoder =
-    Decode.map2 OneOf (field "name" string) (field "values" (Decode.list string))
+    Decode.map OneOf (field "values" (Decode.list string))
 
 
-timeParserDecoder : Decoder ElementaryParser
+timeParserDecoder : Decoder BasicParser
 timeParserDecoder =
-    Decode.map2 Time (field "name" string) (field "pattern" string)
+    Decode.map Time (field "pattern" string)
 
 
-dateParserDecoder : Decoder ElementaryParser
+dateParserDecoder : Decoder BasicParser
 dateParserDecoder =
-    Decode.map2 Date (field "name" string) (field "pattern" string)
+    Decode.map Date (field "pattern" string)
 
 
-charactersParserDecoder : Decoder ElementaryParser
+charactersParserDecoder : Decoder BasicParser
 charactersParserDecoder =
-    Decode.map2 Characters (field "name" string) (field "value" string)
+    Decode.map Characters (field "value" string)
 
 
-matchUntilIncludedParserDecoder : Decoder ElementaryParser
+matchUntilIncludedParserDecoder : Decoder BasicParser
 matchUntilIncludedParserDecoder =
-    Decode.map2 MatchUntilIncluded (field "name" string) (field "value" string)
+    Decode.map MatchUntilIncluded (field "value" string)
 
 
-matchUntilExcludedParserDecoder : Decoder ElementaryParser
+matchUntilExcludedParserDecoder : Decoder BasicParser
 matchUntilExcludedParserDecoder =
-    Decode.map2 MatchUntilExcluded (field "name" string) (field "value" string)
+    Decode.map MatchUntilExcluded (field "value" string)
 
 
-matchForParserDecoder : Decoder ElementaryParser
+matchForParserDecoder : Decoder BasicParser
 matchForParserDecoder =
-    Decode.map2 MatchFor (field "name" string) (field "count" int)
+    Decode.map MatchFor (field "count" int)
 
 
-matchUntilEndParserDecoder : Decoder ElementaryParser
+matchUntilEndParserDecoder : Decoder BasicParser
 matchUntilEndParserDecoder =
-    Decode.map MatchUntilEnd (field "name" string)
+    Decode.succeed MatchUntilEnd

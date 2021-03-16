@@ -17,7 +17,7 @@ import Validate exposing (Validator, fromErrors, ifBlank, ifFalse, ifTrue, valid
 
 
 type Model
-    = CreateParser Session CreateParserModel 
+    = CreateParser Session CreateParserModel
 
 
 type alias CreateParserModel =
@@ -114,28 +114,7 @@ update msg (CreateParser session model) =
                                     }
                                 , parserToApply =
                                     case List.head data of
-                                        Just (ElementaryParser.OneOf name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Time name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Date name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Characters name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilIncluded name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilExcluded name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchFor name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilEnd name) ->
+                                        Just (ElementaryParser.ElementaryParser name _) ->
                                             name
 
                                         Nothing ->
@@ -257,31 +236,8 @@ update msg (CreateParser session model) =
 chooseParserByName : String -> List ElementaryParser.ElementaryParser -> Maybe ElementaryParser.ElementaryParser
 chooseParserByName targetName parsers =
     let
-        matchesName parser =
-            case parser of
-                ElementaryParser.OneOf name _ ->
-                    targetName == name
-
-                ElementaryParser.Time name _ ->
-                    targetName == name
-
-                ElementaryParser.Date name _ ->
-                    targetName == name
-
-                ElementaryParser.Characters name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilIncluded name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilExcluded name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchFor name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilEnd name ->
-                    targetName == name
+        matchesName (ElementaryParser.ElementaryParser name _) =
+            targetName == name
     in
     List.head (List.filter matchesName parsers)
 
@@ -389,31 +345,8 @@ viewParserApplication selection parsers stringToParse =
 
 
 parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
-parserToOption selection parser =
-    case parser of
-        ElementaryParser.OneOf name elements ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Time name pattern ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Date name pattern ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Characters name chars ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilIncluded name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilExcluded name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchFor name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilEnd name ->
-            option [ value name, selected (selection == name) ] [ text name ]
+parserToOption selection (ElementaryParser.ElementaryParser name _) =
+    option [ value name, selected (selection == name) ] [ text name ]
 
 
 matchingPlaceholder : String -> String

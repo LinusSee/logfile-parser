@@ -114,28 +114,7 @@ update msg (CreateLogfileParser session model) =
                                 , parserName = ""
                                 , selectedParser =
                                     case List.head data of
-                                        Just (ElementaryParser.OneOf name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Time name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Date name _) ->
-                                            name
-
-                                        Just (ElementaryParser.Characters name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilIncluded name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilExcluded name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchFor name _) ->
-                                            name
-
-                                        Just (ElementaryParser.MatchUntilEnd name) ->
+                                        Just (ElementaryParser.ElementaryParser name _) ->
                                             name
 
                                         Nothing ->
@@ -252,31 +231,8 @@ update msg (CreateLogfileParser session model) =
 chooseParserByName : String -> List ElementaryParser.ElementaryParser -> Maybe ElementaryParser.ElementaryParser
 chooseParserByName targetName parsers =
     let
-        matchesName parser =
-            case parser of
-                ElementaryParser.OneOf name _ ->
-                    targetName == name
-
-                ElementaryParser.Time name _ ->
-                    targetName == name
-
-                ElementaryParser.Date name _ ->
-                    targetName == name
-
-                ElementaryParser.Characters name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilIncluded name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilExcluded name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchFor name _ ->
-                    targetName == name
-
-                ElementaryParser.MatchUntilEnd name ->
-                    targetName == name
+        matchesName (ElementaryParser.ElementaryParser name _) =
+            targetName == name
     in
     List.head (List.filter matchesName parsers)
 
@@ -362,30 +318,30 @@ viewParserSelection model =
 
 
 viewParser : ( String, ElementaryParser.ElementaryParser ) -> Html Msg
-viewParser ( name, parser ) =
+viewParser ( name, ElementaryParser.ElementaryParser _ parser ) =
     case parser of
-        ElementaryParser.OneOf _ xs ->
+        ElementaryParser.OneOf xs ->
             li [] [ text (name ++ ": [ " ++ String.join ", " xs ++ " ]") ]
 
-        ElementaryParser.Time _ pattern ->
+        ElementaryParser.Time pattern ->
             li [] [ text (name ++ ": " ++ pattern) ]
 
-        ElementaryParser.Date _ pattern ->
+        ElementaryParser.Date pattern ->
             li [] [ text (name ++ ": " ++ pattern) ]
 
-        ElementaryParser.Characters _ s ->
+        ElementaryParser.Characters s ->
             li [] [ text (name ++ ": " ++ s) ]
 
-        ElementaryParser.MatchUntilIncluded _ s ->
+        ElementaryParser.MatchUntilIncluded s ->
             li [] [ text (name ++ ": " ++ s) ]
 
-        ElementaryParser.MatchUntilExcluded _ s ->
+        ElementaryParser.MatchUntilExcluded s ->
             li [] [ text (name ++ ": " ++ s) ]
 
-        ElementaryParser.MatchFor _ number ->
+        ElementaryParser.MatchFor number ->
             li [] [ text (name ++ ": " ++ String.fromInt number) ]
 
-        ElementaryParser.MatchUntilEnd _ ->
+        ElementaryParser.MatchUntilEnd ->
             li [] [ text name ]
 
 
@@ -435,31 +391,8 @@ viewParserApplication model =
 
 
 parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
-parserToOption selection parser =
-    case parser of
-        ElementaryParser.OneOf name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Time name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Date name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.Characters name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilIncluded name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilExcluded name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchFor name _ ->
-            option [ value name, selected (selection == name) ] [ text name ]
-
-        ElementaryParser.MatchUntilEnd name ->
-            option [ value name, selected (selection == name) ] [ text name ]
+parserToOption selection (ElementaryParser.ElementaryParser name _) =
+    option [ value name, selected (selection == name) ] [ text name ]
 
 
 
