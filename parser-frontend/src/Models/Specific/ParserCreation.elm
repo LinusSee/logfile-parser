@@ -17,6 +17,7 @@ type alias ParserFormData =
     { patternType : String
     , matching : String
     , name : String
+    , parsingOptions : ElementaryParser.ParsingOptions
     }
 
 

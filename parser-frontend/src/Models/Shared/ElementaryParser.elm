@@ -1,6 +1,8 @@
 module Models.Shared.ElementaryParser exposing
     ( BasicParser(..)
     , ElementaryParser(..)
+    , ParsingOption(..)
+    , ParsingOptions(..)
     , charactersEncoder
     , dateEncoder
     , elementaryParserEncoder

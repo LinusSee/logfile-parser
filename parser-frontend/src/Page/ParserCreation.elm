@@ -56,6 +56,7 @@ init session =
             { patternType = "oneOf"
             , matching = ""
             , name = ""
+            , parsingOptions = defaultParsingOptions
             }
         , parserToApply = ""
         , stringToParse = ""
@@ -92,6 +93,7 @@ type FormChanged
     = ChangePatternType
     | ChangeMatching
     | ChangeName
+    | ChangeKeepResult
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -111,6 +113,7 @@ update msg (CreateParser session model) =
                                     { patternType = "oneOf"
                                     , matching = ""
                                     , name = ""
+                                    , parsingOptions = defaultParsingOptions
                                     }
                                 , parserToApply =
                                     case List.head data of
@@ -184,6 +187,12 @@ update msg (CreateParser session model) =
                             , Cmd.none
                             )
 
+                        ChangeKeepResult ->
+                            ( CreateParser session model
+                               { model | createForm = }
+                            , Cmd.none
+                            )
+
         ChoseParserToApply selection ->
             ( CreateParser session { model | parserToApply = selection }, Cmd.none )
 
@@ -210,6 +219,7 @@ update msg (CreateParser session model) =
                     { patternType = "oneOf"
                     , matching = ""
                     , name = ""
+                    , parsingOptions = defaultParsingOptions
                     }
                 , parserToApply = model.parserToApply
                 , stringToParse = ""
@@ -240,6 +250,35 @@ chooseParserByName targetName parsers =
             targetName == name
     in
     List.head (List.filter matchesName parsers)
+
+
+defaultParsingOptions : ElementaryParser.ParsingOptions
+defaultParsingOptions =
+    ElementaryParser.ParsingOptions
+        [ ElementaryParser.KeepResult True
+        ]
+
+
+
+-- test : ElementaryParser.ParsingOption -> ElementaryParser.ParsingOption -> Bool
+-- test newOption oldOption =
+--     case ( newOption, oldOption ) of
+--         ( ElementaryParser.KeepResult _, ElementaryParser.KeepResult _ ) ->
+--             True
+--
+--         _ ->
+--             False
+
+
+toggleParsingOption : ElementaryParser.ParsingOption -> ElementaryParser.ParsingOptions -> ElementaryParser.ParsingOptions
+toggleParsingOption option (ElementaryParser.ParsingOptions options) =
+    let
+        mapOptions newOption oldOption =
+            case ( newOption, oldOption ) of
+                ( ElementaryParser.KeepResult _, ElementaryParser.KeepResult oldResult ) ->
+                    ElementaryParser.KeepResult (not oldResult)
+    in
+    ElementaryParser.ParsingOptions (List.map (mapOptions option) options)
 
 
 
@@ -287,6 +326,7 @@ view model =
                         [ label [ for "parserNameInput" ] [ text "Name" ]
                         , input [ id "parserNameInput", placeholder (namePlaceholder formData.patternType), value formData.name, onInput (ChangeForm ChangeName) ] []
                         ]
+                    , parsingOptions formData.parsingOptions
                     , div [ class "button-group", class "button-group--centered-content" ]
                         [ button
                             [ onClick Reset
@@ -347,6 +387,24 @@ viewParserApplication selection parsers stringToParse =
 parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
 parserToOption selection (ElementaryParser.ElementaryParser name _) =
     option [ value name, selected (selection == name) ] [ text name ]
+
+
+parsingOptions : ElementaryParser.ParsingOptions -> Html Msg
+parsingOptions (ElementaryParser.ParsingOptions options) =
+    div []
+        (List.map parsingOption options)
+
+
+parsingOption : ElementaryParser.ParsingOption -> Html Msg
+parsingOption option =
+    case option of
+        ElementaryParser.KeepResult keepResult ->
+            div [ class "input-group", class "input-group--centered-content" ]
+                [ label [ for "keepResult" ] [ text "Keep result" ]
+                , input [ id "keepResult", type_ "checkbox", checked keepResult, onInput (ChangeForm ChangeKeepResult) ] []
+
+                -- , input [ id "keepResult", placeholder (namePlaceholder formData.patternType), value formData.name, onInput (ChangeForm ChangeName) ] []
+                ]
 
 
 matchingPlaceholder : String -> String
