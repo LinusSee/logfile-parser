@@ -188,8 +188,12 @@ update msg (CreateParser session model) =
                             )
 
                         ChangeKeepResult ->
-                            ( CreateParser session model
-                               { model | createForm = }
+                            let
+                                formData =
+                                    model.createForm
+                            in
+                            ( CreateParser session
+                                { model | createForm = { formData | parsingOptions = toggleParsingOption (ElementaryParser.KeepResult True) formData.parsingOptions } }
                             , Cmd.none
                             )
 
