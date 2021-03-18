@@ -16,7 +16,7 @@ module Models.Shared.ElementaryParser exposing
     , timeEncoder
     )
 
-import Json.Decode as Decode exposing (Decoder, field, int, map3, string)
+import Json.Decode as Decode exposing (Decoder, bool, field, int, map3, maybe, string)
 import Json.Encode as Encode
 
 
@@ -52,7 +52,7 @@ type BasicParser
 
 
 type ElementaryParser
-    = ElementaryParser String BasicParser
+    = ElementaryParser String ParsingOptions BasicParser
 
 
 
@@ -60,44 +60,49 @@ type ElementaryParser
 
 
 elementaryParserEncoder : ElementaryParser -> Encode.Value
-elementaryParserEncoder (ElementaryParser name parser) =
+elementaryParserEncoder (ElementaryParser name options parser) =
     case parser of
         OneOf values ->
-            oneOfEncoder name values
+            oneOfEncoder name options values
 
         Time pattern ->
-            timeEncoder name pattern
+            timeEncoder name options pattern
 
         Date pattern ->
-            dateEncoder name pattern
+            dateEncoder name options pattern
 
         Characters value ->
-            charactersEncoder name value
+            charactersEncoder name options value
 
         MatchUntilIncluded value ->
-            matchUntilIncludedEncoder name value
+            matchUntilIncludedEncoder name options value
 
         MatchUntilExcluded value ->
-            matchUntilExcludedEncoder name value
+            matchUntilExcludedEncoder name options value
 
         MatchFor number ->
-            matchForEncoder name number
+            matchForEncoder name options number
 
         MatchUntilEnd ->
-            matchUntilEndEncoder name
+            matchUntilEndEncoder name options
 
 
-oneOfEncoder : String -> List String -> Encode.Value
-oneOfEncoder name values =
+
+-- oneOfEncoder : String -> List String -> Encode.Value
+
+
+oneOfEncoder : String -> ParsingOptions -> List String -> Encode.Value
+oneOfEncoder name options values =
     Encode.object
         [ ( "type", Encode.string "oneOf" )
         , ( "values", Encode.list Encode.string values )
         , ( "name", Encode.string name )
+        , ( "options", encodeParsingOptions )
         ]
 
 
-timeEncoder : String -> TimePattern -> Encode.Value
-timeEncoder name pattern =
+timeEncoder : String -> ParsingOptions -> TimePattern -> Encode.Value
+timeEncoder name options pattern =
     Encode.object
         [ ( "type", Encode.string "time" )
         , ( "pattern", Encode.string pattern )
@@ -105,8 +110,8 @@ timeEncoder name pattern =
         ]
 
 
-dateEncoder : String -> DatePattern -> Encode.Value
-dateEncoder name pattern =
+dateEncoder : String -> ParsingOptions -> DatePattern -> Encode.Value
+dateEncoder name options pattern =
     Encode.object
         [ ( "type", Encode.string "date" )
         , ( "pattern", Encode.string pattern )
@@ -114,8 +119,8 @@ dateEncoder name pattern =
         ]
 
 
-charactersEncoder : String -> String -> Encode.Value
-charactersEncoder name value =
+charactersEncoder : String -> ParsingOptions -> String -> Encode.Value
+charactersEncoder name options value =
     Encode.object
         [ ( "type", Encode.string "characters" )
         , ( "value", Encode.string value )
@@ -123,8 +128,8 @@ charactersEncoder name value =
         ]
 
 
-matchUntilIncludedEncoder : String -> String -> Encode.Value
-matchUntilIncludedEncoder name value =
+matchUntilIncludedEncoder : String -> ParsingOptions -> String -> Encode.Value
+matchUntilIncludedEncoder name options value =
     Encode.object
         [ ( "type", Encode.string "matchUntilIncluded" )
         , ( "value", Encode.string value )
@@ -132,8 +137,8 @@ matchUntilIncludedEncoder name value =
         ]
 
 
-matchUntilExcludedEncoder : String -> String -> Encode.Value
-matchUntilExcludedEncoder name value =
+matchUntilExcludedEncoder : String -> ParsingOptions -> String -> Encode.Value
+matchUntilExcludedEncoder name options value =
     Encode.object
         [ ( "type", Encode.string "matchUntilExcluded" )
         , ( "value", Encode.string value )
@@ -141,8 +146,8 @@ matchUntilExcludedEncoder name value =
         ]
 
 
-matchForEncoder : String -> Int -> Encode.Value
-matchForEncoder name value =
+matchForEncoder : String -> ParsingOptions -> Int -> Encode.Value
+matchForEncoder name options value =
     Encode.object
         [ ( "type", Encode.string "matchFor" )
         , ( "count", Encode.int value )
@@ -150,12 +155,24 @@ matchForEncoder name value =
         ]
 
 
-matchUntilEndEncoder : String -> Encode.Value
-matchUntilEndEncoder name =
+matchUntilEndEncoder : String -> ParsingOptions -> Encode.Value
+matchUntilEndEncoder name options =
     Encode.object
         [ ( "type", Encode.string "matchUntilEnd" )
         , ( "name", Encode.string name )
         ]
+
+
+encodeParsingOptions : ParsingOptions -> Encode.Value
+encodeParsingOptions (ParsingOptions options) =
+    Encode.object (List.map encodedParsingOption options)
+
+
+encodedParsingOption : ParsingOption -> ( String, Encode.Value )
+encodedParsingOption option =
+    case option of
+        KeepResult keepResult ->
+            ( "keepResult", Encode.bool keepResult )
 
 
 
@@ -214,7 +231,7 @@ parserDataDecoderHelp typeName =
 
 decodeElementaryParser : Decoder BasicParser -> Decoder ElementaryParser
 decodeElementaryParser basicParserDecoder =
-    Decode.map2 ElementaryParser (field "name" string) basicParserDecoder
+    Decode.map3 ElementaryParser (field "name" string) parsingOptionsDecoder basicParserDecoder
 
 
 oneOfParserDecoder : Decoder BasicParser
@@ -255,3 +272,14 @@ matchForParserDecoder =
 matchUntilEndParserDecoder : Decoder BasicParser
 matchUntilEndParserDecoder =
     Decode.succeed MatchUntilEnd
+
+
+
+-- parsingOptionsDecoder : Decoder ParsingOptions
+-- parsingOptionsDecoder =
+--     Decode
+
+
+keepResultDecoder : Decoder ParsingOption
+keepResultDecoder =
+    Decode.map KeepResult (Decode.map maybeWithDefault (Decode.maybe (field "keepResult" bool)))
