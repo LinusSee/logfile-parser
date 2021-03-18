@@ -97,7 +97,7 @@ oneOfEncoder name options values =
         [ ( "type", Encode.string "oneOf" )
         , ( "values", Encode.list Encode.string values )
         , ( "name", Encode.string name )
-        , ( "options", encodeParsingOptions )
+        , ( "options", encodeParsingOptions options )
         ]
 
 
@@ -274,12 +274,34 @@ matchUntilEndParserDecoder =
     Decode.succeed MatchUntilEnd
 
 
+parsingOptionsDecoder : Decoder ParsingOptions
+parsingOptionsDecoder =
+    Decode.map ParsingOptions (Decode.map List.singleton keepResultDecoder)
+
+
 
 -- parsingOptionsDecoder : Decoder ParsingOptions
 -- parsingOptionsDecoder =
---     Decode
+--     Decode.succeed
+--         (ParsingOptions
+--             [ decodedKeepResult
+--             ]
+--         )
+-- decodedKeepResult : ParsingOption
+-- decodedKeepResult =
+--     let
+--         decodingResult =
+--             Decode.decodeValue (field "keepResult" bool)
+--     in
+--     case decodingResult of
+--         Ok keepResult ->
+--             KeepResult keepResult
+--
+--         Err err ->
+--             KeepResult True
+-- Decode.map KeepResult (Decode.map maybeWithDefault (Decode.maybe (field "keepResult" bool)))
 
 
 keepResultDecoder : Decoder ParsingOption
 keepResultDecoder =
-    Decode.map KeepResult (Decode.map maybeWithDefault (Decode.maybe (field "keepResult" bool)))
+    Decode.map KeepResult (field "keepResult" bool)
