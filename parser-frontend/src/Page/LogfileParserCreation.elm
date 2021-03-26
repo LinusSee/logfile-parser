@@ -114,7 +114,7 @@ update msg (CreateLogfileParser session model) =
                                 , parserName = ""
                                 , selectedParser =
                                     case List.head data of
-                                        Just (ElementaryParser.ElementaryParser name _) ->
+                                        Just (ElementaryParser.ElementaryParser name _ _) ->
                                             name
 
                                         Nothing ->
@@ -231,7 +231,7 @@ update msg (CreateLogfileParser session model) =
 chooseParserByName : String -> List ElementaryParser.ElementaryParser -> Maybe ElementaryParser.ElementaryParser
 chooseParserByName targetName parsers =
     let
-        matchesName (ElementaryParser.ElementaryParser name _) =
+        matchesName (ElementaryParser.ElementaryParser name _ _) =
             targetName == name
     in
     List.head (List.filter matchesName parsers)
@@ -318,7 +318,7 @@ viewParserSelection model =
 
 
 viewParser : ( String, ElementaryParser.ElementaryParser ) -> Html Msg
-viewParser ( name, ElementaryParser.ElementaryParser _ parser ) =
+viewParser ( name, ElementaryParser.ElementaryParser _ _ parser ) =
     case parser of
         ElementaryParser.OneOf xs ->
             li [] [ text (name ++ ": [ " ++ String.join ", " xs ++ " ]") ]
@@ -391,7 +391,7 @@ viewParserApplication model =
 
 
 parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
-parserToOption selection (ElementaryParser.ElementaryParser name _) =
+parserToOption selection (ElementaryParser.ElementaryParser name _ _) =
     option [ value name, selected (selection == name) ] [ text name ]
 
 

@@ -29,27 +29,27 @@ parserEncoder : ParserFormData -> Encode.Value
 parserEncoder formData =
     case formData.patternType of
         "oneOf" ->
-            ElementaryParser.oneOfEncoder formData.name (toMatchingList formData.matching)
+            ElementaryParser.oneOfEncoder formData.name formData.parsingOptions (toMatchingList formData.matching)
 
         "time" ->
-            ElementaryParser.timeEncoder formData.name formData.matching
+            ElementaryParser.timeEncoder formData.name formData.parsingOptions formData.matching
 
         "date" ->
-            ElementaryParser.dateEncoder formData.name formData.matching
+            ElementaryParser.dateEncoder formData.name formData.parsingOptions formData.matching
 
         "characters" ->
-            ElementaryParser.charactersEncoder formData.name formData.matching
+            ElementaryParser.charactersEncoder formData.name formData.parsingOptions formData.matching
 
         "matchUntilIncluded" ->
-            ElementaryParser.matchUntilIncludedEncoder formData.name formData.matching
+            ElementaryParser.matchUntilIncludedEncoder formData.name formData.parsingOptions formData.matching
 
         "matchUntilExcluded" ->
-            ElementaryParser.matchUntilExcludedEncoder formData.name formData.matching
+            ElementaryParser.matchUntilExcludedEncoder formData.name formData.parsingOptions formData.matching
 
         "matchFor" ->
             case String.toInt formData.matching of
                 Just number ->
-                    ElementaryParser.matchForEncoder formData.name number
+                    ElementaryParser.matchForEncoder formData.name formData.parsingOptions number
 
                 Nothing ->
                     Encode.object
