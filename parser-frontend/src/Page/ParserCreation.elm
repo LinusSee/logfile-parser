@@ -400,18 +400,6 @@ viewParsingOptions options =
         ]
 
 
-parsingOption : ElementaryParser.ParsingOption -> Html Msg
-parsingOption option =
-    case option of
-        ElementaryParser.KeepResult keepResult ->
-            div [ class "input-group", class "input-group--centered-content" ]
-                [ label [ for "keepResult" ] [ text "Keep result" ]
-                , input [ id "keepResult", type_ "checkbox", checked keepResult, onInput (ChangeForm ChangeKeepResult) ] []
-
-                -- , input [ id "keepResult", placeholder (namePlaceholder formData.patternType), value formData.name, onInput (ChangeForm ChangeName) ] []
-                ]
-
-
 matchingPlaceholder : String -> String
 matchingPlaceholder selection =
     case selection of

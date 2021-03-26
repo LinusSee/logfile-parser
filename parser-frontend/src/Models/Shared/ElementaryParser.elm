@@ -273,10 +273,24 @@ parsingOptionsDecoder : Decoder ParsingOptions
 parsingOptionsDecoder =
     --Decode.succeed []
     Decode.map ParsingOptions
-        (field "keepResult" bool)
+        (Decode.maybe (field "keepResult" bool)
+            |> Decode.andThen decodeOrDefaultToTrue
+        )
+
+
+decodeOrDefaultToTrue : Maybe Bool -> Decoder Bool
+decodeOrDefaultToTrue maybeBool =
+    case maybeBool of
+        Just bool ->
+            Decode.succeed bool
+
+        Nothing ->
+            Decode.succeed True
 
 
 
+-- decodeOrDefaultToTrue : Decoder (Maybe Bool) -> Decoder Bool
+-- decodeOrDefaultToTrue target =
 -- fromMaybe : [Decoder (Maybe ParsingOption)]
 -- fromMaybe
 -- parsingOptionsDecoder : Decoder ParsingOptions
