@@ -2,7 +2,7 @@ module Models.Shared.ElementaryParser exposing
     ( BasicParser(..)
     , ElementaryParser(..)
     , ParsingOption(..)
-    , ParsingOptions(..)
+    , ParsingOptions
     , charactersEncoder
     , dateEncoder
     , elementaryParserEncoder
@@ -32,8 +32,8 @@ type alias DatePattern =
     String
 
 
-type ParsingOptions
-    = ParsingOptions (List ParsingOption)
+type alias ParsingOptions =
+    { keepResult : Bool }
 
 
 type ParsingOption
@@ -164,15 +164,10 @@ matchUntilEndEncoder name options =
 
 
 encodeParsingOptions : ParsingOptions -> Encode.Value
-encodeParsingOptions (ParsingOptions options) =
-    Encode.object (List.map encodedParsingOption options)
-
-
-encodedParsingOption : ParsingOption -> ( String, Encode.Value )
-encodedParsingOption option =
-    case option of
-        KeepResult keepResult ->
-            ( "keepResult", Encode.bool keepResult )
+encodeParsingOptions options =
+    Encode.object
+        [ ( "keepResult", Encode.bool options.keepResult )
+        ]
 
 
 
@@ -276,10 +271,14 @@ matchUntilEndParserDecoder =
 
 parsingOptionsDecoder : Decoder ParsingOptions
 parsingOptionsDecoder =
-    Decode.map ParsingOptions (Decode.map List.singleton keepResultDecoder)
+    --Decode.succeed []
+    Decode.map ParsingOptions
+        (field "keepResult" bool)
 
 
 
+-- fromMaybe : [Decoder (Maybe ParsingOption)]
+-- fromMaybe
 -- parsingOptionsDecoder : Decoder ParsingOptions
 -- parsingOptionsDecoder =
 --     Decode.succeed
@@ -300,8 +299,3 @@ parsingOptionsDecoder =
 --         Err err ->
 --             KeepResult True
 -- Decode.map KeepResult (Decode.map maybeWithDefault (Decode.maybe (field "keepResult" bool)))
-
-
-keepResultDecoder : Decoder ParsingOption
-keepResultDecoder =
-    Decode.map KeepResult (field "keepResult" bool)

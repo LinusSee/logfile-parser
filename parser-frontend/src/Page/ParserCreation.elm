@@ -191,9 +191,13 @@ update msg (CreateParser session model) =
                             let
                                 formData =
                                     model.createForm
+
+                                parsingOptions =
+                                    formData.parsingOptions
                             in
                             ( CreateParser session
-                                { model | createForm = { formData | parsingOptions = toggleParsingOption (ElementaryParser.KeepResult True) formData.parsingOptions } }
+                                { model | createForm = { formData | parsingOptions = { parsingOptions | keepResult = not formData.parsingOptions.keepResult } } }
+                              --{ model | createForm = { formData | parsingOptions = toggleParsingOption (ElementaryParser.KeepResult True) formData.parsingOptions } }
                             , Cmd.none
                             )
 
@@ -258,9 +262,7 @@ chooseParserByName targetName parsers =
 
 defaultParsingOptions : ElementaryParser.ParsingOptions
 defaultParsingOptions =
-    ElementaryParser.ParsingOptions
-        [ ElementaryParser.KeepResult True
-        ]
+    { keepResult = True }
 
 
 
@@ -272,20 +274,15 @@ defaultParsingOptions =
 --
 --         _ ->
 --             False
-
-
-toggleParsingOption : ElementaryParser.ParsingOption -> ElementaryParser.ParsingOptions -> ElementaryParser.ParsingOptions
-toggleParsingOption option (ElementaryParser.ParsingOptions options) =
-    let
-        mapOptions newOption oldOption =
-            case ( newOption, oldOption ) of
-                ( ElementaryParser.KeepResult _, ElementaryParser.KeepResult oldResult ) ->
-                    ElementaryParser.KeepResult (not oldResult)
-    in
-    ElementaryParser.ParsingOptions (List.map (mapOptions option) options)
-
-
-
+-- toggleParsingOption : ElementaryParser.ParsingOption -> ElementaryParser.ParsingOptions -> ElementaryParser.ParsingOptions
+-- toggleParsingOption option (ElementaryParser.ParsingOptions options) =
+--     let
+--         mapOptions newOption oldOption =
+--             case ( newOption, oldOption ) of
+--                 ( ElementaryParser.KeepResult _, ElementaryParser.KeepResult oldResult ) ->
+--                     ElementaryParser.KeepResult (not oldResult)
+--     in
+--     ElementaryParser.ParsingOptions (List.map (mapOptions option) options)
 -- VIEW
 
 
@@ -330,7 +327,7 @@ view model =
                         [ label [ for "parserNameInput" ] [ text "Name" ]
                         , input [ id "parserNameInput", placeholder (namePlaceholder formData.patternType), value formData.name, onInput (ChangeForm ChangeName) ] []
                         ]
-                    , parsingOptions formData.parsingOptions
+                    , viewParsingOptions formData.parsingOptions
                     , div [ class "button-group", class "button-group--centered-content" ]
                         [ button
                             [ onClick Reset
@@ -393,10 +390,14 @@ parserToOption selection (ElementaryParser.ElementaryParser name _ _) =
     option [ value name, selected (selection == name) ] [ text name ]
 
 
-parsingOptions : ElementaryParser.ParsingOptions -> Html Msg
-parsingOptions (ElementaryParser.ParsingOptions options) =
+viewParsingOptions : ElementaryParser.ParsingOptions -> Html Msg
+viewParsingOptions options =
     div []
-        (List.map parsingOption options)
+        [ div [ class "input-group", class "input-group--centered-content" ]
+            [ label [ for "keepResult" ] [ text "Keep result" ]
+            , input [ id "keepResult", type_ "checkbox", checked options.keepResult, onInput (ChangeForm ChangeKeepResult) ] []
+            ]
+        ]
 
 
 parsingOption : ElementaryParser.ParsingOption -> Html Msg
