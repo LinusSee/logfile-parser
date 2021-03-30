@@ -69,6 +69,6 @@ runThroughList (x:xs) = do
                                  else next
 
   where NamedElementaryParser resultName (ElementaryParser name (ParsingOptions options) basicParser) = x
-        keepResult [] = False
+        keepResult [] = True
         keepResult ((KeepResult x):xs) = x
         keepResult (x:xs) = keepResult xs

@@ -36,7 +36,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n\t\"type\": \"characters\",\r\n    \"name\": \"postmanParser\",\r\n\t\"value\": \"postman\"\r\n}",
+							"raw": "{\r\n\t\"type\": \"characters\",\r\n    \"name\": \"postmanParser\",\r\n\t\"value\": \"postman\",\r\n    \"options\": {\r\n        \"keepResult\": true\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -95,7 +95,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"target\": \"2020:13:11\",\r\n    \"parser\": {\r\n        \"pattern\": \"YYYY:DD:MM\",\r\n        \"type\": \"date\",\r\n        \"name\": \"standardDate\"\r\n    }\r\n}",
+							"raw": "{\r\n    \"target\": \"2020:13:11\",\r\n    \"parser\": {\r\n        \"pattern\": \"YYYY:DD:MM\",\r\n        \"type\": \"date\",\r\n        \"name\": \"standardDate\",\r\n        \"options\": {\r\n            \"keepResult\": true\r\n        }\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -152,7 +152,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"name\": \"DateTimeParser\",\r\n    \"parsers\": [\r\n            {\r\n                \"name\": \"logDate\",\r\n                \"parser\": {\r\n                    \"type\":\"date\",\r\n                    \"pattern\":\"YYYY-DD-MM\",\r\n                    \"name\":\"weirdDate\"\r\n                }\r\n            },\r\n            {\r\n                \"name\": \"logTime\",\r\n                \"parser\": {\r\n                    \"type\":\"time\",\r\n                    \"pattern\":\"HH:MM\",\r\n                    \"name\":\"clockTime\"\r\n                }\r\n            }\r\n        ]\r\n}",
+							"raw": "{\r\n    \"name\": \"DateTimeParser\",\r\n    \"parsers\": [\r\n            {\r\n                \"name\": \"logDate\",\r\n                \"parser\": {\r\n                    \"type\":\"date\",\r\n                    \"pattern\":\"YYYY-DD-MM\",\r\n                    \"name\":\"weirdDate\",\r\n                    \"options\": {\r\n                        \"keepResult\": true\r\n                    }\r\n                }\r\n            },\r\n            {\r\n                \"name\": \"logTime\",\r\n                \"parser\": {\r\n                    \"type\":\"time\",\r\n                    \"pattern\":\"HH:MM\",\r\n                    \"name\":\"clockTime\",\r\n                    \"options\": {\r\n                        \"keepResult\": true\r\n                    }\r\n                }\r\n            }\r\n        ]\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -210,7 +210,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"target\": \"2000-10-1111-30\",\r\n    \"parser\": {\r\n        \"name\": \"NewParser\",\r\n        \"parsers\": [\r\n            {\r\n                \"name\": \"LogDate\",\r\n                \"parser\": {\r\n                    \"type\": \"date\",\r\n                    \"pattern\": \"yyyy-mm-dd\",\r\n                    \"name\": \"easySortDate\"\r\n                }\r\n            },\r\n            {\r\n                \"name\": \"LogTime\",\r\n                \"parser\": {\r\n                    \"type\": \"time\",\r\n                    \"pattern\": \"hh-mm\",\r\n                    \"name\": \"Time Parser\"\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
+							"raw": "{\r\n    \"target\": \"2000-10-1111-30\",\r\n    \"parser\": {\r\n        \"name\": \"NewParser\",\r\n        \"parsers\": [\r\n            {\r\n                \"name\": \"LogDate\",\r\n                \"parser\": {\r\n                    \"options\": {\r\n                        \"keepResult\": true\r\n                    },\r\n                    \"type\": \"date\",\r\n                    \"pattern\": \"yyyy-mm-dd\",\r\n                    \"name\": \"easySortDate\"\r\n                }\r\n            },\r\n            {\r\n                \"name\": \"LogTime\",\r\n                \"parser\": {\r\n                    \"options\": {\r\n                        \"keepResult\": true\r\n                    },\r\n                    \"type\": \"time\",\r\n                    \"pattern\": \"hh-mm\",\r\n                    \"name\": \"Time Parser\"\r\n                }\r\n            }\r\n        ]\r\n    }\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
