@@ -25,6 +25,7 @@ import CustomParsers
   , CreateLogfileParserRequest (..)
   , NamedElementaryParser (..)
   , fromDbElementaryParser
+  , toDbElementaryParser
   )
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
@@ -57,7 +58,7 @@ existingElementaryParsers dbConfig =
 
 createElementaryParser :: Configs.FileDbConfig -> ElementaryParser -> IO ()
 createElementaryParser dbConfig elementaryParser =
-  ElemFileDb.save dbConfig elementaryParser
+  ElemFileDb.save dbConfig (toDbElementaryParser elementaryParser)
 
 
 applyElementaryParser :: ParsingRequest -> ParsingResponse
@@ -74,7 +75,7 @@ applyElementaryParser ( ParsingRequest target (ElementaryParser name options par
 
 applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO ParsingResponse
 applyElementaryParserByName dbConfig parserName target = do
-  parsers <- ElemFileDb.readAll dbConfig
+  parsers <- fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
   let (ElementaryParser _ _ parser) = head $ filter byName parsers
   let parsingResult = ElementaryParsing.applyParser target parser
 

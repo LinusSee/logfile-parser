@@ -20,6 +20,7 @@ module CustomParsers
 , ParsingOptions (..)
 , ParsingOption (..)
 , fromDbElementaryParser
+, toDbElementaryParser
 ) where
 
 import Data.Aeson
@@ -267,5 +268,24 @@ fromDbParserType parserType =
     DM.MatchUntilEnd        -> MatchUntilEnd
 
 
--- toDbElementaryParser :: ElementaryParser -> DM.ElementaryParser
--- toDbElementaryParser
+toDbElementaryParser :: ElementaryParser -> DM.ElementaryParser
+toDbElementaryParser (ElementaryParser name options parserType) =
+  DM.ElementaryParser
+          name
+          (toDbParsingOptions options)
+          (toDbParserType parserType)
+
+toDbParsingOptions :: ParsingOptions -> DM.ParsingOptions
+toDbParsingOptions options = DM.ParsingOptions {DM.keepResult = True}
+
+toDbParserType :: BasicParser -> DM.ParserType
+toDbParserType parserType =
+  case parserType of
+    OneOf xs             -> DM.OneOf xs
+    Time pattern         -> DM.Time pattern
+    Date pattern         -> DM.Date pattern
+    Characters x         -> DM.Characters x
+    MatchUntilIncluded x -> DM.MatchUntilIncluded x
+    MatchUntilExcluded x -> DM.MatchUntilExcluded x
+    MatchFor c           -> DM.MatchFor c
+    MatchUntilEnd        -> DM.MatchUntilEnd
