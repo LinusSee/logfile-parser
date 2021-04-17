@@ -41,6 +41,7 @@ library:
     - src/business-logic
     - src/database/access
     - src/models
+    - src/models/db
     - src/orchestration
     - src/other/config
     - src/rest

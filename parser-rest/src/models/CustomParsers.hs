@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module CustomParsers
 ( ElementaryParser (..)
@@ -18,6 +19,7 @@ module CustomParsers
 , NamedElementaryParser (..)
 , ParsingOptions (..)
 , ParsingOption (..)
+, fromDbElementaryParser
 ) where
 
 import Data.Aeson
@@ -28,6 +30,8 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Time (TimeOfDay, Day)
 import Servant.Multipart
+
+import qualified DbParserModels as DM
 
 
 
@@ -235,3 +239,33 @@ data LogfileParsingResponse =
 instance ToJSON LogfileParsingResponse where
   toJSON (LogfileParsingResponse val) = object [ "result" .= val ]
   toJSON (LogfileParsingError err) = object [ "error" .= err ]
+
+
+
+fromDbElementaryParser :: DM.ElementaryParser -> ElementaryParser
+fromDbElementaryParser DM.ElementaryParser{DM.name, DM.options, DM.parserType} =
+  ElementaryParser
+          name
+          (fromDbParsingOptions options)
+          (fromDbParserType parserType)
+
+
+fromDbParsingOptions :: DM.ParsingOptions -> ParsingOptions
+fromDbParsingOptions DM.ParsingOptions{DM.keepResult} =
+  ParsingOptions [KeepResult keepResult]
+
+fromDbParserType :: DM.ParserType -> BasicParser
+fromDbParserType parserType =
+  case parserType of
+    DM.OneOf xs             -> OneOf xs
+    DM.Time pattern         -> Time pattern
+    DM.Date pattern         -> Date pattern
+    DM.Characters x         -> Characters x
+    DM.MatchUntilIncluded x -> MatchUntilIncluded x
+    DM.MatchUntilExcluded x -> MatchUntilExcluded x
+    DM.MatchFor c           -> MatchFor c
+    DM.MatchUntilEnd        -> MatchUntilEnd
+
+
+-- toDbElementaryParser :: ElementaryParser -> DM.ElementaryParser
+-- toDbElementaryParser

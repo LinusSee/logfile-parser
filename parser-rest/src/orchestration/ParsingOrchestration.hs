@@ -24,6 +24,7 @@ import CustomParsers
   , LogfileParsingResponse (..)
   , CreateLogfileParserRequest (..)
   , NamedElementaryParser (..)
+  , fromDbElementaryParser
   )
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
@@ -51,7 +52,7 @@ createLogfileParser dbConfig (CreateLogfileParserRequest name parsers) =
 
 existingElementaryParsers :: Configs.FileDbConfig -> IO [ElementaryParser]
 existingElementaryParsers dbConfig =
-  ElemFileDb.readAll dbConfig
+  fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
 
 
 createElementaryParser :: Configs.FileDbConfig -> ElementaryParser -> IO ()

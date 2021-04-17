@@ -1,12 +1,16 @@
-module CustomParsers
-(
+{-# LANGUAGE DuplicateRecordFields #-}
+
+module DbParserModels
+( ElementaryParser(..)
+, ParsingOptions(..)
+, ParserType (..)
 ) where
 
 
 data ElementaryParser =
-  ElementaryParser { name :: String,
-                   , options :: ParsingOptions,
-                   , type :: ParserType
+  ElementaryParser { name :: String
+                   , options :: ParsingOptions
+                   , parserType :: ParserType
                    }
   deriving (Show, Read, Eq)
 

@@ -6,7 +6,7 @@ module ElementaryParserFileDb
 import qualified Data.Text as T
 import Control.Monad (when)
 
-import CustomParsers ( ElementaryParser )
+import DbParserModels (ElementaryParser)
 import qualified Configs as Configs
 
 
