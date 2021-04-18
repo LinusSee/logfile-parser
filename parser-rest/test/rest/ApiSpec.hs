@@ -31,6 +31,8 @@ import qualified Servant.Client as ServC
 
 import CustomParsers ( ElementaryParser (..)
                      , BasicParser (..)
+                     , ParsingOptions (..)
+                     , ParsingOption (..)
                      , LogfileParser (..)
                      , LogfileParsingResponse (..)
                      , ParsingResponse (..)
@@ -40,6 +42,8 @@ import CustomParsers ( ElementaryParser (..)
                      , LogfileParsingFileRequest (..)
                      , NamedElementaryParser (..)
                      , ParsingRequest (..)
+                     , toDbLogfileParser
+                     , toDbElementaryParser
                      )
 import qualified ElementaryParserFileDb as ElemDb -- For initialising data
 import qualified LogfileParserFileDb as LogfileDb -- For initialising data
@@ -84,7 +88,7 @@ spec =  before_ createDbFiles $
 
               describe "POST parser as JSON creates the parser and" $ do
                 it "returns NoContent" $ \port -> do
-                  let parser = ElementaryParser "newLoglevelParser" (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"])
+                  let parser = ElementaryParser "newLoglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"])
                   creationResult <- ServC.runClientM
                               (createElementaryParser client parser)
                               (clientEnv port)
@@ -114,7 +118,7 @@ spec =  before_ createDbFiles $
                 it "returns the parsing response" $ \port -> do
                   let parsingRequest = ParsingRequest
                                           "DEBUG some message"
-                                          (ElementaryParser "newLoglevelParser" (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"]))
+                                          (ElementaryParser "newLoglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"]))
 
                   result <- ServC.runClientM
                               (applyElementaryParser client parsingRequest)
@@ -247,7 +251,7 @@ withUserApp action =
 createElementaryParsers :: IO ()
 createElementaryParsers = mapM_
                             (ElemDb.save fileDbConfig)
-                            (reverse initialElementaryParsers)
+                            (reverse (map toDbElementaryParser initialElementaryParsers))
 
   where dbPath = dbBasePath ++ elementaryParsersDbName
 
@@ -255,7 +259,7 @@ createElementaryParsers = mapM_
 createLogfileParsers :: IO ()
 createLogfileParsers = mapM_
                         (LogfileDb.save fileDbConfig)
-                        [logfileParser]
+                        (map toDbLogfileParser [logfileParser])
 
 
 fileDbConfig :: Configs.FileDbConfig
@@ -278,31 +282,31 @@ initialElementaryParsers =  [ oneOfParser
 
 
 oneOfParser :: ElementaryParser
-oneOfParser = ElementaryParser "loglevelParser" (OneOf ["INFO", "INCIDENT", "ERROR"])
+oneOfParser = ElementaryParser "loglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["INFO", "INCIDENT", "ERROR"])
 
 timeParser :: ElementaryParser
-timeParser = ElementaryParser "dashedTimeParser" (Time "HH-MM")
+timeParser = ElementaryParser "dashedTimeParser" (ParsingOptions [KeepResult True]) (Time "HH-MM")
 
 dateParser :: ElementaryParser
-dateParser = ElementaryParser "dottedDateParser" (Date "YYYY.MM.DD")
+dateParser = ElementaryParser "dottedDateParser" (ParsingOptions [KeepResult True]) (Date "YYYY.MM.DD")
 
 spaceParser :: ElementaryParser
-spaceParser = ElementaryParser "spaceParser" (Characters " ")
+spaceParser = ElementaryParser "spaceParser" (ParsingOptions [KeepResult True]) (Characters " ")
 
 charactersParser :: ElementaryParser
-charactersParser = ElementaryParser "correlationIdEndTag" (Characters "</correlationId>")
+charactersParser = ElementaryParser "correlationIdEndTag" (ParsingOptions [KeepResult True]) (Characters "</correlationId>")
 
 matchUntilIncludedParser :: ElementaryParser
-matchUntilIncludedParser = ElementaryParser "untilCorrelationId" (MatchUntilIncluded "<correlationId>")
+matchUntilIncludedParser = ElementaryParser "untilCorrelationId" (ParsingOptions [KeepResult True]) (MatchUntilIncluded "<correlationId>")
 
 matchUntilExcludedParser :: ElementaryParser
-matchUntilExcludedParser = ElementaryParser "correlationId" (MatchUntilExcluded "</correlationId>")
+matchUntilExcludedParser = ElementaryParser "correlationId" (ParsingOptions [KeepResult True]) (MatchUntilExcluded "</correlationId>")
 
 matchForParser :: ElementaryParser
-matchForParser = ElementaryParser "for1Space" (MatchFor 1)
+matchForParser = ElementaryParser "for1Space" (ParsingOptions [KeepResult True]) (MatchFor 1)
 
 matchUntilEndParser :: ElementaryParser
-matchUntilEndParser = ElementaryParser "matchUntilEnd" MatchUntilEnd
+matchUntilEndParser = ElementaryParser "matchUntilEnd" (ParsingOptions [KeepResult True]) MatchUntilEnd
 
 
 logfileParser :: LogfileParser
