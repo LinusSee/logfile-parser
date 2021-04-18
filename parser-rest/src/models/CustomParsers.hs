@@ -21,6 +21,8 @@ module CustomParsers
 , ParsingOption (..)
 , fromDbElementaryParser
 , toDbElementaryParser
+, fromDbLogfileParser
+, toDbLogfileParser
 ) where
 
 import Data.Aeson
@@ -244,7 +246,7 @@ instance ToJSON LogfileParsingResponse where
 
 
 fromDbElementaryParser :: DM.ElementaryParser -> ElementaryParser
-fromDbElementaryParser DM.ElementaryParser{DM.name, DM.options, DM.parserType} =
+fromDbElementaryParser (DM.ElementaryParser name options parserType) =
   ElementaryParser
           name
           (fromDbParsingOptions options)
@@ -252,7 +254,7 @@ fromDbElementaryParser DM.ElementaryParser{DM.name, DM.options, DM.parserType} =
 
 
 fromDbParsingOptions :: DM.ParsingOptions -> ParsingOptions
-fromDbParsingOptions DM.ParsingOptions{DM.keepResult} =
+fromDbParsingOptions (DM.ParsingOptions keepResult) =
   ParsingOptions [KeepResult keepResult]
 
 fromDbParserType :: DM.ParserType -> BasicParser
@@ -289,3 +291,21 @@ toDbParserType parserType =
     MatchUntilExcluded x -> DM.MatchUntilExcluded x
     MatchFor c           -> DM.MatchFor c
     MatchUntilEnd        -> DM.MatchUntilEnd
+
+
+fromDbLogfileParser :: DM.LogfileParser -> LogfileParser
+fromDbLogfileParser (DM.LogfileParser name namedParsers) =
+  LogfileParser name (map fromDbNamedParser namedParsers)
+
+fromDbNamedParser :: DM.NamedElementaryParser -> NamedElementaryParser
+fromDbNamedParser (DM.NamedElementaryParser name parser) =
+  NamedElementaryParser name (fromDbElementaryParser parser)
+
+
+toDbLogfileParser :: LogfileParser -> DM.LogfileParser
+toDbLogfileParser (LogfileParser name namedParsers) =
+  DM.LogfileParser name (map toDbNamedParser namedParsers)
+
+toDbNamedParser :: NamedElementaryParser -> DM.NamedElementaryParser
+toDbNamedParser (NamedElementaryParser name parser) =
+  DM.NamedElementaryParser name (toDbElementaryParser parser)

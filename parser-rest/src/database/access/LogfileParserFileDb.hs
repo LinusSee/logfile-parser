@@ -6,7 +6,7 @@ module LogfileParserFileDb
 import qualified Data.Text as T
 import Control.Monad (when)
 
-import CustomParsers (LogfileParser)
+import DbParserModels (LogfileParser)
 import qualified Configs as Configs
 
 

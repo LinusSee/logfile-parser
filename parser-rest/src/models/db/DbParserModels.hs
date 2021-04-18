@@ -3,7 +3,9 @@
 module DbParserModels
 ( ElementaryParser(..)
 , ParsingOptions(..)
-, ParserType (..)
+, ParserType(..)
+, NamedElementaryParser(..)
+, LogfileParser(..)
 ) where
 
 
@@ -46,6 +48,6 @@ data NamedElementaryParser =
 
 data LogfileParser =
   LogfileParser { name :: String
-                , namedParsers :: [ElementaryParser]
+                , namedParsers :: [NamedElementaryParser]
                 }
   deriving (Show, Read, Eq)

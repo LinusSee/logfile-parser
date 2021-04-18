@@ -26,6 +26,8 @@ import CustomParsers
   , NamedElementaryParser (..)
   , fromDbElementaryParser
   , toDbElementaryParser
+  , fromDbLogfileParser
+  , toDbLogfileParser
   )
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
@@ -39,14 +41,14 @@ existingLogfileParserNames :: Configs.FileDbConfig -> IO [String]
 existingLogfileParserNames dbConfig = do
   parsers <- LogFileDb.readAll dbConfig
 
-  return $ map extractName parsers
+  return $ map extractName (map fromDbLogfileParser parsers)
 
   where extractName ( LogfileParser name _ ) = name
 
 
 createLogfileParser :: Configs.FileDbConfig -> CreateLogfileParserRequest -> IO ()
 createLogfileParser dbConfig (CreateLogfileParserRequest name parsers) =
-  LogFileDb.save dbConfig logfileParser
+  LogFileDb.save dbConfig (toDbLogfileParser logfileParser)
 
   where logfileParser = LogfileParser name parsers
 
@@ -108,7 +110,7 @@ applyLogfileParserToFile dbConfig (LogfileParsingFileRequest parserName logfile)
 
   target <- readFile logfile
 
-  let parser = head $ filter byName parsers
+  let parser = head $ filter byName (map fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
@@ -124,7 +126,7 @@ applyLogfileParserToFile dbConfig (LogfileParsingFileRequest parserName logfile)
 applyLogfileParserByName :: Configs.FileDbConfig -> String -> String -> IO LogfileParsingResponse
 applyLogfileParserByName dbConfig parserName target = do
   parsers <- LogFileDb.readAll dbConfig
-  let parser = head $ filter byName parsers
+  let parser = head $ filter byName (map fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
