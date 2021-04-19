@@ -42,6 +42,7 @@ library:
     - src/database/access
     - src/models
     - src/models/db
+    - src/models/rest
     - src/orchestration
     - src/other/config
     - src/rest
