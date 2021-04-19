@@ -34,6 +34,37 @@ data ElementaryParser =
                    }
   deriving (Show, Read, Eq)
 
+instance FromJSON ElementaryParser where
+  parseJSON (Object o) =
+    do parserType <- o .: "type"
+       case parserType of
+          String "oneOf"      ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap OneOf (o .: "values"))
+
+          String "time"       ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Time (o .: "pattern"))
+
+          String "date"       ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Date (o .: "pattern"))
+
+          String "characters" ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap Characters (o .: "value"))
+
+          String "matchUntilIncluded" ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchUntilIncluded (o .: "value"))
+
+          String "matchUntilExcluded" ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchUntilExcluded (o .: "value"))
+
+          String "matchFor" ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchFor (o .: "count"))
+
+          String "matchUntilEnd" ->
+            -- TODO: Simple return should suffice
+            ElementaryParser <$> pure "matchUntilEnd" <*> o .: "options" <*> pure MatchUntilEnd
+          -- _                   -> empty
+
+
 data ParserType =
     OneOf [String]
   | Time TimePattern
@@ -53,6 +84,13 @@ data ParsingOptions =
   ParsingOptions { keepResult :: Bool
                  }
   deriving (Show, Read, Eq)
+
+instance FromJSON ParsingOptions where
+  parseJSON (Object o) = do
+    keepResult <- o .: "keepResult"
+
+    return $ ParsingOptions { keepResult = keepResult
+                            }
 
 
 instance ToJSON ElementaryParser where
@@ -75,6 +113,10 @@ data NamedElementaryParser =
                         }
   deriving (Show, Read, Eq)
 
+instance FromJSON NamedElementaryParser where
+  parseJSON (Object o) =
+    NamedElementaryParser <$> o .: "name" <*> o .: "parser"
+
 
 data ElementaryParsingRequest =
   ElementaryParsingRequest { target :: String
@@ -82,12 +124,27 @@ data ElementaryParsingRequest =
                            }
   deriving (Show, Read, Eq)
 
+instance FromJSON ElementaryParsingRequest where
+  parseJSON (Object o) =
+    ElementaryParsingRequest <$> o .: "target" <*> o .: "parser"
+
 
 data ElementaryParsingResponse =
   ElementaryParsingResponse { name :: String
                             , result :: ParsingResult
                             }
   deriving (Show, Read, Eq)
+
+instance ToJSON ElementaryParsingResponse where
+  toJSON (ElementaryParsingResponse name (OneOfResult result))               = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (TimeResult result))                = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (DateResult result))                = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (CharactersResult result))          = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (MatchUntilIncludedResult result))  = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (MatchUntilExcludedResult result))  = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (MatchForResult result))            = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (MatchUntilEndResult result))       = object [ "name" .= name, "result" .= result ]
+  toJSON (ElementaryParsingResponse name (ParsingError result))              = object [ "name" .= name, "error" .= result  ]
 
 
 data ParsingResult =
@@ -111,11 +168,20 @@ data LogfileParser =
                 , namedParsers :: [ NamedElementaryParser ]
                 }
 
+instance FromJSON LogfileParser where
+  parseJSON (Object o) =
+    LogfileParser <$> o .: "name" <*> o .: "parsers"
+
 
 data LogfileParsingRequest =
   LogfileParsingRequest { target :: String
                         , parser :: LogfileParser
                         }
+
+instance FromJSON LogfileParsingRequest where
+  parseJSON (Object o) =
+    LogfileParsingRequest <$> o .: "target" <*> o .: "parser"
+
 
 data LogfileParsingFileRequest =
   LogfileParsingFileRequest { name :: String
@@ -134,3 +200,7 @@ data LogfileParsingResponse =
     LogfileParsingResponse [[ElementaryParsingResponse]]
   | LogfileParsingError String
   deriving (Eq, Show)
+
+instance ToJSON LogfileParsingResponse where
+  toJSON (LogfileParsingResponse val) = object [ "result" .= val ]
+  toJSON (LogfileParsingError err) = object [ "error" .= err ]
