@@ -1,15 +1,28 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module RestParserModels
 ( ElementaryParser (..)
+, CreateElementaryParserRequest
 , ParsingOptions (..)
 , ParserType (..)
+, ElementaryParsingRequest (..)
+, ElementaryParsingResponse (..)
+, ParsingResult (..)
+, NamedElementaryParser (..)
+, LogfileParser (..)
+, CreateLogfileParserRequest
+, LogfileParsingRequest (..)
+, LogfileParsingFileRequest (..)
+, LogfileParsingResponse (..)
 ) where
 
 import Data.Aeson
+import Servant.Multipart
 import Data.Time (TimeOfDay, Day)
 import Data.Text (Text)
+import qualified Data.Text as T
 
 
 type CreateElementaryParserRequest = ElementaryParser
@@ -57,8 +70,10 @@ instance ToJSON ParsingOptions where
 
 
 data NamedElementaryParser =
-    NamedElementaryParser String ElementaryParser
-    deriving (Show, Read, Eq)
+  NamedElementaryParser { name :: String
+                        , parser :: ElementaryParser
+                        }
+  deriving (Show, Read, Eq)
 
 
 data ElementaryParsingRequest =
@@ -93,14 +108,26 @@ type CreateLogfileParserRequest = LogfileParser
 
 data LogfileParser =
   LogfileParser { name :: String
-                 , namedParsers :: [ NamedElementaryParser ]
-                 }
+                , namedParsers :: [ NamedElementaryParser ]
+                }
 
 
 data LogfileParsingRequest =
   LogfileParsingRequest { target :: String
                         , parser :: LogfileParser
                         }
+
+data LogfileParsingFileRequest =
+  LogfileParsingFileRequest { name :: String
+                            , logfile :: FilePath
+                            }
+  deriving (Show)
+
+instance FromMultipart Tmp LogfileParsingFileRequest where
+  fromMultipart form =
+      LogfileParsingFileRequest
+          <$> fmap T.unpack (lookupInput "name" form)
+          <*> fmap fdPayload (lookupFile "logfile" form)
 
 
 data LogfileParsingResponse =

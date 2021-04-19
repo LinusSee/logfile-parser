@@ -14,12 +14,13 @@ import qualified Validation as Validation
 import ValidationModels (ValidationError (..), ValidationType (..))
 import HttpErrors (Problem (..))
 import CustomParsers
+import qualified RestParserModels as RM
 
 
 
 
-validateCreateLogfileParserRequest :: CreateLogfileParserRequest -> Either Problem CreateLogfileParserRequest
-validateCreateLogfileParserRequest request@(CreateLogfileParserRequest name parsers) =
+validateCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> Either Problem RM.CreateLogfileParserRequest
+validateCreateLogfileParserRequest request@(RM.LogfileParser name parsers) =
     case isValidRequest of
       True ->
         Right request
@@ -27,10 +28,8 @@ validateCreateLogfileParserRequest request@(CreateLogfileParserRequest name pars
       False ->
         Left $ errorsToValidationProblem (fromLeft [] validatedParser)
 
-    where validatedParser = Validation.validateLogfileParser logfileParser
+    where validatedParser = Validation.validateLogfileParser request
           isValidRequest = isRight validatedParser
-
-          logfileParser = LogfileParser name parsers
 
 
 validateLogfileParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
@@ -56,8 +55,8 @@ validateLogfileParsingUrlRequest parserName maybeTarget =
             [ValidationError (QueryParamValidation "target") "Target value must be present."]
 
 
-validateLogfileParsingRequest :: LogfileParsingRequest -> Either Problem LogfileParsingRequest
-validateLogfileParsingRequest request@(LogfileParsingRequest target (CreateLogfileParserRequest name parsers)) =
+validateLogfileParsingRequest :: RM.LogfileParsingRequest -> Either Problem RM.LogfileParsingRequest
+validateLogfileParsingRequest request@(RM.LogfileParsingRequest target (RM.LogfileParser name parsers)) =
   case isValidRequest of
     True ->
       Right request
@@ -71,7 +70,7 @@ validateLogfileParsingRequest request@(LogfileParsingRequest target (CreateLogfi
         validatedParser = Validation.validateLogfileParser logfileParser
         isValidRequest = isRight validatedTarget && isRight validatedParser
 
-        logfileParser = LogfileParser name parsers
+        logfileParser = RM.LogfileParser name parsers
 
 
 validateLogfileParsingFileRequest :: LogfileParsingFileRequest -> Either Problem LogfileParsingFileRequest
@@ -89,7 +88,7 @@ validateLogfileParsingFileRequest request@(LogfileParsingFileRequest parserName 
 
 
 
-validateElementaryParserToCreate :: ElementaryParser -> Either Problem ElementaryParser
+validateElementaryParserToCreate :: RM.ElementaryParser -> Either Problem RM.ElementaryParser
 validateElementaryParserToCreate parser =
   case isValidParser of
     True ->
@@ -127,8 +126,8 @@ validateParsingUrlRequest parserName maybeTarget =
 
 
 
-validateParsingRequest :: ParsingRequest -> Either Problem ParsingRequest
-validateParsingRequest request@(ParsingRequest target parser) =
+validateParsingRequest :: RM.ElementaryParsingRequest -> Either Problem RM.ElementaryParsingRequest
+validateParsingRequest request@(RM.ElementaryParsingRequest target parser) =
   case isValidRequest of
     True ->
       Right request

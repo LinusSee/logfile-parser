@@ -24,7 +24,13 @@ module CustomParsers
 , fromDbLogfileParser
 , toDbLogfileParser
 , fromRestElementaryParser
+, fromElementaryParsingRequest
 , toRestElementaryParser
+, toRestElementaryParsingResponse
+, fromRestCreateLogfileParserRequest
+, fromRestLogfileParsingRequest
+, fromRestLogfileParsingFileRequest
+, toRestLogfileParsingResponse
 ) where
 
 import Data.Aeson
@@ -337,6 +343,11 @@ fromRestParserType parserType =
     RM.MatchFor c           -> MatchFor c
     RM.MatchUntilEnd        -> MatchUntilEnd
 
+fromElementaryParsingRequest :: RM.ElementaryParsingRequest -> ParsingRequest
+fromElementaryParsingRequest (RM.ElementaryParsingRequest target parser) =
+  ParsingRequest
+          target
+          (fromRestElementaryParser parser)
 
 toRestElementaryParser :: ElementaryParser -> RM.ElementaryParser
 toRestElementaryParser (ElementaryParser name options parserType) =
@@ -359,3 +370,71 @@ toRestParserType parserType =
     MatchUntilExcluded x -> RM.MatchUntilExcluded x
     MatchFor c           -> RM.MatchFor c
     MatchUntilEnd        -> RM.MatchUntilEnd
+
+
+toRestElementaryParsingResponse :: ParsingResponse -> RM.ElementaryParsingResponse
+toRestElementaryParsingResponse (ParsingResponse name result) =
+  RM.ElementaryParsingResponse
+            name
+            (toRestElementaryParsingResult result)
+
+toRestElementaryParsingResult :: ParsingResult -> RM.ParsingResult
+toRestElementaryParsingResult parsingResult =
+  case parsingResult of
+    OneOfResult result              -> RM.OneOfResult result
+    TimeResult result               -> RM.TimeResult result
+    DateResult result               -> RM.DateResult result
+    CharactersResult result         -> RM.CharactersResult result
+    MatchUntilIncludedResult result -> RM.MatchUntilIncludedResult result
+    MatchUntilExcludedResult result -> RM.MatchUntilExcludedResult result
+    MatchForResult result           -> RM.MatchForResult result
+    MatchUntilEndResult result      -> RM.MatchUntilEndResult result
+    ParsingError err                -> RM.ParsingError err
+
+
+fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> CreateLogfileParserRequest
+fromRestCreateLogfileParserRequest (RM.LogfileParser name namedParsers) =
+  CreateLogfileParserRequest
+            name
+            (map fromRestNamedParser namedParsers)
+
+
+fromRestNamedParser :: RM.NamedElementaryParser -> NamedElementaryParser
+fromRestNamedParser (RM.NamedElementaryParser name parser) =
+  NamedElementaryParser
+            name
+            (fromRestElementaryParser parser)
+
+fromRestLogfileParsingRequest :: RM.LogfileParsingRequest -> LogfileParsingRequest
+fromRestLogfileParsingRequest (RM.LogfileParsingRequest target parser) =
+  LogfileParsingRequest
+            target
+            (fromRestCreateLogfileParserRequest parser)
+
+fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> LogfileParsingFileRequest
+fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest name logfilePath) =
+  LogfileParsingFileRequest name logfilePath
+
+toRestLogfileParsingResponse :: LogfileParsingResponse -> RM.LogfileParsingResponse
+toRestLogfileParsingResponse (LogfileParsingResponse responses) =
+  RM.LogfileParsingResponse $ map (map toRestElementaryParsingResponse) responses
+toRestLogfileParsingResponse (LogfileParsingError err) =
+  RM.LogfileParsingError err
+
+
+-- fromRestLogfileParser :: RM.LogfileParser -> LogfileParser
+-- fromRestLogfileParser (RM.LogfileParser name namedParsers) =
+--   LogfileParser name (map fromDbNamedParser namedParsers)
+--
+-- fromRestNamedParser :: RM.NamedElementaryParser -> NamedElementaryParser
+-- fromRestNamedParser (RM.NamedElementaryParser name parser) =
+--   NamedElementaryParser name (fromDbElementaryParser parser)
+--
+--
+-- toRestLogfileParser :: LogfileParser -> RM.LogfileParser
+-- toRestLogfileParser (LogfileParser name namedParsers) =
+--   RM.LogfileParser name (map toDbNamedParser namedParsers)
+--
+-- toRestNamedParser :: NamedElementaryParser -> RM.NamedElementaryParser
+-- toRestNamedParser (NamedElementaryParser name parser) =
+--   RM.NamedElementaryParser name (toDbElementaryParser parser)
