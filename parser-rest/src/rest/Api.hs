@@ -36,6 +36,9 @@ import CustomParsers
   , LogfileParsingFileRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
+import qualified CustomParsers as CM
+
+import qualified RestParserModels as RM
 import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 import qualified ValidationOrchestration as ValidationOrchestration
@@ -61,7 +64,7 @@ type API =
             )
             :<|>
             ( "building-blocks" :> "complex" :>
-                (    Get '[JSON] [ElementaryParser]
+                (    Get '[JSON] [RM.ElementaryParser]
                 :<|> ReqBody '[JSON] ElementaryParser :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] ParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
@@ -176,10 +179,11 @@ applyLogfileParserToFileHandler dbConfig request =
   where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
-readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [ElementaryParser]
+readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
 readAllElementaryParsersHandler dbConfig = do
-  response <- liftIO $ Orchestration.existingElementaryParsers dbConfig
-
+  parsers <- liftIO $ Orchestration.existingElementaryParsers dbConfig
+  let response = map CM.toRestElementaryParser parsers
+  
   return response
 
 

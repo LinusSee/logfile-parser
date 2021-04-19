@@ -1,10 +1,15 @@
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module RestParserModels
-(
+( ElementaryParser (..)
+, ParsingOptions (..)
+, ParserType (..)
 ) where
 
+import Data.Aeson
 import Data.Time (TimeOfDay, Day)
+import Data.Text (Text)
 
 
 type CreateElementaryParserRequest = ElementaryParser
@@ -35,6 +40,20 @@ data ParsingOptions =
   ParsingOptions { keepResult :: Bool
                  }
   deriving (Show, Read, Eq)
+
+
+instance ToJSON ElementaryParser where
+  toJSON (ElementaryParser n os (OneOf xs))             = object [ "type" .= ("oneOf" :: Text),               "name" .= n, "options" .= os, "values" .= xs ]
+  toJSON (ElementaryParser n os (Time p))               = object [ "type" .= ("time" :: Text),                "name" .= n, "options" .= os, "pattern" .= p ]
+  toJSON (ElementaryParser n os (Date p))               = object [ "type" .= ("date" :: Text),                "name" .= n, "options" .= os, "pattern" .= p ]
+  toJSON (ElementaryParser n os (Characters s))         = object [ "type" .= ("characters" :: Text),          "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchUntilIncluded s)) = object [ "type" .= ("matchUntilIncluded" :: Text),  "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchUntilExcluded s)) = object [ "type" .= ("matchUntilExcluded" :: Text),  "name" .= n, "options" .= os, "value" .= s ]
+  toJSON (ElementaryParser n os (MatchFor i))           = object [ "type" .= ("matchFor" :: Text),            "name" .= n, "options" .= os, "count" .= i ]
+  toJSON (ElementaryParser n os MatchUntilEnd)          = object [ "type" .= ("matchUntilEnd" :: Text),       "name" .= ("matchUntilEnd" :: Text), "options" .= os ]
+
+instance ToJSON ParsingOptions where
+  toJSON ParsingOptions{keepResult=keepResult} = object [ "keepResult" .= keepResult ]
 
 
 data NamedElementaryParser =

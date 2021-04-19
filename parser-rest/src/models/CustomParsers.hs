@@ -23,6 +23,8 @@ module CustomParsers
 , toDbElementaryParser
 , fromDbLogfileParser
 , toDbLogfileParser
+, fromRestElementaryParser
+, toRestElementaryParser
 ) where
 
 import Data.Aeson
@@ -35,6 +37,7 @@ import Data.Time (TimeOfDay, Day)
 import Servant.Multipart
 
 import qualified DbParserModels as DM
+import qualified RestParserModels as RM
 
 
 
@@ -309,3 +312,50 @@ toDbLogfileParser (LogfileParser name namedParsers) =
 toDbNamedParser :: NamedElementaryParser -> DM.NamedElementaryParser
 toDbNamedParser (NamedElementaryParser name parser) =
   DM.NamedElementaryParser name (toDbElementaryParser parser)
+
+
+fromRestElementaryParser :: RM.ElementaryParser -> ElementaryParser
+fromRestElementaryParser (RM.ElementaryParser name options parserType) =
+  ElementaryParser
+          name
+          (fromRestParsingOptions options)
+          (fromRestParserType parserType)
+
+fromRestParsingOptions :: RM.ParsingOptions -> ParsingOptions
+fromRestParsingOptions options = ParsingOptions [KeepResult True]
+
+
+fromRestParserType :: RM.ParserType -> BasicParser
+fromRestParserType parserType =
+  case parserType of
+    RM.OneOf xs             -> OneOf xs
+    RM.Time pattern         -> Time pattern
+    RM.Date pattern         -> Date pattern
+    RM.Characters x         -> Characters x
+    RM.MatchUntilIncluded x -> MatchUntilIncluded x
+    RM.MatchUntilExcluded x -> MatchUntilExcluded x
+    RM.MatchFor c           -> MatchFor c
+    RM.MatchUntilEnd        -> MatchUntilEnd
+
+
+toRestElementaryParser :: ElementaryParser -> RM.ElementaryParser
+toRestElementaryParser (ElementaryParser name options parserType) =
+  RM.ElementaryParser
+          name
+          (toRestParsingOptions options)
+          (toRestParserType parserType)
+
+toRestParsingOptions :: ParsingOptions -> RM.ParsingOptions
+toRestParsingOptions options = RM.ParsingOptions { RM.keepResult = True }
+
+toRestParserType :: BasicParser -> RM.ParserType
+toRestParserType parserType =
+  case parserType of
+    OneOf xs             -> RM.OneOf xs
+    Time pattern         -> RM.Time pattern
+    Date pattern         -> RM.Date pattern
+    Characters x         -> RM.Characters x
+    MatchUntilIncluded x -> RM.MatchUntilIncluded x
+    MatchUntilExcluded x -> RM.MatchUntilExcluded x
+    MatchFor c           -> RM.MatchFor c
+    MatchUntilEnd        -> RM.MatchUntilEnd
