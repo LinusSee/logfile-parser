@@ -60,9 +60,10 @@ instance FromJSON ElementaryParser where
             ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap MatchFor (o .: "count"))
 
           String "matchUntilEnd" ->
-            -- TODO: Simple return should suffice
             ElementaryParser <$> pure "matchUntilEnd" <*> o .: "options" <*> pure MatchUntilEnd
-          -- _                   -> empty
+
+          _                   ->
+            ElementaryParser <$> o.: "name" <*> o .: "options" <*> (fmap InvalidParser (o .: "type"))
 
 
 data ParserType =
