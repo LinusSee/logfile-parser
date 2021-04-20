@@ -1,23 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE NamedFieldPuns #-}
 
-module CustomParsers
-( ElementaryParser (..)
-, BasicParser (..)
-, LogfileParser (..)
-, ParsingResult (..)
-, NamedParsingResult (..)
-, LogfileParsingResult (..)
-, ParsingRequest (..)
-, ParsingResponse (..)
-, LogfileParsingRequest (..)
-, LogfileParsingFileRequest (..)
-, LogfileParsingResponse (..)
-, CreateLogfileParserRequest (..)
-, NamedElementaryParser (..)
-, ParsingOptions (..)
-, ParsingOption (..)
-, fromDbElementaryParser
+module ModelMapping
+( fromDbElementaryParser
 , toDbElementaryParser
 , fromDbLogfileParser
 , toDbLogfileParser
@@ -37,98 +22,6 @@ import qualified BusinessLogicModels as BM
 import qualified DbParserModels as DM
 import qualified RestParserModels as RM
 
-
-
--- MODELS
-data ElementaryParser =
-  ElementaryParser String ParsingOptions BasicParser
-  deriving (Show, Read, Eq)
-
-data ParsingOptions =
-  ParsingOptions [ParsingOption]
-  deriving (Show, Read, Eq)
-
-data ParsingOption =
-  KeepResult Bool
-  deriving (Show, Read, Eq)
-
-type TimePattern = String
-type DatePattern = String
-
-data BasicParser =
-    OneOf [String]
-  | Time TimePattern
-  | Date DatePattern
-  | Characters String
-  | MatchUntilIncluded String
-  | MatchUntilExcluded String
-  | MatchFor Int
-  | MatchUntilEnd
-  deriving (Show, Read, Eq)
-
-
-data ParsingResult =
-    OneOfResult String
-  | TimeResult TimeOfDay
-  | DateResult Day
-  | CharactersResult String
-  | MatchUntilIncludedResult String
-  | MatchUntilExcludedResult String
-  | MatchForResult String
-  | MatchUntilEndResult String
-  | ParsingError String
-  deriving (Show, Read, Eq)
-
-
-data NamedParsingResult =
-    NamedParsingResult String ParsingResult
-    deriving (Show, Read, Eq)
-
-
-data LogfileParser =
-  LogfileParser String [NamedElementaryParser]
-  deriving (Show, Read, Eq)
-
-
-data LogfileParsingResult =
-    LogfileParsingSuccess [[NamedParsingResult]]
-  | LogfileParsingFailure String
-  deriving (Show, Read, Eq)
-
-
-data CreateLogfileParserRequest =
-  CreateLogfileParserRequest String [ NamedElementaryParser ]
-
-
-data NamedElementaryParser =
-    NamedElementaryParser String ElementaryParser
-    deriving (Show, Read, Eq)
-
-
-data ParsingRequest =
-    ParsingRequest String ElementaryParser
-
-
-data ParsingResponse =
-  ParsingResponse String ParsingResult
-  deriving (Eq, Show, Read)
-
-
-data LogfileParsingRequest =
-  LogfileParsingRequest String CreateLogfileParserRequest
-
-
-data LogfileParsingFileRequest =
-  LogfileParsingFileRequest { name :: String
-                            , logfile :: FilePath
-                            }
-  deriving (Show)
-
-
-data LogfileParsingResponse =
-    LogfileParsingResponse [[ParsingResponse]]
-  | LogfileParsingError String
-  deriving (Eq, Show)
 
 
 fromDbElementaryParser :: DM.ElementaryParser -> BM.ElementaryParser

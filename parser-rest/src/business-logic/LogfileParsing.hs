@@ -7,16 +7,6 @@ module LogfileParsing
 
 import qualified Text.Parsec as Parsec
 
-import CustomParsers
-  ( ElementaryParser (..)
-  , NamedElementaryParser (..)
-  , LogfileParser (..)
-  , NamedParsingResult (..)
-  , LogfileParsingResult (..)
-  , ParsingOptions (..)
-  , ParsingOption (..)
-  )
-
 import qualified BusinessLogicModels as BM
 import ElementaryParsing as ElementaryParsing
 

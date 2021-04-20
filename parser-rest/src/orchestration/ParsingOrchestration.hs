@@ -10,25 +10,7 @@ module ParsingOrchestration
 , applyLogfileParserByName
 ) where
 
-import CustomParsers
-  ( ElementaryParser (..)
-  , BasicParser (..)
-  , ParsingResult (..)
-  , NamedParsingResult (..)
-  , ParsingRequest (..)
-  , ParsingResponse (..)
-  , LogfileParser (..)
-  , LogfileParsingResult (..)
-  , LogfileParsingRequest (..)
-  , LogfileParsingFileRequest (..)
-  , LogfileParsingResponse (..)
-  , CreateLogfileParserRequest (..)
-  , NamedElementaryParser (..)
-  , fromDbElementaryParser
-  , toDbElementaryParser
-  , fromDbLogfileParser
-  , toDbLogfileParser
-  )
+import qualified ModelMapping as MM
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
 import qualified ElementaryParserFileDb as ElemFileDb
@@ -43,26 +25,26 @@ existingLogfileParserNames :: Configs.FileDbConfig -> IO [String]
 existingLogfileParserNames dbConfig = do
   parsers <- LogFileDb.readAll dbConfig
 
-  return $ map extractName (map fromDbLogfileParser parsers)
+  return $ map extractName (map MM.fromDbLogfileParser parsers)
 
   where extractName ( BM.LogfileParser name _ ) = name
 
 
 createLogfileParser :: Configs.FileDbConfig -> BM.LogfileParser -> IO ()
 createLogfileParser dbConfig (BM.LogfileParser name parsers) =
-  LogFileDb.save dbConfig (toDbLogfileParser logfileParser)
+  LogFileDb.save dbConfig (MM.toDbLogfileParser logfileParser)
 
   where logfileParser = BM.LogfileParser name parsers
 
 
 existingElementaryParsers :: Configs.FileDbConfig -> IO [BM.ElementaryParser]
 existingElementaryParsers dbConfig =
-  fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
+  fmap (map MM.fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
 
 
 createElementaryParser :: Configs.FileDbConfig -> BM.ElementaryParser -> IO ()
 createElementaryParser dbConfig elementaryParser =
-  ElemFileDb.save dbConfig (toDbElementaryParser elementaryParser)
+  ElemFileDb.save dbConfig (MM.toDbElementaryParser elementaryParser)
 
 
 applyElementaryParser :: (String, BM.ElementaryParser) -> BM.ElementaryParsingResult
@@ -79,7 +61,7 @@ applyElementaryParser ( target, (BM.ElementaryParser name options parser) ) = do
 
 applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO BM.ElementaryParsingResult
 applyElementaryParserByName dbConfig parserName target = do
-  parsers <- fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
+  parsers <- fmap (map MM.fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
   let (BM.ElementaryParser _ _ parser) = head $ filter byName parsers
   let parsingResult = ElementaryParsing.applyParser target parser
 
@@ -112,7 +94,7 @@ applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
 
   target <- readFile logfilePath
 
-  let parser = head $ filter byName (map fromDbLogfileParser parsers)
+  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
@@ -128,7 +110,7 @@ applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
 applyLogfileParserByName :: Configs.FileDbConfig -> (String, String) -> IO BM.LogfileParsingResult
 applyLogfileParserByName dbConfig (parserName, target) = do
   parsers <- LogFileDb.readAll dbConfig
-  let parser = head $ filter byName (map fromDbLogfileParser parsers)
+  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
@@ -139,11 +121,3 @@ applyLogfileParserByName dbConfig (parserName, target) = do
       return result
 
   where byName (BM.LogfileParser name _ ) = name == parserName
-
-
-toLogfileParsingResponse :: LogfileParsingResult -> LogfileParsingResponse
-toLogfileParsingResponse (LogfileParsingSuccess result) =
-    let toParsingResult (NamedParsingResult n r) = ParsingResponse n r
-    in  LogfileParsingResponse $ map (map toParsingResult) result
-toLogfileParsingResponse (LogfileParsingFailure err) =
-    LogfileParsingError err

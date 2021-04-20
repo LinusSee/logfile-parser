@@ -13,7 +13,7 @@ import Data.Either (isRight, fromLeft)
 import qualified Validation as Validation
 import ValidationModels (ValidationError (..), ValidationType (..))
 import HttpErrors (Problem (..))
-import CustomParsers
+
 import qualified RestParserModels as RM
 
 

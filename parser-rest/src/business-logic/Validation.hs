@@ -17,12 +17,7 @@ import ValidationModels
   ( ValidationError (..)
   , ValidationType (..)
   )
-import CustomParsers
-  ( LogfileParser (..)
-  , ElementaryParser (..)
-  , NamedElementaryParser (..)
-  , BasicParser (..)
-  )
+
 import qualified RestParserModels as RM
 
 

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0ce0e8950b627d64454c15db8971acce0f4b4c627a3c1ccf43b25bf30ecd3ebd
+-- hash: 386d272fa4612b2706a5de190debe342893b0a7d2f9150e52fcb2f59af7c32e3
 
 name:           parser-rest
 version:        0.1.0.0
@@ -31,8 +31,8 @@ library
       Validation
       ElementaryParserFileDb
       LogfileParserFileDb
-      CustomParsers
       HttpErrors
+      ModelMapping
       ValidationModels
       BusinessLogicModels
       DbParserModels
