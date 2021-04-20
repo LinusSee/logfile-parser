@@ -1,14 +1,21 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module BusinessLogicModels
-(
+( ElementaryParser (..)
+, ParsingOptions (..)
+, ParserType (..)
+, ElementaryParsingResult (..)
+, ParsingResultType (..)
+, LogfileParser (..)
+, NamedElementaryParser (..)
+, LogfileParsingResult (..)
 ) where
 
 import Data.Time (TimeOfDay, Day)
 
 
 data ElementaryParser =
-  Elementaryparser { name :: String
+  ElementaryParser { name :: String
                    , options :: ParsingOptions
                    , parserType :: ParserType
                    }
@@ -72,11 +79,11 @@ data ParsingResultType =
 
 
 data LogfileParsingResult =
-  LogfileParsingResult [[NamedElementaryParsingResult]]
+  LogfileParsingResult [[ElementaryParsingResult]]
   deriving (Show, Read, Eq)
 
-data NamedElementaryParsingResult =
-    NamedElementaryParsingResult { name :: String
-                                 , result :: ElementaryParsingResult
-                                 }
-    deriving (Show, Read, Eq)
+-- data NamedElementaryParsingResult =
+--     NamedElementaryParsingResult { name :: String
+--                                  , result :: ElementaryParsingResult
+--                                  }
+--     deriving (Show, Read, Eq)

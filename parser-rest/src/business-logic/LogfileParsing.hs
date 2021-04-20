@@ -17,6 +17,7 @@ import CustomParsers
   , ParsingOption (..)
   )
 
+import qualified BusinessLogicModels as BM
 import ElementaryParsing as ElementaryParsing
 
 
@@ -24,16 +25,16 @@ import ElementaryParsing as ElementaryParsing
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyLogfileParser :: String -> LogfileParser -> Either Parsec.ParseError LogfileParsingResult
-applyLogfileParser target (LogfileParser _ parsers) =
+applyLogfileParser :: String -> BM.LogfileParser -> Either Parsec.ParseError BM.LogfileParsingResult
+applyLogfileParser target (BM.LogfileParser _ parsers) =
   parse (fileParser parsers) target
 
 
-fileParser :: [NamedElementaryParser] -> Parsec.Parsec String () LogfileParsingResult
+fileParser :: [BM.NamedElementaryParser] -> Parsec.Parsec String () BM.LogfileParsingResult
 fileParser parsers = do
   result <- Parsec.manyTill (applyListOfParsers parsers) Parsec.eof
 
-  return $ LogfileParsingSuccess result
+  return $ BM.LogfileParsingResult result
   -- TODO: If a single parser returns an error -> LogfileParsingFailure
   -- Can this even happen or is the error throw to the orchestration?
 
@@ -50,7 +51,7 @@ eolParser = do
   return ()
 
 
-applyListOfParsers :: [NamedElementaryParser] -> Parsec.Parsec String () [NamedParsingResult]
+applyListOfParsers :: [BM.NamedElementaryParser] -> Parsec.Parsec String () [BM.ElementaryParsingResult]
 applyListOfParsers parsers = do
   result <- runThroughList parsers
   _ <- eolParser
@@ -58,17 +59,14 @@ applyListOfParsers parsers = do
   return result
 
 
-runThroughList :: [NamedElementaryParser] -> Parsec.Parsec String () [NamedParsingResult]
+runThroughList :: [BM.NamedElementaryParser] -> Parsec.Parsec String () [BM.ElementaryParsingResult]
 runThroughList [] = do
   return []
 runThroughList (x:xs) = do
   result <- ElementaryParsing.chooseParser basicParser
-  let namedResult = NamedParsingResult resultName result
+  let namedResult = BM.ElementaryParsingResult resultName result
   next <- runThroughList xs
-  return $ if keepResult options then (namedResult : next)
-                                 else next
+  return $ if BM.keepResult options then (namedResult : next)
+                                    else next
 
-  where NamedElementaryParser resultName (ElementaryParser name (ParsingOptions options) basicParser) = x
-        keepResult [] = True
-        keepResult ((KeepResult x):xs) = x
-        keepResult (x:xs) = keepResult xs
+  where BM.NamedElementaryParser resultName (BM.ElementaryParser name options basicParser) = x
