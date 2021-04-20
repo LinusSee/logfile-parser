@@ -130,7 +130,7 @@ applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> H
 applyLogfileParserByName dbConfig parserName maybeTarget =
   case validatedParams of
     Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig validParserName validTarget
+      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig (validParserName, validTarget)
       let response = CM.toRestLogfileParsingResponse result
 
       return response
@@ -180,7 +180,7 @@ applyLogfileParserToFileHandler dbConfig request =
 
 
   where mappedRequest = (CM.fromRestLogfileParsingFileRequest request)
-        validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest mappedRequest
+        validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]

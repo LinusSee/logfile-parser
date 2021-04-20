@@ -79,7 +79,8 @@ data ParsingResultType =
 
 
 data LogfileParsingResult =
-  LogfileParsingResult [[ElementaryParsingResult]]
+    LogfileParsingResult [[ElementaryParsingResult]]
+  | LogfileParsingError String
   deriving (Show, Read, Eq)
 
 -- data NamedElementaryParsingResult =

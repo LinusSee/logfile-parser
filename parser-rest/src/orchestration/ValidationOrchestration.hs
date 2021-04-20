@@ -73,8 +73,8 @@ validateLogfileParsingRequest request@(RM.LogfileParsingRequest target (RM.Logfi
         logfileParser = RM.LogfileParser name parsers
 
 
-validateLogfileParsingFileRequest :: LogfileParsingFileRequest -> Either Problem LogfileParsingFileRequest
-validateLogfileParsingFileRequest request@(LogfileParsingFileRequest parserName logfile) =
+validateLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> Either Problem RM.LogfileParsingFileRequest
+validateLogfileParsingFileRequest request@(RM.LogfileParsingFileRequest parserName logfile) =
   case isValidRequest of
     True ->
       Right request

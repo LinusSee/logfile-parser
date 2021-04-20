@@ -33,6 +33,7 @@ module CustomParsers
 
 import Data.Time (TimeOfDay, Day)
 
+import qualified BusinessLogicModels as BM
 import qualified DbParserModels as DM
 import qualified RestParserModels as RM
 
@@ -130,187 +131,169 @@ data LogfileParsingResponse =
   deriving (Eq, Show)
 
 
-fromDbElementaryParser :: DM.ElementaryParser -> ElementaryParser
+fromDbElementaryParser :: DM.ElementaryParser -> BM.ElementaryParser
 fromDbElementaryParser (DM.ElementaryParser name options parserType) =
-  ElementaryParser
+  BM.ElementaryParser
           name
           (fromDbParsingOptions options)
           (fromDbParserType parserType)
 
 
-fromDbParsingOptions :: DM.ParsingOptions -> ParsingOptions
+fromDbParsingOptions :: DM.ParsingOptions -> BM.ParsingOptions
 fromDbParsingOptions (DM.ParsingOptions keepResult) =
-  ParsingOptions [KeepResult keepResult]
+  BM.ParsingOptions { BM.keepResult = keepResult
+                    }
 
-fromDbParserType :: DM.ParserType -> BasicParser
+fromDbParserType :: DM.ParserType -> BM.ParserType
 fromDbParserType parserType =
   case parserType of
-    DM.OneOf xs             -> OneOf xs
-    DM.Time pattern         -> Time pattern
-    DM.Date pattern         -> Date pattern
-    DM.Characters x         -> Characters x
-    DM.MatchUntilIncluded x -> MatchUntilIncluded x
-    DM.MatchUntilExcluded x -> MatchUntilExcluded x
-    DM.MatchFor c           -> MatchFor c
-    DM.MatchUntilEnd        -> MatchUntilEnd
+    DM.OneOf xs             -> BM.OneOf xs
+    DM.Time pattern         -> BM.Time pattern
+    DM.Date pattern         -> BM.Date pattern
+    DM.Characters x         -> BM.Characters x
+    DM.MatchUntilIncluded x -> BM.MatchUntilIncluded x
+    DM.MatchUntilExcluded x -> BM.MatchUntilExcluded x
+    DM.MatchFor c           -> BM.MatchFor c
+    DM.MatchUntilEnd        -> BM.MatchUntilEnd
 
 
-toDbElementaryParser :: ElementaryParser -> DM.ElementaryParser
-toDbElementaryParser (ElementaryParser name options parserType) =
+toDbElementaryParser :: BM.ElementaryParser -> DM.ElementaryParser
+toDbElementaryParser (BM.ElementaryParser name options parserType) =
   DM.ElementaryParser
           name
           (toDbParsingOptions options)
           (toDbParserType parserType)
 
-toDbParsingOptions :: ParsingOptions -> DM.ParsingOptions
-toDbParsingOptions options = DM.ParsingOptions {DM.keepResult = True}
+toDbParsingOptions :: BM.ParsingOptions -> DM.ParsingOptions
+toDbParsingOptions options = DM.ParsingOptions { DM.keepResult = BM.keepResult options
+                                               }
 
-toDbParserType :: BasicParser -> DM.ParserType
+toDbParserType :: BM.ParserType -> DM.ParserType
 toDbParserType parserType =
   case parserType of
-    OneOf xs             -> DM.OneOf xs
-    Time pattern         -> DM.Time pattern
-    Date pattern         -> DM.Date pattern
-    Characters x         -> DM.Characters x
-    MatchUntilIncluded x -> DM.MatchUntilIncluded x
-    MatchUntilExcluded x -> DM.MatchUntilExcluded x
-    MatchFor c           -> DM.MatchFor c
-    MatchUntilEnd        -> DM.MatchUntilEnd
+    BM.OneOf xs             -> DM.OneOf xs
+    BM.Time pattern         -> DM.Time pattern
+    BM.Date pattern         -> DM.Date pattern
+    BM.Characters x         -> DM.Characters x
+    BM.MatchUntilIncluded x -> DM.MatchUntilIncluded x
+    BM.MatchUntilExcluded x -> DM.MatchUntilExcluded x
+    BM.MatchFor c           -> DM.MatchFor c
+    BM.MatchUntilEnd        -> DM.MatchUntilEnd
 
 
-fromDbLogfileParser :: DM.LogfileParser -> LogfileParser
+fromDbLogfileParser :: DM.LogfileParser -> BM.LogfileParser
 fromDbLogfileParser (DM.LogfileParser name namedParsers) =
-  LogfileParser name (map fromDbNamedParser namedParsers)
+  BM.LogfileParser name (map fromDbNamedParser namedParsers)
 
-fromDbNamedParser :: DM.NamedElementaryParser -> NamedElementaryParser
+fromDbNamedParser :: DM.NamedElementaryParser -> BM.NamedElementaryParser
 fromDbNamedParser (DM.NamedElementaryParser name parser) =
-  NamedElementaryParser name (fromDbElementaryParser parser)
+  BM.NamedElementaryParser name (fromDbElementaryParser parser)
 
 
-toDbLogfileParser :: LogfileParser -> DM.LogfileParser
-toDbLogfileParser (LogfileParser name namedParsers) =
+toDbLogfileParser :: BM.LogfileParser -> DM.LogfileParser
+toDbLogfileParser (BM.LogfileParser name namedParsers) =
   DM.LogfileParser name (map toDbNamedParser namedParsers)
 
-toDbNamedParser :: NamedElementaryParser -> DM.NamedElementaryParser
-toDbNamedParser (NamedElementaryParser name parser) =
+toDbNamedParser :: BM.NamedElementaryParser -> DM.NamedElementaryParser
+toDbNamedParser (BM.NamedElementaryParser name parser) =
   DM.NamedElementaryParser name (toDbElementaryParser parser)
 
 
-fromRestElementaryParser :: RM.ElementaryParser -> ElementaryParser
+fromRestElementaryParser :: RM.ElementaryParser -> BM.ElementaryParser
 fromRestElementaryParser (RM.ElementaryParser name options parserType) =
-  ElementaryParser
+  BM.ElementaryParser
           name
           (fromRestParsingOptions options)
           (fromRestParserType parserType)
 
-fromRestParsingOptions :: RM.ParsingOptions -> ParsingOptions
-fromRestParsingOptions options = ParsingOptions [KeepResult True]
+fromRestParsingOptions :: RM.ParsingOptions -> BM.ParsingOptions
+fromRestParsingOptions options =
+  BM.ParsingOptions { BM.keepResult = RM.keepResult options
+                    }
 
 
-fromRestParserType :: RM.ParserType -> BasicParser
+fromRestParserType :: RM.ParserType -> BM.ParserType
 fromRestParserType parserType =
   case parserType of
-    RM.OneOf xs             -> OneOf xs
-    RM.Time pattern         -> Time pattern
-    RM.Date pattern         -> Date pattern
-    RM.Characters x         -> Characters x
-    RM.MatchUntilIncluded x -> MatchUntilIncluded x
-    RM.MatchUntilExcluded x -> MatchUntilExcluded x
-    RM.MatchFor c           -> MatchFor c
-    RM.MatchUntilEnd        -> MatchUntilEnd
+    RM.OneOf xs             -> BM.OneOf xs
+    RM.Time pattern         -> BM.Time pattern
+    RM.Date pattern         -> BM.Date pattern
+    RM.Characters x         -> BM.Characters x
+    RM.MatchUntilIncluded x -> BM.MatchUntilIncluded x
+    RM.MatchUntilExcluded x -> BM.MatchUntilExcluded x
+    RM.MatchFor c           -> BM.MatchFor c
+    RM.MatchUntilEnd        -> BM.MatchUntilEnd
 
-fromElementaryParsingRequest :: RM.ElementaryParsingRequest -> ParsingRequest
+fromElementaryParsingRequest :: RM.ElementaryParsingRequest -> (String, BM.ElementaryParser)
 fromElementaryParsingRequest (RM.ElementaryParsingRequest target parser) =
-  ParsingRequest
-          target
-          (fromRestElementaryParser parser)
+  ( target, fromRestElementaryParser parser)
 
-toRestElementaryParser :: ElementaryParser -> RM.ElementaryParser
-toRestElementaryParser (ElementaryParser name options parserType) =
+toRestElementaryParser :: BM.ElementaryParser -> RM.ElementaryParser
+toRestElementaryParser (BM.ElementaryParser name options parserType) =
   RM.ElementaryParser
           name
           (toRestParsingOptions options)
           (toRestParserType parserType)
 
-toRestParsingOptions :: ParsingOptions -> RM.ParsingOptions
-toRestParsingOptions options = RM.ParsingOptions { RM.keepResult = True }
+toRestParsingOptions :: BM.ParsingOptions -> RM.ParsingOptions
+toRestParsingOptions options = RM.ParsingOptions { RM.keepResult = BM.keepResult options }
 
-toRestParserType :: BasicParser -> RM.ParserType
+toRestParserType :: BM.ParserType -> RM.ParserType
 toRestParserType parserType =
   case parserType of
-    OneOf xs             -> RM.OneOf xs
-    Time pattern         -> RM.Time pattern
-    Date pattern         -> RM.Date pattern
-    Characters x         -> RM.Characters x
-    MatchUntilIncluded x -> RM.MatchUntilIncluded x
-    MatchUntilExcluded x -> RM.MatchUntilExcluded x
-    MatchFor c           -> RM.MatchFor c
-    MatchUntilEnd        -> RM.MatchUntilEnd
+    BM.OneOf xs             -> RM.OneOf xs
+    BM.Time pattern         -> RM.Time pattern
+    BM.Date pattern         -> RM.Date pattern
+    BM.Characters x         -> RM.Characters x
+    BM.MatchUntilIncluded x -> RM.MatchUntilIncluded x
+    BM.MatchUntilExcluded x -> RM.MatchUntilExcluded x
+    BM.MatchFor c           -> RM.MatchFor c
+    BM.MatchUntilEnd        -> RM.MatchUntilEnd
 
 
-toRestElementaryParsingResponse :: ParsingResponse -> RM.ElementaryParsingResponse
-toRestElementaryParsingResponse (ParsingResponse name result) =
+toRestElementaryParsingResponse :: BM.ElementaryParsingResult -> RM.ElementaryParsingResponse
+toRestElementaryParsingResponse (BM.ElementaryParsingResult name result) =
   RM.ElementaryParsingResponse
             name
             (toRestElementaryParsingResult result)
 
-toRestElementaryParsingResult :: ParsingResult -> RM.ParsingResult
+toRestElementaryParsingResult :: BM.ParsingResultType -> RM.ParsingResult
 toRestElementaryParsingResult parsingResult =
   case parsingResult of
-    OneOfResult result              -> RM.OneOfResult result
-    TimeResult result               -> RM.TimeResult result
-    DateResult result               -> RM.DateResult result
-    CharactersResult result         -> RM.CharactersResult result
-    MatchUntilIncludedResult result -> RM.MatchUntilIncludedResult result
-    MatchUntilExcludedResult result -> RM.MatchUntilExcludedResult result
-    MatchForResult result           -> RM.MatchForResult result
-    MatchUntilEndResult result      -> RM.MatchUntilEndResult result
-    ParsingError err                -> RM.ParsingError err
+    BM.OneOfResult result              -> RM.OneOfResult result
+    BM.TimeResult result               -> RM.TimeResult result
+    BM.DateResult result               -> RM.DateResult result
+    BM.CharactersResult result         -> RM.CharactersResult result
+    BM.MatchUntilIncludedResult result -> RM.MatchUntilIncludedResult result
+    BM.MatchUntilExcludedResult result -> RM.MatchUntilExcludedResult result
+    BM.MatchForResult result           -> RM.MatchForResult result
+    BM.MatchUntilEndResult result      -> RM.MatchUntilEndResult result
+    BM.ParsingError err                -> RM.ParsingError err
 
 
-fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> CreateLogfileParserRequest
+fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> BM.LogfileParser
 fromRestCreateLogfileParserRequest (RM.LogfileParser name namedParsers) =
-  CreateLogfileParserRequest
+  BM.LogfileParser
             name
             (map fromRestNamedParser namedParsers)
 
 
-fromRestNamedParser :: RM.NamedElementaryParser -> NamedElementaryParser
+fromRestNamedParser :: RM.NamedElementaryParser -> BM.NamedElementaryParser
 fromRestNamedParser (RM.NamedElementaryParser name parser) =
-  NamedElementaryParser
+  BM.NamedElementaryParser
             name
             (fromRestElementaryParser parser)
 
-fromRestLogfileParsingRequest :: RM.LogfileParsingRequest -> LogfileParsingRequest
+fromRestLogfileParsingRequest :: RM.LogfileParsingRequest -> (String, BM.LogfileParser)
 fromRestLogfileParsingRequest (RM.LogfileParsingRequest target parser) =
-  LogfileParsingRequest
-            target
-            (fromRestCreateLogfileParserRequest parser)
+  ( target, fromRestCreateLogfileParserRequest parser)
 
-fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> LogfileParsingFileRequest
+fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> (String, FilePath)
 fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest name logfilePath) =
-  LogfileParsingFileRequest name logfilePath
+  (name, logfilePath)
 
-toRestLogfileParsingResponse :: LogfileParsingResponse -> RM.LogfileParsingResponse
-toRestLogfileParsingResponse (LogfileParsingResponse responses) =
-  RM.LogfileParsingResponse $ map (map toRestElementaryParsingResponse) responses
-toRestLogfileParsingResponse (LogfileParsingError err) =
+toRestLogfileParsingResponse :: BM.LogfileParsingResult -> RM.LogfileParsingResponse
+toRestLogfileParsingResponse (BM.LogfileParsingResult results) =
+  RM.LogfileParsingResponse $ map (map toRestElementaryParsingResponse) results
+toRestLogfileParsingResponse (BM.LogfileParsingError err) =
   RM.LogfileParsingError err
-
-
--- fromRestLogfileParser :: RM.LogfileParser -> LogfileParser
--- fromRestLogfileParser (RM.LogfileParser name namedParsers) =
---   LogfileParser name (map fromDbNamedParser namedParsers)
---
--- fromRestNamedParser :: RM.NamedElementaryParser -> NamedElementaryParser
--- fromRestNamedParser (RM.NamedElementaryParser name parser) =
---   NamedElementaryParser name (fromDbElementaryParser parser)
---
---
--- toRestLogfileParser :: LogfileParser -> RM.LogfileParser
--- toRestLogfileParser (LogfileParser name namedParsers) =
---   RM.LogfileParser name (map toDbNamedParser namedParsers)
---
--- toRestNamedParser :: NamedElementaryParser -> RM.NamedElementaryParser
--- toRestNamedParser (NamedElementaryParser name parser) =
---   RM.NamedElementaryParser name (toDbElementaryParser parser)

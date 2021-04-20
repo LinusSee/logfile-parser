@@ -35,6 +35,8 @@ import qualified ElementaryParserFileDb as ElemFileDb
 import qualified LogfileParsing as LogfileParsing
 import qualified LogfileParserFileDb as LogFileDb
 
+import qualified BusinessLogicModels as BM
+
 
 
 existingLogfileParserNames :: Configs.FileDbConfig -> IO [String]
@@ -43,100 +45,100 @@ existingLogfileParserNames dbConfig = do
 
   return $ map extractName (map fromDbLogfileParser parsers)
 
-  where extractName ( LogfileParser name _ ) = name
+  where extractName ( BM.LogfileParser name _ ) = name
 
 
-createLogfileParser :: Configs.FileDbConfig -> CreateLogfileParserRequest -> IO ()
-createLogfileParser dbConfig (CreateLogfileParserRequest name parsers) =
+createLogfileParser :: Configs.FileDbConfig -> BM.LogfileParser -> IO ()
+createLogfileParser dbConfig (BM.LogfileParser name parsers) =
   LogFileDb.save dbConfig (toDbLogfileParser logfileParser)
 
-  where logfileParser = LogfileParser name parsers
+  where logfileParser = BM.LogfileParser name parsers
 
 
-existingElementaryParsers :: Configs.FileDbConfig -> IO [ElementaryParser]
+existingElementaryParsers :: Configs.FileDbConfig -> IO [BM.ElementaryParser]
 existingElementaryParsers dbConfig =
   fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
 
 
-createElementaryParser :: Configs.FileDbConfig -> ElementaryParser -> IO ()
+createElementaryParser :: Configs.FileDbConfig -> BM.ElementaryParser -> IO ()
 createElementaryParser dbConfig elementaryParser =
   ElemFileDb.save dbConfig (toDbElementaryParser elementaryParser)
 
 
-applyElementaryParser :: ParsingRequest -> ParsingResponse
-applyElementaryParser ( ParsingRequest target (ElementaryParser name options parser) ) = do
+applyElementaryParser :: (String, BM.ElementaryParser) -> BM.ElementaryParsingResult
+applyElementaryParser ( target, (BM.ElementaryParser name options parser) ) = do
   case parsingResult of
     Left err ->
-      ParsingResponse name (ParsingError (show err))
+      BM.ElementaryParsingResult name (BM.ParsingError (show err))
 
     Right result ->
-      ParsingResponse name result
+      BM.ElementaryParsingResult name result
 
     where parsingResult = ElementaryParsing.applyParser target parser
 
 
-applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO ParsingResponse
+applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO BM.ElementaryParsingResult
 applyElementaryParserByName dbConfig parserName target = do
   parsers <- fmap (map fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
-  let (ElementaryParser _ _ parser) = head $ filter byName parsers
+  let (BM.ElementaryParser _ _ parser) = head $ filter byName parsers
   let parsingResult = ElementaryParsing.applyParser target parser
 
   case parsingResult of
     Left err ->
-      return $ ParsingResponse parserName (ParsingError (show err))
+      return $ BM.ElementaryParsingResult parserName (BM.ParsingError (show err))
 
     Right result ->
-      return $ ParsingResponse parserName result
+      return $ BM.ElementaryParsingResult parserName result
 
-    where byName (ElementaryParser name _ _) = name == parserName
+    where byName (BM.ElementaryParser name _ _) = name == parserName
 
 
-applyLogfileParser :: LogfileParsingRequest -> LogfileParsingResponse
-applyLogfileParser ( LogfileParsingRequest target (CreateLogfileParserRequest name parsers) ) = do
+applyLogfileParser :: (String, BM.LogfileParser) -> BM.LogfileParsingResult
+applyLogfileParser ( target, (BM.LogfileParser name parsers) ) = do
   case parsingResult of
     Left err ->
-      LogfileParsingError (show err)
+      BM.LogfileParsingError (show err)
 
     Right result ->
-      toLogfileParsingResponse result
+      result
 
-  where logfileParser = LogfileParser name parsers
+  where logfileParser = BM.LogfileParser name parsers
         parsingResult = LogfileParsing.applyLogfileParser target logfileParser
 
 
-applyLogfileParserToFile :: Configs.FileDbConfig -> LogfileParsingFileRequest -> IO LogfileParsingResponse
-applyLogfileParserToFile dbConfig (LogfileParsingFileRequest parserName logfile) = do
+applyLogfileParserToFile :: Configs.FileDbConfig -> (String, FilePath) -> IO BM.LogfileParsingResult
+applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
   parsers <- LogFileDb.readAll dbConfig
 
-  target <- readFile logfile
+  target <- readFile logfilePath
 
   let parser = head $ filter byName (map fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
     Left err ->
-      return $ LogfileParsingError (show err)
+      return $ BM.LogfileParsingError (show err)
 
     Right result ->
-      return $ toLogfileParsingResponse result
+      return result
 
-  where byName (LogfileParser name _ ) = name == parserName
+  where byName (BM.LogfileParser name _ ) = name == parserName
 
 
-applyLogfileParserByName :: Configs.FileDbConfig -> String -> String -> IO LogfileParsingResponse
-applyLogfileParserByName dbConfig parserName target = do
+applyLogfileParserByName :: Configs.FileDbConfig -> (String, String) -> IO BM.LogfileParsingResult
+applyLogfileParserByName dbConfig (parserName, target) = do
   parsers <- LogFileDb.readAll dbConfig
   let parser = head $ filter byName (map fromDbLogfileParser parsers)
   let parsingResult = LogfileParsing.applyLogfileParser target parser
 
   case parsingResult of
     Left err ->
-      return $ LogfileParsingError (show err)
+      return $ BM.LogfileParsingError (show err)
 
     Right result ->
-      return $ toLogfileParsingResponse result
+      return result
 
-  where byName (LogfileParser name _ ) = name == parserName
+  where byName (BM.LogfileParser name _ ) = name == parserName
 
 
 toLogfileParsingResponse :: LogfileParsingResult -> LogfileParsingResponse
