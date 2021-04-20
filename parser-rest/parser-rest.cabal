@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b1f9996e8ffb362e182ac53cf56e39b14f8546536f350efe26c42919d7a37130
+-- hash: f38ba74a974670f6904640355a6388bf80184ad97465adec203f7c145cae8f5a
 
 name:           parser-rest
 version:        0.1.0.0
@@ -35,6 +35,7 @@ library
       HttpErrors
       ValidationModels
       DbParserModels
+      RestParserModels
       ParsingOrchestration
       ValidationOrchestration
       Configs
@@ -46,6 +47,7 @@ library
       src/database/access
       src/models
       src/models/db
+      src/models/rest
       src/orchestration
       src/other/config
       src/rest

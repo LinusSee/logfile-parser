@@ -36,6 +36,9 @@ import CustomParsers
   , LogfileParsingFileRequest
   , LogfileParsingResponse (LogfileParsingError)
   )
+import qualified CustomParsers as CM
+
+import qualified RestParserModels as RM
 import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 import qualified ValidationOrchestration as ValidationOrchestration
@@ -53,18 +56,18 @@ type API =
             ( "logfile" :>
                 (
                      Get '[JSON] [String]
-                :<|> ReqBody '[JSON] CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] LogfileParsingResponse
-                :<|> "apply" :> ReqBody '[JSON] LogfileParsingRequest :> Post '[JSON] LogfileParsingResponse
-                :<|> "apply" :> "file" :> MultipartForm Tmp LogfileParsingFileRequest :> Post '[JSON] LogfileParsingResponse
+                :<|> ReqBody '[JSON] RM.CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
+                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
+                :<|> "apply" :> ReqBody '[JSON] RM.LogfileParsingRequest :> Post '[JSON] RM.LogfileParsingResponse
+                :<|> "apply" :> "file" :> MultipartForm Tmp RM.LogfileParsingFileRequest :> Post '[JSON] RM.LogfileParsingResponse
                 )
             )
             :<|>
             ( "building-blocks" :> "complex" :>
-                (    Get '[JSON] [ElementaryParser]
-                :<|> ReqBody '[JSON] ElementaryParser :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] ParsingResponse
-                :<|> "apply" :> ReqBody '[JSON] ParsingRequest :> Post '[JSON] ParsingResponse
+                (    Get '[JSON] [RM.ElementaryParser]
+                :<|> ReqBody '[JSON] RM.ElementaryParser :> PostCreated '[JSON] NoContent
+                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
+                :<|> "apply" :> ReqBody '[JSON] RM.ElementaryParsingRequest :> Post '[JSON] RM.ElementaryParsingResponse
                 )
             )
         )
@@ -106,11 +109,11 @@ getLogfileParserNames dbConfig = do
   return response
 
 
-saveLogfileParserHandler ::  Configs.FileDbConfig -> CreateLogfileParserRequest -> Handler NoContent
+saveLogfileParserHandler ::  Configs.FileDbConfig -> RM.CreateLogfileParserRequest -> Handler NoContent
 saveLogfileParserHandler dbConfig request =
   case validatedRequest of
     Right validRequest -> do
-        _ <- liftIO $ Orchestration.createLogfileParser dbConfig validRequest
+        _ <- liftIO $ Orchestration.createLogfileParser dbConfig (CM.fromRestCreateLogfileParserRequest validRequest)
 
         return NoContent
 
@@ -123,11 +126,12 @@ saveLogfileParserHandler dbConfig request =
   where validatedRequest = ValidationOrchestration.validateCreateLogfileParserRequest request
 
 
-applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler LogfileParsingResponse
+applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.LogfileParsingResponse
 applyLogfileParserByName dbConfig parserName maybeTarget =
   case validatedParams of
     Right (validParserName, validTarget) -> do
-      response <- liftIO $ Orchestration.applyLogfileParserByName dbConfig validParserName validTarget
+      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig validParserName validTarget
+      let response = CM.toRestLogfileParsingResponse result
 
       return response
 
@@ -140,11 +144,12 @@ applyLogfileParserByName dbConfig parserName maybeTarget =
     where validatedParams = ValidationOrchestration.validateLogfileParsingUrlRequest parserName maybeTarget
 
 
-applyLogfileParserHandler :: LogfileParsingRequest -> Handler LogfileParsingResponse
+applyLogfileParserHandler :: RM.LogfileParsingRequest -> Handler RM.LogfileParsingResponse
 applyLogfileParserHandler request =
   case validatedRequest of
     Right validRequest -> do
-      let response = Orchestration.applyLogfileParser request
+      let result = Orchestration.applyLogfileParser (CM.fromRestLogfileParsingRequest request)
+      let response = CM.toRestLogfileParsingResponse result
 
       return response
 
@@ -158,11 +163,12 @@ applyLogfileParserHandler request =
   where validatedRequest = ValidationOrchestration.validateLogfileParsingRequest request
 
 
-applyLogfileParserToFileHandler :: Configs.FileDbConfig -> LogfileParsingFileRequest -> Handler LogfileParsingResponse
+applyLogfileParserToFileHandler :: Configs.FileDbConfig -> RM.LogfileParsingFileRequest -> Handler RM.LogfileParsingResponse
 applyLogfileParserToFileHandler dbConfig request =
   case validatedRequest of
     Right validRequest -> do
-      response <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig request
+      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig mappedRequest
+      let response = CM.toRestLogfileParsingResponse result
 
       return response
 
@@ -173,21 +179,23 @@ applyLogfileParserToFileHandler dbConfig request =
         }
 
 
-  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
+  where mappedRequest = (CM.fromRestLogfileParsingFileRequest request)
+        validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest mappedRequest
 
 
-readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [ElementaryParser]
+readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
 readAllElementaryParsersHandler dbConfig = do
-  response <- liftIO $ Orchestration.existingElementaryParsers dbConfig
+  parsers <- liftIO $ Orchestration.existingElementaryParsers dbConfig
+  let response = map CM.toRestElementaryParser parsers
 
   return response
 
 
-saveParserHandler ::  Configs.FileDbConfig -> ElementaryParser -> Handler NoContent
+saveParserHandler ::  Configs.FileDbConfig -> RM.ElementaryParser -> Handler NoContent
 saveParserHandler dbConfig parser =
   case validatedParser of
     Right validParser -> do
-        _ <- liftIO $ Orchestration.createElementaryParser dbConfig validParser
+        _ <- liftIO $ Orchestration.createElementaryParser dbConfig (CM.fromRestElementaryParser validParser)
 
         return NoContent
 
@@ -201,11 +209,12 @@ saveParserHandler dbConfig parser =
   where validatedParser = ValidationOrchestration.validateElementaryParserToCreate parser
 
 
-applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler ParsingResponse
+applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.ElementaryParsingResponse
 applyParserByNameHandler dbConfig parserName maybeTarget =
   case validatedParams of
     Right (validParserName, validTarget) -> do
-      response <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
+      result <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
+      let response = CM.toRestElementaryParsingResponse result
 
       return response
 
@@ -219,11 +228,12 @@ applyParserByNameHandler dbConfig parserName maybeTarget =
 
 
 
-applyParserHandler :: ParsingRequest -> Handler ParsingResponse
+applyParserHandler :: RM.ElementaryParsingRequest -> Handler RM.ElementaryParsingResponse
 applyParserHandler request =
   case validatedRequest of
     Right validRequest -> do
-      let response = Orchestration.applyElementaryParser request
+      let result = Orchestration.applyElementaryParser (CM.fromElementaryParsingRequest validRequest)
+      let response = CM.toRestElementaryParsingResponse result
 
       return response
 

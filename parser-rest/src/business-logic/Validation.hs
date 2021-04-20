@@ -23,6 +23,7 @@ import CustomParsers
   , NamedElementaryParser (..)
   , BasicParser (..)
   )
+import qualified RestParserModels as RM
 
 
 
@@ -55,39 +56,39 @@ validateLogfileParserExists :: String -> Either ValidationError (Valid String)
 validateLogfileParserExists name = Right $ Valid name
 
 
-validateElementaryParser :: ElementaryParser -> Either [ValidationError] (Valid ElementaryParser)
-validateElementaryParser parser@(ElementaryParser name options basicParser) =
+validateElementaryParser :: RM.ElementaryParser -> Either [ValidationError] (Valid RM.ElementaryParser)
+validateElementaryParser parser@(RM.ElementaryParser name options basicParser) =
     let validatedName = validateParserName name
     in  case basicParser of
-          OneOf values ->
+          RM.OneOf values ->
               let validatedValues = validateOneOfValues values
               in  gatherResult validatedName validatedValues
 
-          Time pattern ->
+          RM.Time pattern ->
               let validatedPattern = validateTimePattern pattern
               in  gatherResult validatedName validatedPattern
 
-          Date pattern ->
+          RM.Date pattern ->
               let validatedPattern = validateDatePattern pattern
               in  gatherResult validatedName validatedPattern
 
-          Characters value ->
+          RM.Characters value ->
               let validatedValue = validateCharactersValue value
               in  gatherResult validatedName validatedValue
 
-          MatchUntilIncluded value ->
+          RM.MatchUntilIncluded value ->
               let validatedValue = validateMatchUntilIncludedValue value
               in  gatherResult validatedName validatedValue
 
-          MatchUntilExcluded value ->
+          RM.MatchUntilExcluded value ->
               let validatedValue = validateMatchUntilExcludedValue value
               in  gatherResult validatedName validatedValue
 
-          MatchFor count ->
+          RM.MatchFor count ->
               let validatedCount = validateMatchForCount count
               in  gatherResult validatedName validatedCount
 
-          MatchUntilEnd ->
+          RM.MatchUntilEnd ->
               Right $ Valid parser
 
     where gatherResult r1 r2 =
@@ -103,8 +104,8 @@ validateElementaryParser parser@(ElementaryParser name options basicParser) =
 
 
 
-validateLogfileParser :: LogfileParser -> Either [ValidationError] (Valid LogfileParser)
-validateLogfileParser parser@(LogfileParser name parsers) =
+validateLogfileParser :: RM.LogfileParser -> Either [ValidationError] (Valid RM.LogfileParser)
+validateLogfileParser parser@(RM.LogfileParser name parsers) =
   case logfileParserIsValid of
     True ->
       Right $ Valid parser
@@ -133,7 +134,7 @@ validateParserName name =
   where nameIsValid = not $ null name
 
 
-validateParsersList :: [NamedElementaryParser] -> Either ValidationError (Valid [NamedElementaryParser])
+validateParsersList :: [RM.NamedElementaryParser] -> Either ValidationError (Valid [RM.NamedElementaryParser])
 validateParsersList parsers =
   case parsersIsValid of
     True ->
@@ -158,8 +159,8 @@ validateParsersList parsers =
         validatedParsers = map validateNamedParser parsers
 
 
-validateNamedParser :: NamedElementaryParser -> Either [ValidationError] (Valid NamedElementaryParser)
-validateNamedParser namedParser@(NamedElementaryParser name elementaryParser) =
+validateNamedParser :: RM.NamedElementaryParser -> Either [ValidationError] (Valid RM.NamedElementaryParser)
+validateNamedParser namedParser@(RM.NamedElementaryParser name elementaryParser) =
   case isValid of
     True ->
       Right $ Valid namedParser
