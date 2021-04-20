@@ -150,7 +150,7 @@ toRestElementaryParsingResponse (BM.ElementaryParsingResult name result) =
             name
             (toRestElementaryParsingResult result)
 
-toRestElementaryParsingResult :: BM.ParsingResultType -> RM.ParsingResult
+toRestElementaryParsingResult :: BM.ParsingResultType -> RM.ParsingResultType
 toRestElementaryParsingResult parsingResult =
   case parsingResult of
     BM.OneOfResult result              -> RM.OneOfResult result
