@@ -12,7 +12,7 @@ module RestParserModels
 , ParsingResultType (..)
 , NamedElementaryParser (..)
 , LogfileParser (..)
-, CreateLogfileParserRequest
+, CreateLogfileParserRequest (..)
 , LogfileParsingRequest (..)
 , LogfileParsingFileRequest (..)
 , LogfileParsingResponse (..)
@@ -168,6 +168,7 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [ NamedElementaryParser ]
                 }
+  deriving (Show, Read, Eq)
 
 instance FromJSON LogfileParser where
   parseJSON (Object o) =

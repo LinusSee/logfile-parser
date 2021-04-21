@@ -10,6 +10,7 @@ module ModelMapping
 , fromElementaryParsingRequest
 , toRestElementaryParser
 , toRestElementaryParsingResponse
+, fromRestLogfileParser
 , fromRestCreateLogfileParserRequest
 , fromRestLogfileParsingRequest
 , fromRestLogfileParsingFileRequest
@@ -164,11 +165,14 @@ toRestElementaryParsingResult parsingResult =
     BM.ParsingError err                -> RM.ParsingError err
 
 
-fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> BM.LogfileParser
-fromRestCreateLogfileParserRequest (RM.LogfileParser name namedParsers) =
+fromRestLogfileParser :: RM.LogfileParser -> BM.LogfileParser
+fromRestLogfileParser (RM.LogfileParser name namedParsers) =
   BM.LogfileParser
             name
             (map fromRestNamedParser namedParsers)
+
+fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> BM.LogfileParser
+fromRestCreateLogfileParserRequest = fromRestLogfileParser
 
 
 fromRestNamedParser :: RM.NamedElementaryParser -> BM.NamedElementaryParser
