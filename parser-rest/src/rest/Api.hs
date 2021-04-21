@@ -157,7 +157,7 @@ applyLogfileParserToFileHandler :: Configs.FileDbConfig -> RM.LogfileParsingFile
 applyLogfileParserToFileHandler dbConfig request =
   case validatedRequest of
     Right validRequest -> do
-      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig mappedRequest
+      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (MM.fromRestLogfileParsingFileRequest validRequest)
       let response = MM.toRestLogfileParsingResponse result
 
       return response
@@ -169,8 +169,7 @@ applyLogfileParserToFileHandler dbConfig request =
         }
 
 
-  where mappedRequest = (MM.fromRestLogfileParsingFileRequest request)
-        validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
+  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
