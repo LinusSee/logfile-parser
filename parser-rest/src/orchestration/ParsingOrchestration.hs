@@ -10,7 +10,6 @@ module ParsingOrchestration
 , applyLogfileParserByName
 ) where
 
-import qualified ModelMapping as MM
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
 import qualified ElementaryParserFileDb as ElemFileDb
@@ -18,6 +17,7 @@ import qualified LogfileParsing as LogfileParsing
 import qualified LogfileParserFileDb as LogFileDb
 
 import qualified BusinessLogicModels as BM
+import qualified ModelMapping as MM
 
 
 

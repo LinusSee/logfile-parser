@@ -22,14 +22,14 @@ import           Servant
 import           Servant.Multipart
 import qualified Servant.Client as ServC
 
-
-import qualified ModelMapping as MM
-import qualified RestParserModels as RM
-
 import qualified ElementaryParserFileDb as ElemDb -- For initialising data
 import qualified LogfileParserFileDb as LogfileDb -- For initialising data
 import qualified Configs as Configs
 import qualified Api as Api
+
+import qualified ModelMapping as MM
+import qualified RestParserModels as RM
+
 
 
 createDbFiles :: IO ()

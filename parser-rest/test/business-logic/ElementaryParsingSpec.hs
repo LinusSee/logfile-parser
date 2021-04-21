@@ -9,7 +9,6 @@ import Test.Hspec.QuickCheck (prop)
 import qualified Test.QuickCheck as QC
 import Data.Time (TimeOfDay (..), Day)
 
--- import CustomParsers
 import ElementaryParsing
 
 import qualified BusinessLogicModels as BM
