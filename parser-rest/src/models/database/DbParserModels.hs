@@ -17,6 +17,12 @@ data ElementaryParser =
   deriving (Show, Read, Eq)
 
 
+data ParsingOptions =
+  ParsingOptions { keepResult :: Bool
+                 }
+  deriving (Show, Read, Eq)
+
+
 data ParserType =
     OneOf [String]
   | Time TimePattern
@@ -32,9 +38,11 @@ type TimePattern = String
 type DatePattern = String
 
 
-data ParsingOptions =
-  ParsingOptions { keepResult :: Bool
-                 }
+
+data LogfileParser =
+  LogfileParser { name :: String
+                , namedParsers :: [NamedElementaryParser]
+                }
   deriving (Show, Read, Eq)
 
 
@@ -42,12 +50,4 @@ data NamedElementaryParser =
   NamedElementaryParser { name :: String
                         , parser :: ElementaryParser
                         }
-  deriving (Show, Read, Eq)
-
-
-
-data LogfileParser =
-  LogfileParser { name :: String
-                , namedParsers :: [NamedElementaryParser]
-                }
   deriving (Show, Read, Eq)

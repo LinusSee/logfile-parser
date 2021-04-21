@@ -13,7 +13,7 @@ import Data.Either (isRight, fromLeft)
 import qualified Validation as Validation
 import ValidationModels (ValidationError (..), ValidationType (..))
 import HttpErrors (Problem (..))
-import CustomParsers
+
 import qualified RestParserModels as RM
 
 
@@ -73,8 +73,8 @@ validateLogfileParsingRequest request@(RM.LogfileParsingRequest target (RM.Logfi
         logfileParser = RM.LogfileParser name parsers
 
 
-validateLogfileParsingFileRequest :: LogfileParsingFileRequest -> Either Problem LogfileParsingFileRequest
-validateLogfileParsingFileRequest request@(LogfileParsingFileRequest parserName logfile) =
+validateLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> Either Problem RM.LogfileParsingFileRequest
+validateLogfileParsingFileRequest request@(RM.LogfileParsingFileRequest parserName logfile) =
   case isValidRequest of
     True ->
       Right request

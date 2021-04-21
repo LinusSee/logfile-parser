@@ -9,8 +9,9 @@ import Test.Hspec.QuickCheck (prop)
 import qualified Test.QuickCheck as QC
 import Data.Time (TimeOfDay (..), Day)
 
-import CustomParsers
 import ElementaryParsing
+
+import qualified BusinessLogicModels as BM
 
 
 
@@ -20,17 +21,17 @@ spec = do
     describe "applyParser - OneOf Parser" $ do
         context "when provided with a valid target value and an OneOf parser" $ do
             it "returns the first match even if another would fit" $ do
-                let parser = OneOf ["matchNormal", "other", "matchNormalExtended"]
-                applyParser "matchNormalExtended" parser `shouldBe` Right (OneOfResult "matchNormal")
+                let parser = BM.OneOf ["matchNormal", "other", "matchNormalExtended"]
+                applyParser "matchNormalExtended" parser `shouldBe` Right (BM.OneOfResult "matchNormal")
 
             prop "matches a value if it is in a OneOf parsers list (with smaller matches removed)" $ do
                 QC.forAll (QC.listOf1 nonEmptyString) $ \values -> QC.forAll (QC.elements values) $ \val -> do
                     -- Remove elements that start the same as the target element
                     let validValue = \valueToCheck -> not (isPrefixOf valueToCheck val) || valueToCheck == val
                     let validValues = filter validValue values
-                    let parser = OneOf validValues
+                    let parser = BM.OneOf validValues
 
-                    applyParser val parser `shouldBe` Right (OneOfResult val)
+                    applyParser val parser `shouldBe` Right (BM.OneOfResult val)
 
 
         context "when provided with an invalid target value and an OneOf parser" $ do
@@ -39,7 +40,7 @@ spec = do
                     -- Remove elements that start the same as the target element
                     let validValue = \valueToCheck -> not (isPrefixOf valueToCheck val)
                     let validValues = filter validValue values
-                    let parser = OneOf validValues
+                    let parser = BM.OneOf validValues
 
                     applyParser val parser `shouldSatisfy` isLeft
 
@@ -49,50 +50,50 @@ spec = do
         context "when provided with a valid target value and a Time parser" $ do
             it "returns a time by matching the pattern HH:MM" $ do
                 let target = "11:59 and some more text"
-                let parser = Time "HH:MM"
+                let parser = BM.Time "HH:MM"
 
-                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 11 59 00 )
+                applyParser target parser `shouldBe` Right (BM.TimeResult $ TimeOfDay 11 59 00 )
 
 
             it "returns a time by matching the pattern HH_MM" $ do
                 let target = "14_01"
-                let parser = Time "HH_MM"
+                let parser = BM.Time "HH_MM"
 
-                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 14 01 00)
+                applyParser target parser `shouldBe` Right (BM.TimeResult $ TimeOfDay 14 01 00)
 
 
             it "returns a time by matching the pattern MM-HH" $ do
                 let target = "00-0 and some more text"
-                let parser = Time "MM-HH"
+                let parser = BM.Time "MM-HH"
 
-                applyParser target parser `shouldBe` Right (TimeResult $ TimeOfDay 0 0 0)
+                applyParser target parser `shouldBe` Right (BM.TimeResult $ TimeOfDay 0 0 0)
 
 
         context "when provided with an invalid target value and a Time parser" $ do
             it "returns an error if the separator doesn't match the pattern" $ do
                 let target = "10:00 and some more text"
-                let parser = Time "HH-MM"
+                let parser = BM.Time "HH-MM"
 
                 applyParser target parser `shouldSatisfy` isLeft
 
 
             it "returns an error if the target doesn't match the pattern" $ do
                 let target = "1-a00 and some more text"
-                let parser = Time "HH-MM"
+                let parser = BM.Time "HH-MM"
 
                 applyParser target parser `shouldSatisfy` isLeft
 
 
             it "returns an error if the hour is not a valid one" $ do
                 let target = "24-00 and some more text"
-                let parser = Time "HH-MM"
+                let parser = BM.Time "HH-MM"
 
                 applyParser target parser `shouldSatisfy` isLeft
 
 
             it "returns an error if the minute is not a valid one" $ do
                 let target = "10-60 and some more text"
-                let parser = Time "HH-MM"
+                let parser = BM.Time "HH-MM"
 
                 applyParser target parser `shouldSatisfy` isLeft
 
@@ -104,8 +105,8 @@ spec = do
             prop "matches a value that fits a Date parser's pattern" $ do
                 QC.forAll validDatePattern $
                   \pattern -> QC.forAll (simpleDateFromPattern pattern) $ \date -> do
-                    let parser = Date pattern
-                    let result = Right ( DateResult $ toDate pattern date )
+                    let parser = BM.Date pattern
+                    let result = Right ( BM.DateResult $ toDate pattern date )
 
                     applyParser date parser `shouldBe` result
 
@@ -115,14 +116,14 @@ spec = do
         context "when provided with a valid input and a Characters parser" $ do
             prop "matches the provided string" $ do
                 \target -> do
-                    let parser = Characters target
+                    let parser = BM.Characters target
 
-                    applyParser target parser `shouldBe` Right (CharactersResult target)
+                    applyParser target parser `shouldBe` Right (BM.CharactersResult target)
 
         context "when provided with an invalid input and a Characters parser" $ do
             prop "doesn't match the provided string" $ do
                 QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    let parser = Characters target
+                    let parser = BM.Characters target
 
                     applyParser (drop 1 target) parser `shouldSatisfy` isLeft
 
@@ -133,17 +134,17 @@ spec = do
         context "when provided with a valid input and a MatchUntilIncluded parser" $ do
             prop "matches until the provided string, with the string being included" $ do
                 \before after -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    let parser = MatchUntilIncluded target
+                    let parser = BM.MatchUntilIncluded target
                     let stringToParse = takeUntilSubstring before target ++ target ++ after
                     let result = takeUntilSubstring before target ++ target
 
-                    applyParser stringToParse parser `shouldBe` Right (MatchUntilIncludedResult result)
+                    applyParser stringToParse parser `shouldBe` Right (BM.MatchUntilIncludedResult result)
 
 
         context "when provided with an invalid input and a MatchUntilIncluded parser" $ do
             prop "doesn't match the provided string" $ do
                 \before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    let parser = MatchUntilIncluded target
+                    let parser = BM.MatchUntilIncluded target
                     let stringToParse = takeUntilSubstring before target
 
                     applyParser stringToParse parser `shouldSatisfy` isLeft
@@ -155,17 +156,17 @@ spec = do
         context "when provided with a valid input and a MatchUntilExcluded parser" $ do
             prop "matches until the provided string, with the provided string being excluded" $ do
                 \before after -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    let parser = MatchUntilExcluded target
+                    let parser = BM.MatchUntilExcluded target
                     let stringToParse = takeUntilSubstring before target ++ target ++ after
                     let result = takeUntilSubstring before target
 
-                    applyParser stringToParse parser `shouldBe` Right (MatchUntilExcludedResult result)
+                    applyParser stringToParse parser `shouldBe` Right (BM.MatchUntilExcludedResult result)
 
 
         context "when provided with an invalid input and a MatchUntilExcluded parser" $ do
             prop "doesn't match the provided string" $ do
                 \before -> QC.forAll (QC.listOf1 QC.arbitrary) $ \target -> do
-                    let parser = MatchUntilExcluded target
+                    let parser = BM.MatchUntilExcluded target
                     let stringToParse = takeUntilSubstring before target
 
                     applyParser stringToParse parser `shouldSatisfy` isLeft
@@ -176,9 +177,9 @@ spec = do
         context "when provided with a valid input and a MatchFor parser" $ do
             prop "matches the first n characters" $ do
                 \count -> QC.forAll (certainLengthString count) $ \target -> do
-                    let parser = MatchFor count
+                    let parser = BM.MatchFor count
 
-                    applyParser target parser `shouldBe` Right (MatchForResult (take count target))
+                    applyParser target parser `shouldBe` Right (BM.MatchForResult (take count target))
 
 
 
@@ -186,28 +187,28 @@ spec = do
         context "when provided with a valid input without newline and a MatchUntil parser" $ do
             prop "matches the entire string" $ do
                 \start end -> do
-                    let parser = MatchUntilEnd
+                    let parser = BM.MatchUntilEnd
                     let target = filter ((/=)'\r') $ filter ((/=)'\n') (start ++ end)
 
-                    applyParser target parser `shouldBe` Right (MatchUntilEndResult target)
+                    applyParser target parser `shouldBe` Right (BM.MatchUntilEndResult target)
 
 
             prop "matches until newline (\\n)" $ do
                 \start -> QC.forAll (QC.listOf1 QC.arbitrary) $ \end -> do
-                    let parser = MatchUntilEnd
+                    let parser = BM.MatchUntilEnd
                     let cleanStart = filter ((/=) '\r') $ filter ((/=) '\n') start
                     let target = cleanStart ++ "\n" ++ end
 
-                    applyParser target parser `shouldBe` Right (MatchUntilEndResult cleanStart)
+                    applyParser target parser `shouldBe` Right (BM.MatchUntilEndResult cleanStart)
 
 
             prop "matches until newline (\\r\\n)" $ do
                 \start -> QC.forAll (QC.listOf1 QC.arbitrary) $ \end -> do
-                    let parser = MatchUntilEnd
+                    let parser = BM.MatchUntilEnd
                     let cleanStart = filter ((/=) '\r') $ filter ((/=) '\n') start
                     let target = cleanStart ++ "\r\n" ++ end
 
-                    applyParser target parser `shouldBe` Right (MatchUntilEndResult cleanStart)
+                    applyParser target parser `shouldBe` Right (BM.MatchUntilEndResult cleanStart)
 
 
 

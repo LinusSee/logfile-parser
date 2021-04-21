@@ -16,39 +16,20 @@ import Data.ByteString.Lazy (ByteString)
 import System.Directory (createDirectoryIfMissing, removeDirectoryRecursive)
 
 
-
-
-
-
 import qualified Network.HTTP.Client              as HttpClient
 import qualified Network.Wai.Handler.Warp         as Warp
 import           Servant
 import           Servant.Multipart
 import qualified Servant.Client as ServC
 
-
-
-
-import CustomParsers ( ElementaryParser (..)
-                     , BasicParser (..)
-                     , ParsingOptions (..)
-                     , ParsingOption (..)
-                     , LogfileParser (..)
-                     , LogfileParsingResponse (..)
-                     , ParsingResponse (..)
-                     , ParsingResult (..)
-                     , CreateLogfileParserRequest (..)
-                     , LogfileParsingRequest (..)
-                     , LogfileParsingFileRequest (..)
-                     , NamedElementaryParser (..)
-                     , ParsingRequest (..)
-                     , toDbLogfileParser
-                     , toDbElementaryParser
-                     )
 import qualified ElementaryParserFileDb as ElemDb -- For initialising data
 import qualified LogfileParserFileDb as LogfileDb -- For initialising data
 import qualified Configs as Configs
 import qualified Api as Api
+
+import qualified ModelMapping as MM
+import qualified RestParserModels as RM
+
 
 
 createDbFiles :: IO ()
@@ -88,7 +69,7 @@ spec =  before_ createDbFiles $
 
               describe "POST parser as JSON creates the parser and" $ do
                 it "returns NoContent" $ \port -> do
-                  let parser = ElementaryParser "newLoglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"])
+                  let parser = RM.ElementaryParser "newLoglevelParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.OneOf ["TRACE", "DEBUG", "INFO", "ERROR"])
                   creationResult <- ServC.runClientM
                               (createElementaryParser client parser)
                               (clientEnv port)
@@ -109,24 +90,24 @@ spec =  before_ createDbFiles $
                               (applyElementaryParserByName client parserName target)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ ParsingResponse
+                  result `shouldBe` (Right $ RM.ElementaryParsingResponse
                                               parserName
-                                              (OneOfResult "INCIDENT"))
+                                              (RM.OneOfResult "INCIDENT"))
 
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns the parsing response" $ \port -> do
-                  let parsingRequest = ParsingRequest
+                  let parsingRequest = RM.ElementaryParsingRequest
                                           "DEBUG some message"
-                                          (ElementaryParser "newLoglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["TRACE", "DEBUG", "INFO", "ERROR"]))
+                                          (RM.ElementaryParser "newLoglevelParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.OneOf ["TRACE", "DEBUG", "INFO", "ERROR"]))
 
                   result <- ServC.runClientM
                               (applyElementaryParser client parsingRequest)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ ParsingResponse
+                  result `shouldBe` (Right $ RM.ElementaryParsingResponse
                                               "newLoglevelParser"
-                                              (OneOfResult "DEBUG"))
+                                              (RM.OneOfResult "DEBUG"))
 
 
 
@@ -142,11 +123,11 @@ spec =  before_ createDbFiles $
 
               describe "POST parser as JSON creates the parser and" $ do
                 it "returns NoContent" $ \port -> do
-                  let parser = CreateLogfileParserRequest
+                  let parser = RM.LogfileParser
                                   "newLogfileParser"
-                                  [ NamedElementaryParser "loglevel" oneOfParser
-                                  , NamedElementaryParser "space" spaceParser
-                                  , NamedElementaryParser "message" matchUntilEndParser
+                                  [ RM.NamedElementaryParser "loglevel" oneOfParser
+                                  , RM.NamedElementaryParser "space" spaceParser
+                                  , RM.NamedElementaryParser "message" matchUntilEndParser
                                   ]
 
                   creationResult <- ServC.runClientM
@@ -169,46 +150,46 @@ spec =  before_ createDbFiles $
                               (applyLogfileParserByName client parserName target)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ LogfileParsingResponse [
-                                              [ ParsingResponse "LogLevel" (OneOfResult "INCIDENT")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "LogDate" (OneOfResult "2021-02-13")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "LogTime" (OneOfResult "16:13:00")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "UntilCorrelationId" (OneOfResult "some stuff before id <correlationId>")
-                                              , ParsingResponse "CorrelationId" (OneOfResult "asg-qwta123-fd")
-                                              , ParsingResponse "CorrelationIdEndTag" (OneOfResult "</correlationId>")
-                                              , ParsingResponse "forSpace" (OneOfResult " ")
-                                              , ParsingResponse "restOfTheMessage" (OneOfResult "error message")
+                  result `shouldBe` (Right $ RM.LogfileParsingResponse [
+                                              [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
+                                              , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
+                                              , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
+                                              , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
                                               ]])
 
 
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns a list of parser names" $ \port -> do
-                  let parsingRequest = LogfileParsingRequest
+                  let parsingRequest = RM.LogfileParsingRequest
                                   "ERROR some message describing the error\n\
                                   \INFO some info"
-                                  (CreateLogfileParserRequest
+                                  (RM.LogfileParser
                                     "newLogfileParser"
-                                    [ NamedElementaryParser "loglevel" oneOfParser
-                                    , NamedElementaryParser "space" spaceParser
-                                    , NamedElementaryParser "message" matchUntilEndParser
+                                    [ RM.NamedElementaryParser "loglevel" oneOfParser
+                                    , RM.NamedElementaryParser "space" spaceParser
+                                    , RM.NamedElementaryParser "message" matchUntilEndParser
                                     ])
 
                   result <- ServC.runClientM
                               (applyLogfileParser client parsingRequest)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ LogfileParsingResponse
-                                              [ [ ParsingResponse "loglevel" (OneOfResult "ERROR")
-                                                , ParsingResponse "space" (OneOfResult " ")
-                                                , ParsingResponse "message" (OneOfResult "some message describing the error")
+                  result `shouldBe` (Right $ RM.LogfileParsingResponse
+                                              [ [ RM.ElementaryParsingResponse "loglevel" (RM.OneOfResult "ERROR")
+                                                , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                , RM.ElementaryParsingResponse "message" (RM.OneOfResult "some message describing the error")
                                                 ]
-                                              , [ ParsingResponse "loglevel" (OneOfResult "INFO")
-                                                , ParsingResponse "space" (OneOfResult " ")
-                                                , ParsingResponse "message" (OneOfResult "some info")
+                                              , [ RM.ElementaryParsingResponse "loglevel" (RM.OneOfResult "INFO")
+                                                , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                , RM.ElementaryParsingResponse "message" (RM.OneOfResult "some info")
                                                 ]
                                               ])
 
@@ -216,7 +197,7 @@ spec =  before_ createDbFiles $
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns a list of parser names" $ \port -> do
                   let path = "foo_bar_baz"
-                  let parsingRequest = LogfileParsingFileRequest
+                  let parsingRequest = RM.LogfileParsingFileRequest
                                         "myLogfileParser"
                                         "assets\\sample_logfiles\\test_logfile.log"
                                         --"./assets/sample-logfiles/test_logfile.log"
@@ -226,18 +207,18 @@ spec =  before_ createDbFiles $
                               (applyLogfileParserToFile client (path, parsingRequest))
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ LogfileParsingResponse [
-                                              [ ParsingResponse "LogLevel" (OneOfResult "INCIDENT")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "LogDate" (OneOfResult "2021-02-13")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "LogTime" (OneOfResult "16:13:00")
-                                              , ParsingResponse "space" (OneOfResult " ")
-                                              , ParsingResponse "UntilCorrelationId" (OneOfResult "some stuff before id <correlationId>")
-                                              , ParsingResponse "CorrelationId" (OneOfResult "asg-qwta123-fd")
-                                              , ParsingResponse "CorrelationIdEndTag" (OneOfResult "</correlationId>")
-                                              , ParsingResponse "forSpace" (OneOfResult " ")
-                                              , ParsingResponse "restOfTheMessage" (OneOfResult "error message")
+                  result `shouldBe` (Right $ RM.LogfileParsingResponse [
+                                              [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
+                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
+                                              , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
+                                              , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
+                                              , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
+                                              , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
                                               ]])
 
 
@@ -251,7 +232,7 @@ withUserApp action =
 createElementaryParsers :: IO ()
 createElementaryParsers = mapM_
                             (ElemDb.save fileDbConfig)
-                            (reverse (map toDbElementaryParser initialElementaryParsers))
+                            (reverse (map (MM.toDbElementaryParser . MM.fromRestElementaryParser) initialElementaryParsers))
 
   where dbPath = dbBasePath ++ elementaryParsersDbName
 
@@ -259,7 +240,7 @@ createElementaryParsers = mapM_
 createLogfileParsers :: IO ()
 createLogfileParsers = mapM_
                         (LogfileDb.save fileDbConfig)
-                        (map toDbLogfileParser [logfileParser])
+                        (map (MM.toDbLogfileParser . MM.fromRestLogfileParser) [logfileParser])
 
 
 fileDbConfig :: Configs.FileDbConfig
@@ -268,7 +249,7 @@ fileDbConfig = Configs.FileDbConfig
                   (T.pack $ dbBasePath ++ logfileParsersDbName)
 
 
-initialElementaryParsers :: [ElementaryParser]
+initialElementaryParsers :: [RM.ElementaryParser]
 initialElementaryParsers =  [ oneOfParser
                             , timeParser
                             , dateParser
@@ -281,48 +262,48 @@ initialElementaryParsers =  [ oneOfParser
                             ]
 
 
-oneOfParser :: ElementaryParser
-oneOfParser = ElementaryParser "loglevelParser" (ParsingOptions [KeepResult True]) (OneOf ["INFO", "INCIDENT", "ERROR"])
+oneOfParser :: RM.ElementaryParser
+oneOfParser = RM.ElementaryParser "loglevelParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.OneOf ["INFO", "INCIDENT", "ERROR"])
 
-timeParser :: ElementaryParser
-timeParser = ElementaryParser "dashedTimeParser" (ParsingOptions [KeepResult True]) (Time "HH-MM")
+timeParser :: RM.ElementaryParser
+timeParser = RM.ElementaryParser "dashedTimeParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.Time "HH-MM")
 
-dateParser :: ElementaryParser
-dateParser = ElementaryParser "dottedDateParser" (ParsingOptions [KeepResult True]) (Date "YYYY.MM.DD")
+dateParser :: RM.ElementaryParser
+dateParser = RM.ElementaryParser "dottedDateParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.Date "YYYY.MM.DD")
 
-spaceParser :: ElementaryParser
-spaceParser = ElementaryParser "spaceParser" (ParsingOptions [KeepResult True]) (Characters " ")
+spaceParser :: RM.ElementaryParser
+spaceParser = RM.ElementaryParser "spaceParser" (RM.ParsingOptions { RM.keepResult = True }) (RM.Characters " ")
 
-charactersParser :: ElementaryParser
-charactersParser = ElementaryParser "correlationIdEndTag" (ParsingOptions [KeepResult True]) (Characters "</correlationId>")
+charactersParser :: RM.ElementaryParser
+charactersParser = RM.ElementaryParser "correlationIdEndTag" (RM.ParsingOptions { RM.keepResult = True }) (RM.Characters "</correlationId>")
 
-matchUntilIncludedParser :: ElementaryParser
-matchUntilIncludedParser = ElementaryParser "untilCorrelationId" (ParsingOptions [KeepResult True]) (MatchUntilIncluded "<correlationId>")
+matchUntilIncludedParser :: RM.ElementaryParser
+matchUntilIncludedParser = RM.ElementaryParser "untilCorrelationId" (RM.ParsingOptions { RM.keepResult = True }) (RM.MatchUntilIncluded "<correlationId>")
 
-matchUntilExcludedParser :: ElementaryParser
-matchUntilExcludedParser = ElementaryParser "correlationId" (ParsingOptions [KeepResult True]) (MatchUntilExcluded "</correlationId>")
+matchUntilExcludedParser :: RM.ElementaryParser
+matchUntilExcludedParser = RM.ElementaryParser "correlationId" (RM.ParsingOptions { RM.keepResult = True }) (RM.MatchUntilExcluded "</correlationId>")
 
-matchForParser :: ElementaryParser
-matchForParser = ElementaryParser "for1Space" (ParsingOptions [KeepResult True]) (MatchFor 1)
+matchForParser :: RM.ElementaryParser
+matchForParser = RM.ElementaryParser "for1Space" (RM.ParsingOptions { RM.keepResult = True }) (RM.MatchFor 1)
 
-matchUntilEndParser :: ElementaryParser
-matchUntilEndParser = ElementaryParser "matchUntilEnd" (ParsingOptions [KeepResult True]) MatchUntilEnd
+matchUntilEndParser :: RM.ElementaryParser
+matchUntilEndParser = RM.ElementaryParser "matchUntilEnd" (RM.ParsingOptions { RM.keepResult = True }) RM.MatchUntilEnd
 
 
-logfileParser :: LogfileParser
-logfileParser = LogfileParser
+logfileParser :: RM.LogfileParser
+logfileParser = RM.LogfileParser
                   "myLogfileParser"
-                  [ NamedElementaryParser "LogLevel" oneOfParser
-                  , NamedElementaryParser "space" spaceParser
-                  , NamedElementaryParser "LogDate" dateParser
-                  , NamedElementaryParser "space" spaceParser
-                  , NamedElementaryParser "LogTime" timeParser
-                  , NamedElementaryParser "space" spaceParser
-                  , NamedElementaryParser "UntilCorrelationId" matchUntilIncludedParser
-                  , NamedElementaryParser "CorrelationId" matchUntilExcludedParser
-                  , NamedElementaryParser "CorrelationIdEndTag" charactersParser
-                  , NamedElementaryParser "forSpace" matchForParser
-                  , NamedElementaryParser "restOfTheMessage" matchUntilEndParser
+                  [ RM.NamedElementaryParser "LogLevel" oneOfParser
+                  , RM.NamedElementaryParser "space" spaceParser
+                  , RM.NamedElementaryParser "LogDate" dateParser
+                  , RM.NamedElementaryParser "space" spaceParser
+                  , RM.NamedElementaryParser "LogTime" timeParser
+                  , RM.NamedElementaryParser "space" spaceParser
+                  , RM.NamedElementaryParser "UntilCorrelationId" matchUntilIncludedParser
+                  , RM.NamedElementaryParser "CorrelationId" matchUntilExcludedParser
+                  , RM.NamedElementaryParser "CorrelationIdEndTag" charactersParser
+                  , RM.NamedElementaryParser "forSpace" matchForParser
+                  , RM.NamedElementaryParser "restOfTheMessage" matchUntilEndParser
                   ]
 -- data Config = Config
 --   { fileDbConfig :: FileDbConfig
@@ -350,45 +331,45 @@ logfileParsersDbName = "/logfile_parsers.txt"
 getLogfileParserNames :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [String]
 getLogfileParserNames (( parserNames :<|> _ ) :<|> (_)) = parserNames
 
-createLogfileParser :: ServC.Client ServC.ClientM Api.API -> (CreateLogfileParserRequest -> ServC.ClientM NoContent)
+createLogfileParser :: ServC.Client ServC.ClientM Api.API -> (RM.CreateLogfileParserRequest -> ServC.ClientM NoContent)
 createLogfileParser (( _ :<|> createParser :<|> _) :<|> (_)) = createParser
 
-applyLogfileParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM RM.LogfileParsingResponse)
 applyLogfileParserByName (( _ :<|> _ :<|> applyByName :<|> _) :<|> (_)) = applyByName
 
-applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (LogfileParsingRequest -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (RM.LogfileParsingRequest -> ServC.ClientM RM.LogfileParsingResponse)
 applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser :<|> _) :<|> (_)) = applyParser
 
-applyLogfileParserToFile :: ServC.Client ServC.ClientM Api.API -> ((ByteString, LogfileParsingFileRequest) -> ServC.ClientM LogfileParsingResponse)
+applyLogfileParserToFile :: ServC.Client ServC.ClientM Api.API -> ((ByteString, RM.LogfileParsingFileRequest) -> ServC.ClientM RM.LogfileParsingResponse)
 applyLogfileParserToFile (( _ :<|> _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) = applyParser
 
 
-getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [ElementaryParser]
+getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [RM.ElementaryParser]
 getElementaryParsers ((_) :<|> ( getParsers :<|> _)) = getParsers
 
-createElementaryParser :: ServC.Client ServC.ClientM Api.API -> (ElementaryParser -> ServC.ClientM NoContent)
+createElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParser -> ServC.ClientM NoContent)
 createElementaryParser ((_) :<|> ( _ :<|> createParser :<|> _)) = createParser
 
-applyElementaryParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM ParsingResponse)
+applyElementaryParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM RM.ElementaryParsingResponse)
 applyElementaryParserByName ((_) :<|> ( _ :<|> _ :<|> applyByName :<|> _)) = applyByName
 
-applyElementaryParser :: ServC.Client ServC.ClientM Api.API -> (ParsingRequest -> ServC.ClientM ParsingResponse)
+applyElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParsingRequest -> ServC.ClientM RM.ElementaryParsingResponse)
 applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyParser)) = applyParser
 
 
 
-instance ToJSON ParsingRequest where
-  toJSON (ParsingRequest target parser) =
+instance ToJSON RM.ElementaryParsingRequest where
+  toJSON (RM.ElementaryParsingRequest target parser) =
     object [ "target" .= target, "parser" .= parser ]
 
 
-instance ToJSON LogfileParsingRequest where
-  toJSON (LogfileParsingRequest target parser) =
+instance ToJSON RM.LogfileParsingRequest where
+  toJSON (RM.LogfileParsingRequest target parser) =
     object [ "target" .= target, "parser" .= parser ]
 
 
-instance ToMultipart Tmp LogfileParsingFileRequest where
-  toMultipart (LogfileParsingFileRequest name logfile) =
+instance ToMultipart Tmp RM.LogfileParsingFileRequest where
+  toMultipart (RM.LogfileParsingFileRequest name logfile) =
       MultipartData [ Input "name" (T.pack name) ]
                     [ FileData
                         "logfile"
@@ -398,34 +379,34 @@ instance ToMultipart Tmp LogfileParsingFileRequest where
                     ]
 
 
-instance ToJSON CreateLogfileParserRequest where
-  toJSON (CreateLogfileParserRequest name parsers) =
+instance ToJSON RM.LogfileParser where
+  toJSON (RM.LogfileParser name parsers) =
     object [ "name" .= name, "parsers" .= parsers]
 
 
-instance ToJSON NamedElementaryParser where
-  toJSON (NamedElementaryParser name parser) =
+instance ToJSON RM.NamedElementaryParser where
+  toJSON (RM.NamedElementaryParser name parser) =
     object [ "name" .= name, "parser" .= parser]
 
 
-instance FromJSON ParsingResponse where
+instance FromJSON RM.ElementaryParsingResponse where
   parseJSON (Object o) =
     do maybeResult <- o .:? "result"
        case maybeResult of
          Just (String result) ->
-            ParsingResponse <$> o .: "name" <*> (fmap OneOfResult (o .: "result"))
+            RM.ElementaryParsingResponse <$> o .: "name" <*> (fmap RM.OneOfResult (o .: "result"))
 
          Nothing ->
-            ParsingResponse <$> o .: "name" <*> (fmap ParsingError (o .: "error"))
+            RM.ElementaryParsingResponse <$> o .: "name" <*> (fmap RM.ParsingError (o .: "error"))
 
 
-instance FromJSON LogfileParsingResponse where
+instance FromJSON RM.LogfileParsingResponse where
   parseJSON (Object o) =
     do parserType <- o .:? "result"
-       let maybeResponse = fmap LogfileParsingResponse parserType
+       let maybeResponse = fmap RM.LogfileParsingResponse parserType
        case maybeResponse of
           Just response ->
             return response
 
           Nothing ->
-            LogfileParsingError <$> o .: "error"
+            RM.LogfileParsingError <$> o .: "error"

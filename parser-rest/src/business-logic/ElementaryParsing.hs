@@ -10,121 +10,117 @@ import qualified Text.Parsec as Parsec
 import Data.Char
 import Data.List
 import Data.Time
-import CustomParsers
-  ( ElementaryParser (..)
-  , BasicParser (..)
-  , ParsingResult (..)
-  )
 
+import qualified BusinessLogicModels as BM
 
 
 parse rule text = Parsec.parse rule "Logfile parser (source name)" text
 
 
-applyParser :: String -> BasicParser -> Either Parsec.ParseError ParsingResult
+applyParser :: String -> BM.ParserType -> Either Parsec.ParseError BM.ParsingResultType
 applyParser target parser =
     parse chosenParser target
 
     where chosenParser = chooseParser parser
 
 
-chooseParser :: BasicParser -> Parsec.Parsec String () ParsingResult
+chooseParser :: BM.ParserType -> Parsec.Parsec String () BM.ParsingResultType
 chooseParser basicParser =
   case basicParser of
-    OneOf xs ->
+    BM.OneOf xs ->
       applyOneOf xs
 
-    Time pattern ->
+    BM.Time pattern ->
       applyTime pattern
 
-    Date pattern ->
+    BM.Date pattern ->
       applyDate pattern
 
-    Characters chars ->
+    BM.Characters chars ->
       applyCharacters chars
 
-    MatchUntilIncluded chars ->
+    BM.MatchUntilIncluded chars ->
       applyMatchUntilIncluded chars
 
-    MatchUntilExcluded chars ->
+    BM.MatchUntilExcluded chars ->
       applyMatchUntilExcluded chars
 
-    MatchFor count ->
+    BM.MatchFor count ->
       applyMatchFor count
 
-    MatchUntilEnd ->
+    BM.MatchUntilEnd ->
       applyMatchUntilEnd
 
 
 
 
 
-applyOneOf :: [ String ] -> Parsec.Parsec String () ParsingResult
+applyOneOf :: [ String ] -> Parsec.Parsec String () BM.ParsingResultType
 applyOneOf target = do
   result <- Parsec.choice (map (Parsec.try .Parsec.string) target)
-  return $ OneOfResult result
+  return $ BM.OneOfResult result
 
 
-applyTime :: String -> Parsec.Parsec String () ParsingResult
+applyTime :: String -> Parsec.Parsec String () BM.ParsingResultType
 applyTime format = do
   result <- timePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let time = parseTimeM False defaultTimeLocale "%H:%M" result :: Maybe TimeOfDay
   case time of
     Just parsedTime ->
-      return $ TimeResult parsedTime
+      return $ BM.TimeResult parsedTime
 
     Nothing ->
-      return $ ParsingError ("Could not convert '" ++ result ++ "' to a time'")
+      return $ BM.ParsingError ("Could not convert '" ++ result ++ "' to a time'")
 
 
-applyDate :: String -> Parsec.Parsec String () ParsingResult
+applyDate :: String -> Parsec.Parsec String () BM.ParsingResultType
 applyDate format = do
   result <- datePatternToParsers (map toUpper format)
   -- "%H:%M:%S.%q" and replicate 9 '0'
   let day = parseTimeM False defaultTimeLocale "%Y%m%d" result :: Maybe Day
   case day of
     Just parsedDay ->
-      return $ DateResult parsedDay
+      return $ BM.DateResult parsedDay
 
     Nothing ->
-      return $ ParsingError ("Could not convert '" ++ result ++ "' to a date'")
+      return $ BM.ParsingError ("Could not convert '" ++ result ++ "' to a date'")
 
 
-applyCharacters :: String -> Parsec.Parsec String () ParsingResult
+applyCharacters :: String -> Parsec.Parsec String () BM.ParsingResultType
 applyCharacters target = do
   result <- Parsec.string target
-  return $ CharactersResult result
+  return $ BM.CharactersResult result
 
 
-applyMatchUntilIncluded :: String -> Parsec.Parsec String () ParsingResult
+applyMatchUntilIncluded :: String -> Parsec.Parsec String () BM.ParsingResultType
 applyMatchUntilIncluded value = do
   untilIncluded <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead (Parsec.try $ Parsec.string value))
   included <- Parsec.string value
   let result = untilIncluded ++ included
 
-  return $ MatchUntilIncludedResult result
+  return $ BM.MatchUntilIncludedResult result
 
 
-applyMatchUntilExcluded :: String -> Parsec.Parsec String () ParsingResult
+applyMatchUntilExcluded :: String -> Parsec.Parsec String () BM.ParsingResultType
 applyMatchUntilExcluded value = do
   result <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead (Parsec.try $ Parsec.string value))
 
-  return $ MatchUntilExcludedResult result
+  return $ BM.MatchUntilExcludedResult result
 
 
-applyMatchFor :: Int -> Parsec.Parsec String () ParsingResult
+applyMatchFor :: Int -> Parsec.Parsec String () BM.ParsingResultType
 applyMatchFor count = do
   result <- Parsec.count count Parsec.anyChar
 
-  return $ MatchForResult result
+  return $ BM.MatchForResult result
 
 
-applyMatchUntilEnd :: Parsec.Parsec String () ParsingResult
+applyMatchUntilEnd :: Parsec.Parsec String () BM.ParsingResultType
 applyMatchUntilEnd = do
   result <- Parsec.manyTill Parsec.anyChar (Parsec.lookAhead eolParser)
 
-  return $ MatchUntilEndResult result
+  return $ BM.MatchUntilEndResult result
 
 
 newlineParser :: Parsec.Parsec String () ()

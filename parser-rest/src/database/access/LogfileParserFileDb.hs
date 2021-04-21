@@ -6,12 +6,13 @@ module LogfileParserFileDb
 import qualified Data.Text as T
 import Control.Monad (when)
 
-import DbParserModels (LogfileParser)
 import qualified Configs as Configs
 
+import qualified DbParserModels as DM
 
 
-readAll :: Configs.FileDbConfig -> IO [LogfileParser]
+
+readAll :: Configs.FileDbConfig -> IO [DM.LogfileParser]
 readAll dbConfig = do
   contents <- readFile filePath
 
@@ -20,7 +21,7 @@ readAll dbConfig = do
   where filePath = T.unpack $ Configs.logfileParserPath dbConfig
 
 
-save :: Configs.FileDbConfig -> LogfileParser -> IO ()
+save :: Configs.FileDbConfig -> DM.LogfileParser -> IO ()
 save dbConfig logfileParser = do
   allParsers <- readAll dbConfig
 
@@ -31,5 +32,5 @@ save dbConfig logfileParser = do
   where filePath = T.unpack $ Configs.logfileParserPath dbConfig
 
 
-toParsers :: String -> [LogfileParser]
+toParsers :: String -> [DM.LogfileParser]
 toParsers contents = read contents

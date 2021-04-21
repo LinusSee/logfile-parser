@@ -9,10 +9,10 @@ module RestParserModels
 , ParserType (..)
 , ElementaryParsingRequest (..)
 , ElementaryParsingResponse (..)
-, ParsingResult (..)
+, ParsingResultType (..)
 , NamedElementaryParser (..)
 , LogfileParser (..)
-, CreateLogfileParserRequest
+, CreateLogfileParserRequest (..)
 , LogfileParsingRequest (..)
 , LogfileParsingFileRequest (..)
 , LogfileParsingResponse (..)
@@ -132,7 +132,7 @@ instance FromJSON ElementaryParsingRequest where
 
 data ElementaryParsingResponse =
   ElementaryParsingResponse { name :: String
-                            , result :: ParsingResult
+                            , result :: ParsingResultType
                             }
   deriving (Show, Read, Eq)
 
@@ -148,7 +148,7 @@ instance ToJSON ElementaryParsingResponse where
   toJSON (ElementaryParsingResponse name (ParsingError result))              = object [ "name" .= name, "error" .= result  ]
 
 
-data ParsingResult =
+data ParsingResultType =
     OneOfResult String
   | TimeResult TimeOfDay
   | DateResult Day
@@ -168,6 +168,7 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [ NamedElementaryParser ]
                 }
+  deriving (Show, Read, Eq)
 
 instance FromJSON LogfileParser where
   parseJSON (Object o) =

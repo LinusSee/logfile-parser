@@ -25,23 +25,13 @@ import Servant.Multipart
 import Data.ByteString.Char8 (pack)
 import Data.CaseInsensitive (mk)
 
-import CustomParsers
-  ( ElementaryParser
-  , LogfileParser
-  , CreateLogfileParserRequest
-  , ParsingResult (ParsingError)
-  , ParsingRequest
-  , ParsingResponse (ParsingResponse)
-  , LogfileParsingRequest
-  , LogfileParsingFileRequest
-  , LogfileParsingResponse (LogfileParsingError)
-  )
-import qualified CustomParsers as CM
 
-import qualified RestParserModels as RM
 import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 import qualified ValidationOrchestration as ValidationOrchestration
+
+import qualified ModelMapping as MM
+import qualified RestParserModels as RM
 
 
 startApp :: Configs.Config -> IO ()
@@ -113,7 +103,7 @@ saveLogfileParserHandler ::  Configs.FileDbConfig -> RM.CreateLogfileParserReque
 saveLogfileParserHandler dbConfig request =
   case validatedRequest of
     Right validRequest -> do
-        _ <- liftIO $ Orchestration.createLogfileParser dbConfig (CM.fromRestCreateLogfileParserRequest validRequest)
+        _ <- liftIO $ Orchestration.createLogfileParser dbConfig (MM.fromRestCreateLogfileParserRequest validRequest)
 
         return NoContent
 
@@ -130,8 +120,8 @@ applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> H
 applyLogfileParserByName dbConfig parserName maybeTarget =
   case validatedParams of
     Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig validParserName validTarget
-      let response = CM.toRestLogfileParsingResponse result
+      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig (validParserName, validTarget)
+      let response = MM.toRestLogfileParsingResponse result
 
       return response
 
@@ -148,8 +138,8 @@ applyLogfileParserHandler :: RM.LogfileParsingRequest -> Handler RM.LogfileParsi
 applyLogfileParserHandler request =
   case validatedRequest of
     Right validRequest -> do
-      let result = Orchestration.applyLogfileParser (CM.fromRestLogfileParsingRequest request)
-      let response = CM.toRestLogfileParsingResponse result
+      let result = Orchestration.applyLogfileParser (MM.fromRestLogfileParsingRequest request)
+      let response = MM.toRestLogfileParsingResponse result
 
       return response
 
@@ -167,8 +157,8 @@ applyLogfileParserToFileHandler :: Configs.FileDbConfig -> RM.LogfileParsingFile
 applyLogfileParserToFileHandler dbConfig request =
   case validatedRequest of
     Right validRequest -> do
-      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig mappedRequest
-      let response = CM.toRestLogfileParsingResponse result
+      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (MM.fromRestLogfileParsingFileRequest validRequest)
+      let response = MM.toRestLogfileParsingResponse result
 
       return response
 
@@ -179,14 +169,13 @@ applyLogfileParserToFileHandler dbConfig request =
         }
 
 
-  where mappedRequest = (CM.fromRestLogfileParsingFileRequest request)
-        validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest mappedRequest
+  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
 readAllElementaryParsersHandler dbConfig = do
   parsers <- liftIO $ Orchestration.existingElementaryParsers dbConfig
-  let response = map CM.toRestElementaryParser parsers
+  let response = map MM.toRestElementaryParser parsers
 
   return response
 
@@ -195,7 +184,7 @@ saveParserHandler ::  Configs.FileDbConfig -> RM.ElementaryParser -> Handler NoC
 saveParserHandler dbConfig parser =
   case validatedParser of
     Right validParser -> do
-        _ <- liftIO $ Orchestration.createElementaryParser dbConfig (CM.fromRestElementaryParser validParser)
+        _ <- liftIO $ Orchestration.createElementaryParser dbConfig (MM.fromRestElementaryParser validParser)
 
         return NoContent
 
@@ -214,7 +203,7 @@ applyParserByNameHandler dbConfig parserName maybeTarget =
   case validatedParams of
     Right (validParserName, validTarget) -> do
       result <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
-      let response = CM.toRestElementaryParsingResponse result
+      let response = MM.toRestElementaryParsingResponse result
 
       return response
 
@@ -232,8 +221,8 @@ applyParserHandler :: RM.ElementaryParsingRequest -> Handler RM.ElementaryParsin
 applyParserHandler request =
   case validatedRequest of
     Right validRequest -> do
-      let result = Orchestration.applyElementaryParser (CM.fromElementaryParsingRequest validRequest)
-      let response = CM.toRestElementaryParsingResponse result
+      let result = Orchestration.applyElementaryParser (MM.fromElementaryParsingRequest validRequest)
+      let response = MM.toRestElementaryParsingResponse result
 
       return response
 
