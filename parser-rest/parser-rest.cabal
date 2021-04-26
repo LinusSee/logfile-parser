@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 386d272fa4612b2706a5de190debe342893b0a7d2f9150e52fcb2f59af7c32e3
+-- hash: f307c98603342a2ec05995e0fc0e44cfe6a5c1b44e9634d68f9e89938bd32c27
 
 name:           parser-rest
 version:        0.1.0.0
@@ -66,6 +66,7 @@ library
     , text
     , time
     , unordered-containers
+    , uuid
     , wai
     , wai-cors
     , wai-extra
@@ -93,6 +94,7 @@ executable parser-rest-exe
     , text
     , time
     , unordered-containers
+    , uuid
     , wai
     , wai-cors
     , wai-extra
@@ -136,6 +138,7 @@ test-suite parser-rest-test
     , text
     , time
     , unordered-containers
+    , uuid
     , wai
     , wai-cors
     , wai-extra

@@ -1,13 +1,22 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 
 module DbParserModels
-( ElementaryParser(..)
+( Entity(..)
+, ElementaryParser(..)
 , ParsingOptions(..)
 , ParserType(..)
 , NamedElementaryParser(..)
 , LogfileParser(..)
 ) where
 
+import Data.UUID
+
+
+data Entity a =
+  Entity { id :: UUID
+         , entity :: a
+         }
+  deriving (Show, Read, Eq)
 
 data ElementaryParser =
   ElementaryParser { name :: String
