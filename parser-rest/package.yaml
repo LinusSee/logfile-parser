@@ -28,6 +28,7 @@ dependencies:
 - servant-multipart
 - servant-options
 - unordered-containers
+- uuid
 - wai
 - wai-cors
 - wai-extra
