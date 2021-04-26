@@ -5,6 +5,7 @@ module LogfileParserFileDb
 
 import qualified Data.Text as T
 import Control.Monad (when)
+import Data.UUID
 import Data.UUID.V4 (nextRandom)
 
 import qualified Configs as Configs
@@ -30,7 +31,7 @@ readAllEntities dbConfig = do
   where filePath = T.unpack $ Configs.logfileParserPath dbConfig
 
 
-save :: Configs.FileDbConfig -> DM.LogfileParser -> IO ()
+save :: Configs.FileDbConfig -> DM.LogfileParser -> IO UUID
 save dbConfig logfileParser = do
   newUUID <- nextRandom
   let newLogfileParser = DM.Entity newUUID logfileParser
@@ -39,6 +40,8 @@ save dbConfig logfileParser = do
   -- Needed because of lazy IO
   when (length allParsers >= 0) $
     writeFile filePath $ show (newLogfileParser:allParsers)
+
+  return newUUID
 
   where filePath = T.unpack $ Configs.logfileParserPath dbConfig
 

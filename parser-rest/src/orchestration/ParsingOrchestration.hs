@@ -10,6 +10,8 @@ module ParsingOrchestration
 , applyLogfileParserByName
 ) where
 
+import Data.UUID
+
 import qualified Configs as Configs
 import qualified ElementaryParsing as ElementaryParsing
 import qualified ElementaryParserFileDb as ElemFileDb
@@ -30,7 +32,7 @@ existingLogfileParserNames dbConfig = do
   where extractName ( BM.LogfileParser name _ ) = name
 
 
-createLogfileParser :: Configs.FileDbConfig -> BM.LogfileParser -> IO ()
+createLogfileParser :: Configs.FileDbConfig -> BM.LogfileParser -> IO UUID
 createLogfileParser dbConfig (BM.LogfileParser name parsers) =
   LogFileDb.save dbConfig (MM.toDbLogfileParser logfileParser)
 
@@ -42,7 +44,7 @@ existingElementaryParsers dbConfig =
   fmap (map MM.fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
 
 
-createElementaryParser :: Configs.FileDbConfig -> BM.ElementaryParser -> IO ()
+createElementaryParser :: Configs.FileDbConfig -> BM.ElementaryParser -> IO UUID
 createElementaryParser dbConfig elementaryParser =
   ElemFileDb.save dbConfig (MM.toDbElementaryParser elementaryParser)
 
