@@ -30,6 +30,29 @@
 					"response": []
 				},
 				{
+					"name": "Get all elementary parser IDs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex/ids",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex",
+								"ids"
+							]
+						},
+						"description": "Retrieves the IDs and names for all existing elementary parsers."
+					},
+					"response": []
+				},
+				{
 					"name": "Create applied elementary parser",
 					"request": {
 						"method": "POST",
