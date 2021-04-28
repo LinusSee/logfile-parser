@@ -3,12 +3,14 @@
 
 module ModelMapping
 ( fromDbElementaryParser
+, fromDbElementaryParserId
 , toDbElementaryParser
 , fromDbLogfileParser
 , toDbLogfileParser
 , fromRestElementaryParser
 , fromElementaryParsingRequest
 , toRestElementaryParser
+, toRestElementaryParserId
 , toRestElementaryParsingResponse
 , fromRestLogfileParser
 , fromRestCreateLogfileParserRequest
@@ -31,6 +33,11 @@ fromDbElementaryParser (DM.ElementaryParser name options parserType) =
           name
           (fromDbParsingOptions options)
           (fromDbParserType parserType)
+
+
+fromDbElementaryParserId :: DM.ElementaryParserId -> BM.ElementaryParserId
+fromDbElementaryParserId (DM.ElementaryParserId uuid name) =
+  BM.ElementaryParserId uuid name
 
 
 fromDbParsingOptions :: DM.ParsingOptions -> BM.ParsingOptions
@@ -128,6 +135,11 @@ toRestElementaryParser (BM.ElementaryParser name options parserType) =
           name
           (toRestParsingOptions options)
           (toRestParserType parserType)
+
+toRestElementaryParserId :: BM.ElementaryParserId -> RM.ElementaryParserId
+toRestElementaryParserId (BM.ElementaryParserId uuid name) =
+  RM.ElementaryParserId uuid name
+
 
 toRestParsingOptions :: BM.ParsingOptions -> RM.ParsingOptions
 toRestParsingOptions options = RM.ParsingOptions { RM.keepResult = BM.keepResult options }

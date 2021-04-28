@@ -1,5 +1,6 @@
 module ElementaryParserFileDb
-  ( readAll
+  ( readAllIds
+  , readAll
   , save
   ) where
 
@@ -12,6 +13,14 @@ import qualified Configs as Configs
 
 import qualified DbParserModels as DM
 
+
+
+readAllIds :: Configs.FileDbConfig -> IO [DM.ElementaryParserId]
+readAllIds dbConfig = do
+  entities <- readAllEntities dbConfig
+  return $ map extractIdAndName entities
+
+  where extractIdAndName = \(DM.Entity uuid (DM.ElementaryParser name _ _)) -> DM.ElementaryParserId uuid name
 
 
 readAll :: Configs.FileDbConfig -> IO ([DM.ElementaryParser])

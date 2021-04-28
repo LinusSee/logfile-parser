@@ -3,6 +3,7 @@
 module DbParserModels
 ( Entity(..)
 , ElementaryParser(..)
+, ElementaryParserId(..)
 , ParsingOptions(..)
 , ParserType(..)
 , NamedElementaryParser(..)
@@ -24,6 +25,12 @@ data ElementaryParser =
                    , parserType :: ParserType
                    }
   deriving (Show, Read, Eq)
+
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
 
 
 data ParsingOptions =

@@ -2,6 +2,7 @@
 
 module BusinessLogicModels
 ( ElementaryParser (..)
+, ElementaryParserId (..)
 , ParsingOptions (..)
 , ParserType (..)
 , ElementaryParsingResult (..)
@@ -12,6 +13,7 @@ module BusinessLogicModels
 ) where
 
 import Data.Time (TimeOfDay, Day)
+import Data.UUID
 
 
 data ElementaryParser =
@@ -20,6 +22,12 @@ data ElementaryParser =
                    , parserType :: ParserType
                    }
   deriving (Show, Read, Eq)
+
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
 
 
 data ParsingOptions =

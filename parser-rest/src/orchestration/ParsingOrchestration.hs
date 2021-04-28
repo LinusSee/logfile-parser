@@ -1,6 +1,7 @@
 module ParsingOrchestration
 ( existingLogfileParserNames
 , createLogfileParser
+, existingElementaryParserIds
 , existingElementaryParsers
 , createElementaryParser
 , applyElementaryParser
@@ -37,6 +38,11 @@ createLogfileParser dbConfig (BM.LogfileParser name parsers) =
   LogFileDb.save dbConfig (MM.toDbLogfileParser logfileParser)
 
   where logfileParser = BM.LogfileParser name parsers
+
+
+existingElementaryParserIds :: Configs.FileDbConfig -> IO [BM.ElementaryParserId]
+existingElementaryParserIds dbConfig =
+  fmap (map MM.fromDbElementaryParserId) (ElemFileDb.readAllIds dbConfig)
 
 
 existingElementaryParsers :: Configs.FileDbConfig -> IO [BM.ElementaryParser]

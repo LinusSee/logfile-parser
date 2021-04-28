@@ -4,6 +4,7 @@
 
 module RestParserModels
 ( ElementaryParser (..)
+, ElementaryParserId (..)
 , CreateElementaryParserRequest
 , ParsingOptions (..)
 , ParserType (..)
@@ -22,10 +23,24 @@ import Data.Aeson
 import Servant.Multipart
 import Data.Time (TimeOfDay, Day)
 import Data.Text (Text)
+import Data.UUID
 import qualified Data.Text as T
 
 
+
+-- ElementaryParser Models
+
+
 type CreateElementaryParserRequest = ElementaryParser
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
+
+instance ToJSON ElementaryParserId where
+  toJSON (ElementaryParserId idVal name) = object [ "id" .= idVal, "name" .= name ]
+
 
 data ElementaryParser =
   ElementaryParser { name :: String
@@ -159,6 +174,10 @@ data ParsingResultType =
   | MatchUntilEndResult String
   | ParsingError String
   deriving (Show, Read, Eq)
+
+
+
+-- Logfile Parser Models
 
 
 type CreateLogfileParserRequest = LogfileParser

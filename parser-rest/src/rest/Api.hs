@@ -54,7 +54,8 @@ type API =
             )
             :<|>
             ( "building-blocks" :> "complex" :>
-                (    Get '[JSON] [RM.ElementaryParser]
+                (    "ids" :> Get '[JSON] [RM.ElementaryParserId]
+                :<|> Get '[JSON] [RM.ElementaryParser]
                 :<|> ReqBody '[JSON] RM.ElementaryParser :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.ElementaryParsingRequest :> Post '[JSON] RM.ElementaryParsingResponse
@@ -86,6 +87,7 @@ server dbConfig =
   :<|> applyLogfileParserHandler
   :<|> applyLogfileParserToFileHandler dbConfig
   )
+  :<|> readAllElementaryParserIdsHandler dbConfig
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
   :<|> applyParserByNameHandler dbConfig
@@ -170,6 +172,14 @@ applyLogfileParserToFileHandler dbConfig request =
 
 
   where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
+
+
+readAllElementaryParserIdsHandler :: Configs.FileDbConfig -> Handler [RM.ElementaryParserId]
+readAllElementaryParserIdsHandler dbConfig = do
+  ids <- liftIO $ Orchestration.existingElementaryParserIds dbConfig
+  let response = map MM.toRestElementaryParserId ids
+
+  return response
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
