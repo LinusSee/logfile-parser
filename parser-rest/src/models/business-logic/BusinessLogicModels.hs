@@ -8,6 +8,7 @@ module BusinessLogicModels
 , ElementaryParsingResult (..)
 , ParsingResultType (..)
 , LogfileParser (..)
+, LogfileParserId (..)
 , NamedElementaryParser (..)
 , LogfileParsingResult (..)
 ) where
@@ -56,6 +57,13 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [NamedElementaryParser]
                 }
+  deriving (Show, Read, Eq)
+
+
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
   deriving (Show, Read, Eq)
 
 

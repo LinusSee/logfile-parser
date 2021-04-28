@@ -13,6 +13,7 @@ module RestParserModels
 , ParsingResultType (..)
 , NamedElementaryParser (..)
 , LogfileParser (..)
+, LogfileParserId (..)
 , CreateLogfileParserRequest (..)
 , LogfileParsingRequest (..)
 , LogfileParsingFileRequest (..)
@@ -192,6 +193,17 @@ data LogfileParser =
 instance FromJSON LogfileParser where
   parseJSON (Object o) =
     LogfileParser <$> o .: "name" <*> o .: "parsers"
+
+
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
+  deriving (Show, Read, Eq)
+
+instance ToJSON LogfileParserId where
+  toJSON (LogfileParserId uuid name) =
+    object [ "id" .= uuid, "name" .= name]
 
 
 data LogfileParsingRequest =

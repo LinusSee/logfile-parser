@@ -1,5 +1,6 @@
 module LogfileParserFileDb
-( readAll
+( readAllIds
+, readAll
 , save
 ) where
 
@@ -12,6 +13,14 @@ import qualified Configs as Configs
 
 import qualified DbParserModels as DM
 
+
+
+readAllIds :: Configs.FileDbConfig -> IO [DM.LogfileParserId]
+readAllIds dbConfig = do
+  entities <- readAllEntities dbConfig
+  return $ map extractId entities
+
+  where extractId = \(DM.Entity uuid (DM.LogfileParser name _)) -> DM.LogfileParserId uuid name
 
 
 readAll :: Configs.FileDbConfig -> IO [DM.LogfileParser]

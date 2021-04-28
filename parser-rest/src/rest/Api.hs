@@ -45,7 +45,7 @@ type API =
         (
             ( "logfile" :>
                 (
-                     Get '[JSON] [String]
+                     Get '[JSON] [RM.LogfileParserId]
                 :<|> ReqBody '[JSON] RM.CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
                 :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.LogfileParsingRequest :> Post '[JSON] RM.LogfileParsingResponse
@@ -81,7 +81,7 @@ api = Proxy
 
 server :: Configs.FileDbConfig -> Server API
 server dbConfig =
-  (    getLogfileParserNames dbConfig
+  (    getLogfileParserIds dbConfig
   :<|> saveLogfileParserHandler dbConfig
   :<|> applyLogfileParserByName dbConfig
   :<|> applyLogfileParserHandler
@@ -94,9 +94,10 @@ server dbConfig =
   :<|> applyParserHandler
 
 
-getLogfileParserNames ::  Configs.FileDbConfig -> Handler [String]
-getLogfileParserNames dbConfig = do
-  response <- liftIO $ Orchestration.existingLogfileParserNames dbConfig
+getLogfileParserIds ::  Configs.FileDbConfig -> Handler [RM.LogfileParserId]
+getLogfileParserIds dbConfig = do
+  result <- liftIO $ Orchestration.existingLogfileParserIds dbConfig
+  let response = map MM.toRestLogfileParserId result
 
   return response
 

@@ -1,5 +1,6 @@
 module ParsingOrchestration
-( existingLogfileParserNames
+( existingLogfileParserIds
+, existingLogfileParserNames
 , createLogfileParser
 , existingElementaryParserIds
 , existingElementaryParsers
@@ -24,6 +25,12 @@ import qualified ModelMapping as MM
 
 
 
+existingLogfileParserIds :: Configs.FileDbConfig -> IO [BM.LogfileParserId]
+existingLogfileParserIds dbConfig =
+  fmap (map MM.fromDbLogfileParserId) (LogFileDb.readAllIds dbConfig)
+
+
+-- TODO: Remove when existingLogfileParserIds is finished
 existingLogfileParserNames :: Configs.FileDbConfig -> IO [String]
 existingLogfileParserNames dbConfig = do
   parsers <- LogFileDb.readAll dbConfig

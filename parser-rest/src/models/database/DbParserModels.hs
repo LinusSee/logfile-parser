@@ -8,6 +8,7 @@ module DbParserModels
 , ParserType(..)
 , NamedElementaryParser(..)
 , LogfileParser(..)
+, LogfileParserId(..)
 ) where
 
 import Data.UUID
@@ -59,6 +60,13 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [NamedElementaryParser]
                 }
+  deriving (Show, Read, Eq)
+
+
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
   deriving (Show, Read, Eq)
 
 

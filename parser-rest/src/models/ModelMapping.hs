@@ -13,6 +13,8 @@ module ModelMapping
 , toRestElementaryParserId
 , toRestElementaryParsingResponse
 , fromRestLogfileParser
+, toRestLogfileParserId
+, fromDbLogfileParserId
 , fromRestCreateLogfileParserRequest
 , fromRestLogfileParsingRequest
 , fromRestLogfileParsingFileRequest
@@ -85,6 +87,10 @@ toDbParserType parserType =
 fromDbLogfileParser :: DM.LogfileParser -> BM.LogfileParser
 fromDbLogfileParser (DM.LogfileParser name namedParsers) =
   BM.LogfileParser name (map fromDbNamedParser namedParsers)
+
+fromDbLogfileParserId :: DM.LogfileParserId -> BM.LogfileParserId
+fromDbLogfileParserId (DM.LogfileParserId uuid name) =
+  BM.LogfileParserId uuid name
 
 fromDbNamedParser :: DM.NamedElementaryParser -> BM.NamedElementaryParser
 fromDbNamedParser (DM.NamedElementaryParser name parser) =
@@ -182,6 +188,10 @@ fromRestLogfileParser (RM.LogfileParser name namedParsers) =
   BM.LogfileParser
             name
             (map fromRestNamedParser namedParsers)
+
+toRestLogfileParserId :: BM.LogfileParserId -> RM.LogfileParserId
+toRestLogfileParserId (BM.LogfileParserId uuid name) =
+  RM.LogfileParserId uuid name
 
 fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> BM.LogfileParser
 fromRestCreateLogfileParserRequest = fromRestLogfileParser

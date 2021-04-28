@@ -116,9 +116,9 @@ spec =  before_ createDbFiles $
               describe "GET logfile parser names as JSON" $ do
                 it "returns a list of parser names" $ \port -> do
                   result <- ServC.runClientM
-                              (getLogfileParserNames client)
+                              (getLogfileParserIds client)
                               (clientEnv port)
-                  result `shouldBe` Right ["myLogfileParser"]
+                  result `shouldSatisfy` matchesLogfileParsingNames ["myLogfileParser"]
 
 
               describe "POST parser as JSON creates the parser and" $ do
@@ -136,9 +136,9 @@ spec =  before_ createDbFiles $
                   creationResult `shouldBe` Right NoContent
 
                   getResult <- ServC.runClientM
-                              (getLogfileParserNames client)
+                              (getLogfileParserIds client)
                               (clientEnv port)
-                  getResult `shouldBe` Right ["newLogfileParser", "myLogfileParser"]
+                  getResult `shouldSatisfy` matchesLogfileParsingNames ["newLogfileParser", "myLogfileParser"]
 
 
               describe "GET parsing response for existing parser via URL params" $ do
@@ -328,8 +328,8 @@ logfileParsersDbName :: String
 logfileParsersDbName = "/logfile_parsers.txt"
 
 
-getLogfileParserNames :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [String]
-getLogfileParserNames (( parserNames :<|> _ ) :<|> (_)) = parserNames
+getLogfileParserIds :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [RM.LogfileParserId]
+getLogfileParserIds (( parserNames :<|> _ ) :<|> (_)) = parserNames
 
 createLogfileParser :: ServC.Client ServC.ClientM Api.API -> (RM.CreateLogfileParserRequest -> ServC.ClientM NoContent)
 createLogfileParser (( _ :<|> createParser :<|> _) :<|> (_)) = createParser
@@ -345,17 +345,26 @@ applyLogfileParserToFile (( _ :<|> _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) =
 
 
 getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [RM.ElementaryParser]
-getElementaryParsers ((_) :<|> ( getParsers :<|> _)) = getParsers
+getElementaryParsers ((_) :<|> ( _ :<|> getParsers :<|> _)) = getParsers
 
 createElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParser -> ServC.ClientM NoContent)
-createElementaryParser ((_) :<|> ( _ :<|> createParser :<|> _)) = createParser
+createElementaryParser ((_) :<|> ( _ :<|> _ :<|> createParser :<|> _)) = createParser
 
 applyElementaryParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM RM.ElementaryParsingResponse)
-applyElementaryParserByName ((_) :<|> ( _ :<|> _ :<|> applyByName :<|> _)) = applyByName
+applyElementaryParserByName ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyByName :<|> _)) = applyByName
 
 applyElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParsingRequest -> ServC.ClientM RM.ElementaryParsingResponse)
-applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyParser)) = applyParser
+applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> _ :<|> applyParser)) = applyParser
 
+
+
+
+matchesLogfileParsingNames :: [String] -> Either a [RM.LogfileParserId] -> Bool
+matchesLogfileParsingNames names (Right ids) = names == map extractLogfileName ids
+matchesLogfileParsingNames _ _ = False
+
+extractLogfileName :: RM.LogfileParserId -> String
+extractLogfileName (RM.LogfileParserId _ name) = name
 
 
 instance ToJSON RM.ElementaryParsingRequest where
@@ -398,6 +407,16 @@ instance FromJSON RM.ElementaryParsingResponse where
 
          Nothing ->
             RM.ElementaryParsingResponse <$> o .: "name" <*> (fmap RM.ParsingError (o .: "error"))
+
+
+instance FromJSON RM.ElementaryParserId where
+  parseJSON (Object o) =
+    RM.ElementaryParserId <$> o .: "id" <*> o .: "name"
+
+
+instance FromJSON RM.LogfileParserId where
+  parseJSON (Object o) =
+    RM.LogfileParserId <$> o .: "id" <*> o .: "name"
 
 
 instance FromJSON RM.LogfileParsingResponse where
