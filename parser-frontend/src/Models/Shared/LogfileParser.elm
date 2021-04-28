@@ -1,7 +1,8 @@
 module Models.Shared.LogfileParser exposing
     ( LogfileParser
+    , LogfileParserId
     , logfileParserEncoder
-    , logfileParserNamesDecoder
+    , logfileParserIdsDecoder
     )
 
 import Json.Decode as Decode exposing (Decoder, field, string)
@@ -16,6 +17,12 @@ import Models.Shared.ElementaryParser as ElementaryParser
 type alias LogfileParser =
     { name : String
     , parsers : List ( String, ElementaryParser.ElementaryParser )
+    }
+
+
+type alias LogfileParserId =
+    { parserId : String
+    , name : String
     }
 
 
@@ -43,6 +50,11 @@ namedParserEncoder ( name, parser ) =
 -- DECODING
 
 
-logfileParserNamesDecoder : Decoder (List String)
-logfileParserNamesDecoder =
-    Decode.list string
+logfileParserIdsDecoder : Decoder (List LogfileParserId)
+logfileParserIdsDecoder =
+    Decode.list logfileParserIdDecoder
+
+
+logfileParserIdDecoder : Decoder LogfileParserId
+logfileParserIdDecoder =
+    Decode.map2 LogfileParserId (field "id" string) (field "name" string)
