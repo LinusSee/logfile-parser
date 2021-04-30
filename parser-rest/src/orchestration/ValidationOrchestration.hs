@@ -5,7 +5,7 @@ module ValidationOrchestration
 , validateElementaryParserToCreate
 , validateParsingRequest
 , validateLogfileParsingFileRequest
-, validateParsingUrlRequest
+, validateParsingTarget
 ) where
 
 import Data.Either (isRight, fromLeft)
@@ -101,24 +101,21 @@ validateElementaryParserToCreate parser =
         isValidParser = isRight validatedParser
 
 
-validateParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
-validateParsingUrlRequest parserName maybeTarget =
+validateParsingTarget :: Maybe String -> Either Problem String
+validateParsingTarget maybeTarget =
   case maybeTarget of
     Just target ->
       case isValidRequest of
         True ->
-          Right (parserName, target)
+          Right target
 
         False ->
           Left $ errorsToValidationProblem $
               ( Validation.appendError validatedTarget
-              . Validation.appendError validatedParserName
               ) []
 
       where validatedTarget = Validation.validateTarget target
-            validatedParserName = Validation.validateElementaryParserExists parserName
-
-            isValidRequest = isRight validatedTarget && isRight validatedParserName
+            isValidRequest = isRight validatedTarget
 
     Nothing ->
       Left $ errorsToValidationProblem

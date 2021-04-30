@@ -6,7 +6,7 @@ module ParsingOrchestration
 , existingElementaryParsers
 , createElementaryParser
 , applyElementaryParser
-, applyElementaryParserByName
+, applyElementaryParserById
 , applyLogfileParser
 , applyLogfileParserToFile
 , applyLogfileParserByName
@@ -74,20 +74,23 @@ applyElementaryParser ( target, (BM.ElementaryParser name options parser) ) = do
     where parsingResult = ElementaryParsing.applyParser target parser
 
 
-applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO BM.ElementaryParsingResult
-applyElementaryParserByName dbConfig parserName target = do
-  parsers <- fmap (map MM.fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
-  let (BM.ElementaryParser _ _ parser) = head $ filter byName parsers
-  let parsingResult = ElementaryParsing.applyParser target parser
+applyElementaryParserById :: Configs.FileDbConfig -> UUID -> String -> IO BM.ElementaryParsingResult
+applyElementaryParserById dbConfig uuid target = do
+  parser <- fmap (fmap MM.fromDbElementaryParser) (ElemFileDb.readById dbConfig uuid)
+  case parser of
+    Just (BM.ElementaryParser parserName _ parser) -> do
+      let parsingResult = ElementaryParsing.applyParser target parser
 
-  case parsingResult of
-    Left err ->
-      return $ BM.ElementaryParsingResult parserName (BM.ParsingError (show err))
+      case parsingResult of
+        Left err ->
+          return $ BM.ElementaryParsingResult parserName (BM.ParsingError (show err))
 
-    Right result ->
-      return $ BM.ElementaryParsingResult parserName result
+        Right result ->
+          return $ BM.ElementaryParsingResult parserName result
 
-    where byName (BM.ElementaryParser name _ _) = name == parserName
+    Nothing ->
+      -- TODO: Somehow use problem detail (Might need some rethinking in how to generally handle errors)
+      return $ BM.ElementaryParsingResult "Parser not found" (BM.ParsingError ("No parser with UUID " ++ show uuid ++ " was found."))
 
 
 applyLogfileParser :: (String, BM.LogfileParser) -> BM.LogfileParsingResult

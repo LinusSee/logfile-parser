@@ -15,6 +15,7 @@ module Api
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import Data.Aeson.TH
+import Data.UUID
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.RequestLogger
@@ -57,7 +58,7 @@ type API =
                 (    "ids" :> Get '[JSON] [RM.ElementaryParserId]
                 :<|> Get '[JSON] [RM.ElementaryParser]
                 :<|> ReqBody '[JSON] RM.ElementaryParser :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
+                :<|> "apply" :> Capture "id" UUID :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.ElementaryParsingRequest :> Post '[JSON] RM.ElementaryParsingResponse
                 )
             )
@@ -90,7 +91,7 @@ server dbConfig =
   :<|> readAllElementaryParserIdsHandler dbConfig
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
-  :<|> applyParserByNameHandler dbConfig
+  :<|> applyParserByIdHandler dbConfig
   :<|> applyParserHandler
 
 
@@ -209,11 +210,11 @@ saveParserHandler dbConfig parser =
   where validatedParser = ValidationOrchestration.validateElementaryParserToCreate parser
 
 
-applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.ElementaryParsingResponse
-applyParserByNameHandler dbConfig parserName maybeTarget =
-  case validatedParams of
-    Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
+applyParserByIdHandler ::  Configs.FileDbConfig -> UUID -> Maybe String -> Handler RM.ElementaryParsingResponse
+applyParserByIdHandler dbConfig uuid maybeTarget =
+  case validatedTarget of
+    Right validTarget -> do
+      result <- liftIO $ Orchestration.applyElementaryParserById dbConfig uuid validTarget
       let response = MM.toRestElementaryParsingResponse result
 
       return response
@@ -224,7 +225,7 @@ applyParserByNameHandler dbConfig parserName maybeTarget =
         , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
         }
 
-  where validatedParams = ValidationOrchestration.validateParsingUrlRequest parserName maybeTarget
+  where validatedTarget = ValidationOrchestration.validateParsingTarget maybeTarget
 
 
 
