@@ -1,9 +1,11 @@
 module LogfileParserFileDb
-( readAllIds
+( readById
+, readAllIds
 , readAll
 , save
 ) where
 
+import Data.List as List
 import qualified Data.Text as T
 import Control.Monad (when)
 import Data.UUID
@@ -13,6 +15,17 @@ import qualified Configs as Configs
 
 import qualified DbParserModels as DM
 
+
+
+readById :: Configs.FileDbConfig -> UUID -> IO (Maybe DM.LogfileParser)
+readById dbConfig uuid = do
+  entities <- readAllEntities dbConfig
+  let maybeEntity = List.find (matchesId uuid) entities
+
+  return $ fmap extractParser maybeEntity
+
+  where matchesId targetUuid (DM.Entity currentUuid _) = targetUuid == currentUuid
+        extractParser (DM.Entity _ parser) = parser
 
 
 readAllIds :: Configs.FileDbConfig -> IO [DM.LogfileParserId]

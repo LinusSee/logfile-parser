@@ -48,7 +48,7 @@ type API =
                 (
                      Get '[JSON] [RM.LogfileParserId]
                 :<|> ReqBody '[JSON] RM.CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
+                :<|> "apply" :> Capture "id" UUID :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.LogfileParsingRequest :> Post '[JSON] RM.LogfileParsingResponse
                 :<|> "apply" :> "file" :> MultipartForm Tmp RM.LogfileParsingFileRequest :> Post '[JSON] RM.LogfileParsingResponse
                 )
@@ -84,7 +84,7 @@ server :: Configs.FileDbConfig -> Server API
 server dbConfig =
   (    getLogfileParserIds dbConfig
   :<|> saveLogfileParserHandler dbConfig
-  :<|> applyLogfileParserByName dbConfig
+  :<|> applyLogfileParserById dbConfig
   :<|> applyLogfileParserHandler
   :<|> applyLogfileParserToFileHandler dbConfig
   )
@@ -120,11 +120,11 @@ saveLogfileParserHandler dbConfig request =
   where validatedRequest = ValidationOrchestration.validateCreateLogfileParserRequest request
 
 
-applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.LogfileParsingResponse
-applyLogfileParserByName dbConfig parserName maybeTarget =
+applyLogfileParserById ::  Configs.FileDbConfig -> UUID -> Maybe String -> Handler RM.LogfileParsingResponse
+applyLogfileParserById dbConfig uuid maybeTarget =
   case validatedParams of
-    Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig (validParserName, validTarget)
+    Right validTarget -> do
+      result <- liftIO $ Orchestration.applyLogfileParserById dbConfig (uuid, validTarget)
       let response = MM.toRestLogfileParsingResponse result
 
       return response
@@ -135,7 +135,7 @@ applyLogfileParserByName dbConfig parserName maybeTarget =
           , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
           }
 
-    where validatedParams = ValidationOrchestration.validateLogfileParsingUrlRequest parserName maybeTarget
+    where validatedParams = ValidationOrchestration.validateParsingTarget maybeTarget
 
 
 applyLogfileParserHandler :: RM.LogfileParsingRequest -> Handler RM.LogfileParsingResponse

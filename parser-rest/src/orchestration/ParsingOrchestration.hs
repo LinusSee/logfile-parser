@@ -9,7 +9,7 @@ module ParsingOrchestration
 , applyElementaryParserById
 , applyLogfileParser
 , applyLogfileParserToFile
-, applyLogfileParserByName
+, applyLogfileParserById
 ) where
 
 import Data.UUID
@@ -125,17 +125,20 @@ applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
   where byName (BM.LogfileParser name _ ) = name == parserName
 
 
-applyLogfileParserByName :: Configs.FileDbConfig -> (String, String) -> IO BM.LogfileParsingResult
-applyLogfileParserByName dbConfig (parserName, target) = do
-  parsers <- LogFileDb.readAll dbConfig
-  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
+applyLogfileParserById :: Configs.FileDbConfig -> (UUID, String) -> IO BM.LogfileParsingResult
+applyLogfileParserById dbConfig (uuid, target) = do
+  maybeParser <- LogFileDb.readById dbConfig uuid
 
-  case parsingResult of
-    Left err ->
-      return $ BM.LogfileParsingError (show err)
+  case maybeParser of
+    Just parser -> do
+      let parsingResult = LogfileParsing.applyLogfileParser target (MM.fromDbLogfileParser parser)
 
-    Right result ->
-      return result
+      case parsingResult of
+        Left err ->
+          return $ BM.LogfileParsingError (show err)
 
-  where byName (BM.LogfileParser name _ ) = name == parserName
+        Right result ->
+          return result
+
+    Nothing ->
+      return $ BM.LogfileParsingError ("No logfile parser found with uuid [" ++ show uuid ++ "]")
