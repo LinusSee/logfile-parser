@@ -10,6 +10,10 @@ import Test.Hspec
 
 import Data.Aeson
 import Data.Aeson.TH
+import qualified Data.List as List
+import qualified Data.Maybe as MaybeModule
+import qualified Data.Either as EitherModule
+import Data.UUID
 import Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import Data.ByteString.Lazy (ByteString)
@@ -59,6 +63,17 @@ spec =  before_ createDbFiles $
 
           describe "api" $ do
             describe "building-blocks" $ do
+              describe "GET elementary parser IDs as JSON" $ do
+                it "returns the IDs and names of the parsers added by before_ as a list" $ \port -> do
+                  result <- ServC.runClientM
+                              (getElementaryParserIds client)
+                              (clientEnv port)
+
+                  let parserNames = map (\(RM.ElementaryParser name _ _) -> name) initialElementaryParsers
+
+                  result `shouldSatisfy` matchesElementaryParsingNames parserNames
+
+
               describe "GET elementary parsers as JSON" $ do
                 it "returns the names of the parsers added by before_ as a list" $ \port -> do
                   result <- ServC.runClientM
@@ -83,16 +98,33 @@ spec =  before_ createDbFiles $
 
               describe "GET parsing response for existing parser via URL params" $ do
                 it "returns the parsing response" $ \port -> do
-                  let parserName = "loglevelParser"
-                  let target = Just "INCIDENT some message"
-
-                  result <- ServC.runClientM
-                              (applyElementaryParserByName client parserName target)
+                  eitherIds <- ServC.runClientM
+                              (getElementaryParserIds client)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ RM.ElementaryParsingResponse
-                                              parserName
-                                              (RM.OneOfResult "INCIDENT"))
+                  eitherIds `shouldSatisfy` EitherModule.isRight
+
+                  case eitherIds of
+                    Left err ->
+                      True `shouldBe` False
+
+                    Right ids -> do
+                      let parserName = "loglevelParser"
+                      let maybeParserId = List.find (matchesElementaryName parserName) ids
+
+                      maybeParserId `shouldSatisfy` MaybeModule.isJust
+
+                      let RM.ElementaryParserId uuid _ = MaybeModule.fromJust maybeParserId
+                      let target = Just "INCIDENT some message"
+
+                      result <- ServC.runClientM
+                                  (applyElementaryParserById client uuid target)
+                                  (clientEnv port)
+
+                      result `shouldBe` (Right $ RM.ElementaryParsingResponse
+                                                  parserName
+                                                  (RM.OneOfResult "INCIDENT"))
+
 
 
               describe "POST parser and target as JSON applies the parser to the target and" $ do
@@ -344,14 +376,17 @@ applyLogfileParserToFile :: ServC.Client ServC.ClientM Api.API -> ((ByteString, 
 applyLogfileParserToFile (( _ :<|> _ :<|> _ :<|> _ :<|> applyParser) :<|> (_)) = applyParser
 
 
+getElementaryParserIds :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [RM.ElementaryParserId]
+getElementaryParserIds ((_) :<|> (getParserIds :<|> _)) = getParserIds
+
 getElementaryParsers :: ServC.Client ServC.ClientM Api.API -> ServC.ClientM [RM.ElementaryParser]
 getElementaryParsers ((_) :<|> ( _ :<|> getParsers :<|> _)) = getParsers
 
 createElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParser -> ServC.ClientM NoContent)
 createElementaryParser ((_) :<|> ( _ :<|> _ :<|> createParser :<|> _)) = createParser
 
-applyElementaryParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM RM.ElementaryParsingResponse)
-applyElementaryParserByName ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyByName :<|> _)) = applyByName
+applyElementaryParserById :: ServC.Client ServC.ClientM Api.API -> (UUID -> Maybe String -> ServC.ClientM RM.ElementaryParsingResponse)
+applyElementaryParserById ((_) :<|> ( _ :<|> _ :<|> _ :<|> applyById :<|> _)) = applyById
 
 applyElementaryParser :: ServC.Client ServC.ClientM Api.API -> (RM.ElementaryParsingRequest -> ServC.ClientM RM.ElementaryParsingResponse)
 applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> _ :<|> applyParser)) = applyParser
@@ -365,6 +400,16 @@ matchesLogfileParsingNames _ _ = False
 
 extractLogfileName :: RM.LogfileParserId -> String
 extractLogfileName (RM.LogfileParserId _ name) = name
+
+matchesElementaryParsingNames :: [String] -> Either a [RM.ElementaryParserId] -> Bool
+matchesElementaryParsingNames names (Right ids) = names == map extractElementaryName ids
+matchesElementaryParsingNames _ _ = False
+
+extractElementaryName :: RM.ElementaryParserId -> String
+extractElementaryName (RM.ElementaryParserId _ name) = name
+
+matchesElementaryName :: String -> RM.ElementaryParserId -> Bool
+matchesElementaryName parserName (RM.ElementaryParserId _ name) = parserName == name
 
 
 instance ToJSON RM.ElementaryParsingRequest where

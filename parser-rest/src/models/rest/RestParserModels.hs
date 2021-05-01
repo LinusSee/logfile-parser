@@ -38,6 +38,7 @@ data ElementaryParserId =
   ElementaryParserId { id :: UUID
                      , name :: String
                      }
+  deriving (Show, Read, Eq)
 
 instance ToJSON ElementaryParserId where
   toJSON (ElementaryParserId idVal name) = object [ "id" .= idVal, "name" .= name ]
