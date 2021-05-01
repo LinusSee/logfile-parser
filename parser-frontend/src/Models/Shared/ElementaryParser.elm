@@ -1,6 +1,7 @@
 module Models.Shared.ElementaryParser exposing
     ( BasicParser(..)
     , ElementaryParser(..)
+    , ElementaryParserId
     , ParsingOption(..)
     , ParsingOptions
     , charactersEncoder
@@ -12,6 +13,7 @@ module Models.Shared.ElementaryParser exposing
     , matchUntilIncludedEncoder
     , oneOfEncoder
     , parserDataDecoder
+    , parserIdsDecoder
     , parsersDataDecoder
     , timeEncoder
     )
@@ -53,6 +55,12 @@ type BasicParser
 
 type ElementaryParser
     = ElementaryParser String ParsingOptions BasicParser
+
+
+type alias ElementaryParserId =
+    { parserId : String
+    , name : String
+    }
 
 
 
@@ -174,9 +182,19 @@ encodeParsingOptions options =
 -- DECODING
 
 
+parserIdsDecoder : Decoder (List ElementaryParserId)
+parserIdsDecoder =
+    Decode.list parserIdDecoder
+
+
 parsersDataDecoder : Decoder (List ElementaryParser)
 parsersDataDecoder =
     Decode.list parserDataDecoder
+
+
+parserIdDecoder : Decoder ElementaryParserId
+parserIdDecoder =
+    Decode.map2 ElementaryParserId (field "id" string) (field "name" string)
 
 
 parserDataDecoder : Decoder ElementaryParser
