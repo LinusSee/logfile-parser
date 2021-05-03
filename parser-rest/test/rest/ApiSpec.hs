@@ -145,8 +145,8 @@ spec =  before_ createDbFiles $
 
           before_ createLogfileParsers $
             describe "logfile" $ do
-              describe "GET logfile parser names as JSON" $ do
-                it "returns a list of parser names" $ \port -> do
+              describe "GET logfile parser ids as JSON" $ do
+                it "returns a list of parser ids with names" $ \port -> do
                   result <- ServC.runClientM
                               (getLogfileParserIds client)
                               (clientEnv port)
@@ -175,26 +175,43 @@ spec =  before_ createDbFiles $
 
               describe "GET parsing response for existing parser via URL params" $ do
                 it "returns the parsing response" $ \port -> do
-                  let parserName = "myLogfileParser"
-                  let target = Just "INCIDENT 2021.02.13 16-13 some stuff before id <correlationId>asg-qwta123-fd</correlationId> error message"
-
-                  result <- ServC.runClientM
-                              (applyLogfileParserByName client parserName target)
+                  eitherIds <- ServC.runClientM
+                              (getLogfileParserIds client)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ RM.LogfileParsingResponse [
-                                              [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
-                                              , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
-                                              , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
-                                              , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
-                                              ]])
+                  eitherIds `shouldSatisfy` EitherModule.isRight
+
+                  case eitherIds of
+                    Left err ->
+                      True `shouldBe` False
+
+                    Right ids -> do
+                      let parserName = "myLogfileParser"
+
+                      let maybeParserId = List.find (matchesLogfileParserName parserName) ids
+
+                      maybeParserId `shouldSatisfy` MaybeModule.isJust
+
+                      let RM.LogfileParserId uuid _ = MaybeModule.fromJust maybeParserId
+                      let target = Just "INCIDENT 2021.02.13 16-13 some stuff before id <correlationId>asg-qwta123-fd</correlationId> error message"
+
+                      result <- ServC.runClientM
+                                  (applyLogfileParserById client uuid target)
+                                  (clientEnv port)
+
+                      result `shouldBe` (Right $ RM.LogfileParsingResponse [
+                                                    [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
+                                                    , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                    , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
+                                                    , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                    , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
+                                                    , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                    , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
+                                                    , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
+                                                    , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
+                                                    , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
+                                                    , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
+                                                    ]])
 
 
 
@@ -366,8 +383,8 @@ getLogfileParserIds (( parserNames :<|> _ ) :<|> (_)) = parserNames
 createLogfileParser :: ServC.Client ServC.ClientM Api.API -> (RM.CreateLogfileParserRequest -> ServC.ClientM NoContent)
 createLogfileParser (( _ :<|> createParser :<|> _) :<|> (_)) = createParser
 
-applyLogfileParserByName :: ServC.Client ServC.ClientM Api.API -> (String -> Maybe String -> ServC.ClientM RM.LogfileParsingResponse)
-applyLogfileParserByName (( _ :<|> _ :<|> applyByName :<|> _) :<|> (_)) = applyByName
+applyLogfileParserById :: ServC.Client ServC.ClientM Api.API -> (UUID -> Maybe String -> ServC.ClientM RM.LogfileParsingResponse)
+applyLogfileParserById (( _ :<|> _ :<|> applyById :<|> _) :<|> (_)) = applyById
 
 applyLogfileParser :: ServC.Client ServC.ClientM Api.API -> (RM.LogfileParsingRequest -> ServC.ClientM RM.LogfileParsingResponse)
 applyLogfileParser (( _ :<|> _ :<|> _ :<|> applyParser :<|> _) :<|> (_)) = applyParser
@@ -397,6 +414,9 @@ applyElementaryParser ((_) :<|> ( _ :<|> _ :<|> _ :<|> _ :<|> applyParser)) = ap
 matchesLogfileParsingNames :: [String] -> Either a [RM.LogfileParserId] -> Bool
 matchesLogfileParsingNames names (Right ids) = names == map extractLogfileName ids
 matchesLogfileParsingNames _ _ = False
+
+matchesLogfileParserName :: String -> RM.LogfileParserId -> Bool
+matchesLogfileParserName parserName (RM.LogfileParserId _ name) = parserName == name
 
 extractLogfileName :: RM.LogfileParserId -> String
 extractLogfileName (RM.LogfileParserId _ name) = name
