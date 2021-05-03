@@ -13,7 +13,8 @@ import Data.Aeson.TH
 import qualified Data.List as List
 import qualified Data.Maybe as MaybeModule
 import qualified Data.Either as EitherModule
-import Data.UUID
+import Data.UUID (UUID)
+import qualified Data.UUID as UUID
 import Network.Wai.Handler.Warp as Warp
 import qualified Data.Text as T
 import Data.ByteString.Lazy (ByteString)
@@ -246,30 +247,45 @@ spec =  before_ createDbFiles $
               describe "POST parser and target as JSON applies the parser to the target and" $ do
                 it "returns a list of parser names" $ \port -> do
                   let path = "foo_bar_baz"
-                  let parsingRequest = RM.LogfileParsingFileRequest
-                                        "myLogfileParser"
-                                        "assets\\sample_logfiles\\test_logfile.log"
-                                        --"./assets/sample-logfiles/test_logfile.log"
 
-
-                  result <- ServC.runClientM
-                              (applyLogfileParserToFile client (path, parsingRequest))
+                  eitherIds <- ServC.runClientM
+                              (getLogfileParserIds client)
                               (clientEnv port)
 
-                  result `shouldBe` (Right $ RM.LogfileParsingResponse [
-                                              [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
-                                              , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
-                                              , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
-                                              , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
-                                              , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
-                                              , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
-                                              ]])
+                  eitherIds `shouldSatisfy` EitherModule.isRight
 
+                  case eitherIds of
+                    Left err ->
+                      True `shouldBe` False
+
+                    Right ids -> do
+                      let maybeParserId = List.find (matchesLogfileParserName "myLogfileParser") ids
+
+                      maybeParserId `shouldSatisfy` MaybeModule.isJust
+
+                      let RM.LogfileParserId uuid _ = MaybeModule.fromJust maybeParserId
+                      let parsingRequest = RM.LogfileParsingFileRequest
+                                            (Just uuid)
+                                            "assets\\sample_logfiles\\test_logfile.log"
+
+
+                      result <- ServC.runClientM
+                                  (applyLogfileParserToFile client (path, parsingRequest))
+                                  (clientEnv port)
+
+                      result `shouldBe` (Right $ RM.LogfileParsingResponse [
+                                                  [ RM.ElementaryParsingResponse "LogLevel" (RM.OneOfResult "INCIDENT")
+                                                  , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                  , RM.ElementaryParsingResponse "LogDate" (RM.OneOfResult "2021-02-13")
+                                                  , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                  , RM.ElementaryParsingResponse "LogTime" (RM.OneOfResult "16:13:00")
+                                                  , RM.ElementaryParsingResponse "space" (RM.OneOfResult " ")
+                                                  , RM.ElementaryParsingResponse "UntilCorrelationId" (RM.OneOfResult "some stuff before id <correlationId>")
+                                                  , RM.ElementaryParsingResponse "CorrelationId" (RM.OneOfResult "asg-qwta123-fd")
+                                                  , RM.ElementaryParsingResponse "CorrelationIdEndTag" (RM.OneOfResult "</correlationId>")
+                                                  , RM.ElementaryParsingResponse "forSpace" (RM.OneOfResult " ")
+                                                  , RM.ElementaryParsingResponse "restOfTheMessage" (RM.OneOfResult "error message")
+                                                  ]])
 
 
 
@@ -443,14 +459,25 @@ instance ToJSON RM.LogfileParsingRequest where
 
 
 instance ToMultipart Tmp RM.LogfileParsingFileRequest where
-  toMultipart (RM.LogfileParsingFileRequest name logfile) =
-      MultipartData [ Input "name" (T.pack name) ]
-                    [ FileData
-                        "logfile"
-                        (T.pack logfile)
-                        "text/plain"
-                        logfile
-                    ]
+  toMultipart (RM.LogfileParsingFileRequest maybeUuid logfile) = do
+      case maybeUuid of
+        Just uuid ->
+          MultipartData [ Input "id" (UUID.toText uuid) ]
+                        [ FileData
+                            "logfile"
+                            (T.pack logfile)
+                            "text/plain"
+                            logfile
+                        ]
+
+        Nothing ->
+          MultipartData [ Input "id" (T.pack "invalid uuid passed") ]
+                        [ FileData
+                            "logfile"
+                            (T.pack logfile)
+                            "text/plain"
+                            logfile
+                        ]
 
 
 instance ToJSON RM.LogfileParser where

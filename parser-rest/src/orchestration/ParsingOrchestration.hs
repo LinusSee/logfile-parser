@@ -106,23 +106,11 @@ applyLogfileParser ( target, (BM.LogfileParser name parsers) ) = do
         parsingResult = LogfileParsing.applyLogfileParser target logfileParser
 
 
-applyLogfileParserToFile :: Configs.FileDbConfig -> (String, FilePath) -> IO BM.LogfileParsingResult
-applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
-  parsers <- LogFileDb.readAll dbConfig
-
+applyLogfileParserToFile :: Configs.FileDbConfig -> (UUID, FilePath) -> IO BM.LogfileParsingResult
+applyLogfileParserToFile dbConfig (uuid, logfilePath) = do
   target <- readFile logfilePath
 
-  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
-
-  case parsingResult of
-    Left err ->
-      return $ BM.LogfileParsingError (show err)
-
-    Right result ->
-      return result
-
-  where byName (BM.LogfileParser name _ ) = name == parserName
+  applyLogfileParserById dbConfig (uuid, target)
 
 
 applyLogfileParserById :: Configs.FileDbConfig -> (UUID, String) -> IO BM.LogfileParsingResult

@@ -15,7 +15,7 @@ module Api
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import Data.Aeson.TH
-import Data.UUID
+import Data.UUID (UUID)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.RequestLogger
@@ -31,6 +31,7 @@ import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 import qualified ValidationOrchestration as ValidationOrchestration
 
+import HttpErrors (Problem(..))
 import qualified ModelMapping as MM
 import qualified RestParserModels as RM
 
@@ -158,22 +159,26 @@ applyLogfileParserHandler request =
 
 
 applyLogfileParserToFileHandler :: Configs.FileDbConfig -> RM.LogfileParsingFileRequest -> Handler RM.LogfileParsingResponse
-applyLogfileParserToFileHandler dbConfig request =
-  case validatedRequest of
-    Right validRequest -> do
-      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (MM.fromRestLogfileParsingFileRequest validRequest)
+applyLogfileParserToFileHandler dbConfig (RM.LogfileParsingFileRequest maybeUuid filePath) =
+  case maybeUuid of
+    Just uuid -> do
+      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (uuid, filePath)
       let response = MM.toRestLogfileParsingResponse result
 
       return response
 
-    Left problem ->
+    Nothing -> do
+      let problem = Problem { problemType = "http://localhost/problems/validation-error"
+                            , title = "Failed to validate request parameters."
+                            , status = 400
+                            , detail = "UUID was in an incorrect format."
+                            , errors = []
+                            }
+
       throwError $ err400
         { errBody = encode problem
         , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
         }
-
-
-  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
 
 
 readAllElementaryParserIdsHandler :: Configs.FileDbConfig -> Handler [RM.ElementaryParserId]

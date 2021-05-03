@@ -17,11 +17,12 @@ module ModelMapping
 , fromDbLogfileParserId
 , fromRestCreateLogfileParserRequest
 , fromRestLogfileParsingRequest
-, fromRestLogfileParsingFileRequest
+-- , fromRestLogfileParsingFileRequest
 , toRestLogfileParsingResponse
 ) where
 
 import Data.Time (TimeOfDay, Day)
+import Data.UUID (UUID)
 
 import qualified BusinessLogicModels as BM
 import qualified DbParserModels as DM
@@ -207,9 +208,9 @@ fromRestLogfileParsingRequest :: RM.LogfileParsingRequest -> (String, BM.Logfile
 fromRestLogfileParsingRequest (RM.LogfileParsingRequest target parser) =
   ( target, fromRestCreateLogfileParserRequest parser)
 
-fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> (String, FilePath)
-fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest name logfilePath) =
-  (name, logfilePath)
+-- fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> (UUID, FilePath)
+-- fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest uuid logfilePath) =
+--   (uuid, logfilePath)
 
 toRestLogfileParsingResponse :: BM.LogfileParsingResult -> RM.LogfileParsingResponse
 toRestLogfileParsingResponse (BM.LogfileParsingResult results) =

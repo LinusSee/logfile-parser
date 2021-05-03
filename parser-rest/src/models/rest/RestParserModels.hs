@@ -24,7 +24,8 @@ import Data.Aeson
 import Servant.Multipart
 import Data.Time (TimeOfDay, Day)
 import Data.Text (Text)
-import Data.UUID
+import Data.UUID (UUID)
+import qualified Data.UUID as UUID
 import qualified Data.Text as T
 
 
@@ -218,7 +219,7 @@ instance FromJSON LogfileParsingRequest where
 
 
 data LogfileParsingFileRequest =
-  LogfileParsingFileRequest { name :: String
+  LogfileParsingFileRequest { uuid :: Maybe UUID
                             , logfile :: FilePath
                             }
   deriving (Show)
@@ -226,7 +227,7 @@ data LogfileParsingFileRequest =
 instance FromMultipart Tmp LogfileParsingFileRequest where
   fromMultipart form =
       LogfileParsingFileRequest
-          <$> fmap T.unpack (lookupInput "name" form)
+          <$> fmap UUID.fromText (lookupInput "id" form)
           <*> fmap fdPayload (lookupFile "logfile" form)
 
 
