@@ -195,13 +195,13 @@ viewLogfileParserDropdownSelect maybeSelectedId parserIds =
     case maybeSelectedId of
         Just selectedId ->
             select
-                [ id "parserSelect", value selectedId.name, onInput SelectLogfileParser ]
-                (List.map (\parserId -> option [ value parserId.name, selected (selectedId.name == parserId.name) ] [ text parserId.name ]) parserIds)
+                [ id "parserSelect", value selectedId.parserId, onInput SelectLogfileParser ]
+                (List.map (\parserId -> option [ value parserId.parserId, selected (selectedId.parserId == parserId.parserId) ] [ text parserId.name ]) parserIds)
 
         Nothing ->
             select
                 [ id "parserSelect", value "", onInput SelectLogfileParser ]
-                (List.map (\parserId -> option [ value parserId.name, selected False ] [ text parserId.name ]) parserIds)
+                (List.map (\parserId -> option [ value parserId.parserId, selected False ] [ text parserId.name ]) parserIds)
 
 
 viewParserApplication : Maybe File -> List (Html Msg)
