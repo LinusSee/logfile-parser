@@ -22,8 +22,8 @@ type Model
 
 type alias ApplyLogfileParserModel =
     { requestState : HttpRequestState
-    , existingParsers : List String
-    , chosenParser : String
+    , existingParsers : List LogfileParser.LogfileParserId
+    , chosenParser : Maybe LogfileParser.LogfileParserId
     , selectedLogfile : Maybe File
     , parsingResult : List (List ( String, String ))
     }
@@ -40,13 +40,13 @@ init session =
     ( ApplyLogfileParser session
         { requestState = Success
         , existingParsers = []
-        , chosenParser = ""
+        , chosenParser = Nothing
         , selectedLogfile = Nothing
         , parsingResult = []
         }
     , Http.get
         { url = "http://localhost:8080/api/parsers/logfile"
-        , expect = Http.expectJson GotLogfileParserNames LogfileParser.logfileParserNamesDecoder
+        , expect = Http.expectJson GotLogfileParserIds LogfileParser.logfileParserIdsDecoder
         }
     )
 
@@ -61,7 +61,7 @@ type Msg
     | LogfileRequested
     | LogfileSelected File
     | ApplyParser
-    | GotLogfileParserNames (Result Http.Error (List String))
+    | GotLogfileParserIds (Result Http.Error (List LogfileParser.LogfileParserId))
     | GotParsingResult (Result Http.Error (List (List ( String, String ))))
 
 
@@ -71,8 +71,8 @@ update msg (ApplyLogfileParser session model) =
         NoMsgYet ->
             ( ApplyLogfileParser session model, Cmd.none )
 
-        SelectLogfileParser selectedName ->
-            ( ApplyLogfileParser session { model | chosenParser = selectedName }
+        SelectLogfileParser selectedId ->
+            ( ApplyLogfileParser session { model | chosenParser = List.head (List.filter (\parserId -> parserId.parserId == selectedId) model.existingParsers) }
             , Cmd.none
             )
 
@@ -89,17 +89,22 @@ update msg (ApplyLogfileParser session model) =
         ApplyParser ->
             case model.selectedLogfile of
                 Just logfile ->
-                    ( ApplyLogfileParser session model
-                    , Http.post
-                        { url = "http://localhost:8080/api/parsers/logfile/apply/file"
-                        , body =
-                            Http.multipartBody
-                                [ Http.stringPart "name" model.chosenParser
-                                , Http.filePart "logfile" logfile
-                                ]
-                        , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
-                        }
-                    )
+                    case model.chosenParser of
+                        Just parserId ->
+                            ( ApplyLogfileParser session model
+                            , Http.post
+                                { url = "http://localhost:8080/api/parsers/logfile/apply/file"
+                                , body =
+                                    Http.multipartBody
+                                        [ Http.stringPart "id" parserId.parserId
+                                        , Http.filePart "logfile" logfile
+                                        ]
+                                , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
+                                }
+                            )
+
+                        Nothing ->
+                            Debug.todo "No parser selected: Should not be possible and the user should be given a message"
 
                 Nothing ->
                     Debug.todo "No file selected: Should not be possible and the user should be given a message"
@@ -114,7 +119,7 @@ update msg (ApplyLogfileParser session model) =
         --     , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
         --     }
         -- )
-        GotLogfileParserNames response ->
+        GotLogfileParserIds response ->
             case response of
                 Ok data ->
                     ( ApplyLogfileParser
@@ -123,8 +128,8 @@ update msg (ApplyLogfileParser session model) =
                         , existingParsers = data
                         , chosenParser =
                             case List.head data of
-                                Just firstName ->
-                                    firstName
+                                Just firstId ->
+                                    Just firstId
 
                                 Nothing ->
                                     model.chosenParser
@@ -177,14 +182,26 @@ view model =
                 )
 
 
-viewLogfileParserDropdown : String -> List String -> Html Msg
-viewLogfileParserDropdown selection parserNames =
+viewLogfileParserDropdown : Maybe LogfileParser.LogfileParserId -> List LogfileParser.LogfileParserId -> Html Msg
+viewLogfileParserDropdown maybeSelectedId parserIds =
     div [ class "input-group", class "input-group--centered-content" ]
         [ label [ for "parserSelect" ] [ text "Parser" ]
-        , select
-            [ id "parserSelect", value selection, onInput SelectLogfileParser ]
-            (List.map (\name -> option [ value name, selected (selection == name) ] [ text name ]) parserNames)
+        , viewLogfileParserDropdownSelect maybeSelectedId parserIds
         ]
+
+
+viewLogfileParserDropdownSelect : Maybe LogfileParser.LogfileParserId -> List LogfileParser.LogfileParserId -> Html Msg
+viewLogfileParserDropdownSelect maybeSelectedId parserIds =
+    case maybeSelectedId of
+        Just selectedId ->
+            select
+                [ id "parserSelect", value selectedId.parserId, onInput SelectLogfileParser ]
+                (List.map (\parserId -> option [ value parserId.parserId, selected (selectedId.parserId == parserId.parserId) ] [ text parserId.name ]) parserIds)
+
+        Nothing ->
+            select
+                [ id "parserSelect", value "", onInput SelectLogfileParser ]
+                (List.map (\parserId -> option [ value parserId.parserId, selected False ] [ text parserId.name ]) parserIds)
 
 
 viewParserApplication : Maybe File -> List (Html Msg)

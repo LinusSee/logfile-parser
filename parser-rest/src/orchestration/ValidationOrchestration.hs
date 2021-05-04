@@ -4,8 +4,7 @@ module ValidationOrchestration
 , validateLogfileParsingRequest
 , validateElementaryParserToCreate
 , validateParsingRequest
-, validateLogfileParsingFileRequest
-, validateParsingUrlRequest
+, validateParsingTarget
 ) where
 
 import Data.Either (isRight, fromLeft)
@@ -73,21 +72,6 @@ validateLogfileParsingRequest request@(RM.LogfileParsingRequest target (RM.Logfi
         logfileParser = RM.LogfileParser name parsers
 
 
-validateLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> Either Problem RM.LogfileParsingFileRequest
-validateLogfileParsingFileRequest request@(RM.LogfileParsingFileRequest parserName logfile) =
-  case isValidRequest of
-    True ->
-      Right request
-
-    False ->
-      Left $ errorsToValidationProblem $
-        Validation.appendError validatedName []
-
-  where validatedName = Validation.validateLogfileParserExists parserName
-        isValidRequest = isRight validatedName
-
-
-
 validateElementaryParserToCreate :: RM.ElementaryParser -> Either Problem RM.ElementaryParser
 validateElementaryParserToCreate parser =
   case isValidParser of
@@ -101,24 +85,21 @@ validateElementaryParserToCreate parser =
         isValidParser = isRight validatedParser
 
 
-validateParsingUrlRequest :: String -> Maybe String -> Either Problem (String, String)
-validateParsingUrlRequest parserName maybeTarget =
+validateParsingTarget :: Maybe String -> Either Problem String
+validateParsingTarget maybeTarget =
   case maybeTarget of
     Just target ->
       case isValidRequest of
         True ->
-          Right (parserName, target)
+          Right target
 
         False ->
           Left $ errorsToValidationProblem $
               ( Validation.appendError validatedTarget
-              . Validation.appendError validatedParserName
               ) []
 
       where validatedTarget = Validation.validateTarget target
-            validatedParserName = Validation.validateElementaryParserExists parserName
-
-            isValidRequest = isRight validatedTarget && isRight validatedParserName
+            isValidRequest = isRight validatedTarget
 
     Nothing ->
       Left $ errorsToValidationProblem

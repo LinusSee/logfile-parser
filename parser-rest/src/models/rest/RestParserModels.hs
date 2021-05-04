@@ -4,6 +4,7 @@
 
 module RestParserModels
 ( ElementaryParser (..)
+, ElementaryParserId (..)
 , CreateElementaryParserRequest
 , ParsingOptions (..)
 , ParserType (..)
@@ -12,6 +13,7 @@ module RestParserModels
 , ParsingResultType (..)
 , NamedElementaryParser (..)
 , LogfileParser (..)
+, LogfileParserId (..)
 , CreateLogfileParserRequest (..)
 , LogfileParsingRequest (..)
 , LogfileParsingFileRequest (..)
@@ -22,10 +24,26 @@ import Data.Aeson
 import Servant.Multipart
 import Data.Time (TimeOfDay, Day)
 import Data.Text (Text)
+import Data.UUID (UUID)
+import qualified Data.UUID as UUID
 import qualified Data.Text as T
 
 
+
+-- ElementaryParser Models
+
+
 type CreateElementaryParserRequest = ElementaryParser
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
+  deriving (Show, Read, Eq)
+
+instance ToJSON ElementaryParserId where
+  toJSON (ElementaryParserId idVal name) = object [ "id" .= idVal, "name" .= name ]
+
 
 data ElementaryParser =
   ElementaryParser { name :: String
@@ -161,6 +179,10 @@ data ParsingResultType =
   deriving (Show, Read, Eq)
 
 
+
+-- Logfile Parser Models
+
+
 type CreateLogfileParserRequest = LogfileParser
 
 
@@ -175,6 +197,17 @@ instance FromJSON LogfileParser where
     LogfileParser <$> o .: "name" <*> o .: "parsers"
 
 
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
+  deriving (Show, Read, Eq)
+
+instance ToJSON LogfileParserId where
+  toJSON (LogfileParserId uuid name) =
+    object [ "id" .= uuid, "name" .= name]
+
+
 data LogfileParsingRequest =
   LogfileParsingRequest { target :: String
                         , parser :: LogfileParser
@@ -186,7 +219,7 @@ instance FromJSON LogfileParsingRequest where
 
 
 data LogfileParsingFileRequest =
-  LogfileParsingFileRequest { name :: String
+  LogfileParsingFileRequest { uuid :: Maybe UUID
                             , logfile :: FilePath
                             }
   deriving (Show)
@@ -194,7 +227,7 @@ data LogfileParsingFileRequest =
 instance FromMultipart Tmp LogfileParsingFileRequest where
   fromMultipart form =
       LogfileParsingFileRequest
-          <$> fmap T.unpack (lookupInput "name" form)
+          <$> fmap UUID.fromText (lookupInput "id" form)
           <*> fmap fdPayload (lookupFile "logfile" form)
 
 

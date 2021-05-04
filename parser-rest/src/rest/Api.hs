@@ -15,6 +15,7 @@ module Api
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson as Aeson
 import Data.Aeson.TH
+import Data.UUID (UUID)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Network.Wai.Middleware.RequestLogger
@@ -30,6 +31,7 @@ import qualified Configs as Configs
 import qualified ParsingOrchestration as Orchestration
 import qualified ValidationOrchestration as ValidationOrchestration
 
+import HttpErrors (Problem(..))
 import qualified ModelMapping as MM
 import qualified RestParserModels as RM
 
@@ -45,18 +47,19 @@ type API =
         (
             ( "logfile" :>
                 (
-                     Get '[JSON] [String]
+                     Get '[JSON] [RM.LogfileParserId]
                 :<|> ReqBody '[JSON] RM.CreateLogfileParserRequest :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
+                :<|> "apply" :> Capture "id" UUID :> QueryParam "target" String :> Get '[JSON] RM.LogfileParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.LogfileParsingRequest :> Post '[JSON] RM.LogfileParsingResponse
                 :<|> "apply" :> "file" :> MultipartForm Tmp RM.LogfileParsingFileRequest :> Post '[JSON] RM.LogfileParsingResponse
                 )
             )
             :<|>
             ( "building-blocks" :> "complex" :>
-                (    Get '[JSON] [RM.ElementaryParser]
+                (    "ids" :> Get '[JSON] [RM.ElementaryParserId]
+                :<|> Get '[JSON] [RM.ElementaryParser]
                 :<|> ReqBody '[JSON] RM.ElementaryParser :> PostCreated '[JSON] NoContent
-                :<|> "apply" :> Capture "parserName" String :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
+                :<|> "apply" :> Capture "id" UUID :> QueryParam "target" String :> Get '[JSON] RM.ElementaryParsingResponse
                 :<|> "apply" :> ReqBody '[JSON] RM.ElementaryParsingRequest :> Post '[JSON] RM.ElementaryParsingResponse
                 )
             )
@@ -80,21 +83,23 @@ api = Proxy
 
 server :: Configs.FileDbConfig -> Server API
 server dbConfig =
-  (    getLogfileParserNames dbConfig
+  (    getLogfileParserIds dbConfig
   :<|> saveLogfileParserHandler dbConfig
-  :<|> applyLogfileParserByName dbConfig
+  :<|> applyLogfileParserById dbConfig
   :<|> applyLogfileParserHandler
   :<|> applyLogfileParserToFileHandler dbConfig
   )
+  :<|> readAllElementaryParserIdsHandler dbConfig
   :<|> readAllElementaryParsersHandler dbConfig
   :<|> saveParserHandler dbConfig
-  :<|> applyParserByNameHandler dbConfig
+  :<|> applyParserByIdHandler dbConfig
   :<|> applyParserHandler
 
 
-getLogfileParserNames ::  Configs.FileDbConfig -> Handler [String]
-getLogfileParserNames dbConfig = do
-  response <- liftIO $ Orchestration.existingLogfileParserNames dbConfig
+getLogfileParserIds ::  Configs.FileDbConfig -> Handler [RM.LogfileParserId]
+getLogfileParserIds dbConfig = do
+  result <- liftIO $ Orchestration.existingLogfileParserIds dbConfig
+  let response = map MM.toRestLogfileParserId result
 
   return response
 
@@ -116,11 +121,11 @@ saveLogfileParserHandler dbConfig request =
   where validatedRequest = ValidationOrchestration.validateCreateLogfileParserRequest request
 
 
-applyLogfileParserByName ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.LogfileParsingResponse
-applyLogfileParserByName dbConfig parserName maybeTarget =
+applyLogfileParserById ::  Configs.FileDbConfig -> UUID -> Maybe String -> Handler RM.LogfileParsingResponse
+applyLogfileParserById dbConfig uuid maybeTarget =
   case validatedParams of
-    Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyLogfileParserByName dbConfig (validParserName, validTarget)
+    Right validTarget -> do
+      result <- liftIO $ Orchestration.applyLogfileParserById dbConfig (uuid, validTarget)
       let response = MM.toRestLogfileParsingResponse result
 
       return response
@@ -131,7 +136,7 @@ applyLogfileParserByName dbConfig parserName maybeTarget =
           , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
           }
 
-    where validatedParams = ValidationOrchestration.validateLogfileParsingUrlRequest parserName maybeTarget
+    where validatedParams = ValidationOrchestration.validateParsingTarget maybeTarget
 
 
 applyLogfileParserHandler :: RM.LogfileParsingRequest -> Handler RM.LogfileParsingResponse
@@ -154,22 +159,34 @@ applyLogfileParserHandler request =
 
 
 applyLogfileParserToFileHandler :: Configs.FileDbConfig -> RM.LogfileParsingFileRequest -> Handler RM.LogfileParsingResponse
-applyLogfileParserToFileHandler dbConfig request =
-  case validatedRequest of
-    Right validRequest -> do
-      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (MM.fromRestLogfileParsingFileRequest validRequest)
+applyLogfileParserToFileHandler dbConfig (RM.LogfileParsingFileRequest maybeUuid filePath) =
+  case maybeUuid of
+    Just uuid -> do
+      result <- liftIO $ Orchestration.applyLogfileParserToFile dbConfig (uuid, filePath)
       let response = MM.toRestLogfileParsingResponse result
 
       return response
 
-    Left problem ->
+    Nothing -> do
+      let problem = Problem { problemType = "http://localhost/problems/validation-error"
+                            , title = "Failed to validate request parameters."
+                            , status = 400
+                            , detail = "UUID was in an incorrect format."
+                            , errors = []
+                            }
+
       throwError $ err400
         { errBody = encode problem
         , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
         }
 
 
-  where validatedRequest = ValidationOrchestration.validateLogfileParsingFileRequest request
+readAllElementaryParserIdsHandler :: Configs.FileDbConfig -> Handler [RM.ElementaryParserId]
+readAllElementaryParserIdsHandler dbConfig = do
+  ids <- liftIO $ Orchestration.existingElementaryParserIds dbConfig
+  let response = map MM.toRestElementaryParserId ids
+
+  return response
 
 
 readAllElementaryParsersHandler ::  Configs.FileDbConfig -> Handler [RM.ElementaryParser]
@@ -198,11 +215,11 @@ saveParserHandler dbConfig parser =
   where validatedParser = ValidationOrchestration.validateElementaryParserToCreate parser
 
 
-applyParserByNameHandler ::  Configs.FileDbConfig -> String -> Maybe String -> Handler RM.ElementaryParsingResponse
-applyParserByNameHandler dbConfig parserName maybeTarget =
-  case validatedParams of
-    Right (validParserName, validTarget) -> do
-      result <- liftIO $ Orchestration.applyElementaryParserByName dbConfig validParserName validTarget
+applyParserByIdHandler ::  Configs.FileDbConfig -> UUID -> Maybe String -> Handler RM.ElementaryParsingResponse
+applyParserByIdHandler dbConfig uuid maybeTarget =
+  case validatedTarget of
+    Right validTarget -> do
+      result <- liftIO $ Orchestration.applyElementaryParserById dbConfig uuid validTarget
       let response = MM.toRestElementaryParsingResponse result
 
       return response
@@ -213,7 +230,7 @@ applyParserByNameHandler dbConfig parserName maybeTarget =
         , errHeaders = [((mk $ pack "Content-Type"), (pack "application/json;charset=utf-8"))]
         }
 
-  where validatedParams = ValidationOrchestration.validateParsingUrlRequest parserName maybeTarget
+  where validatedTarget = ValidationOrchestration.validateParsingTarget maybeTarget
 
 
 

@@ -3,10 +3,12 @@
 module DbParserModels
 ( Entity(..)
 , ElementaryParser(..)
+, ElementaryParserId(..)
 , ParsingOptions(..)
 , ParserType(..)
 , NamedElementaryParser(..)
 , LogfileParser(..)
+, LogfileParserId(..)
 ) where
 
 import Data.UUID
@@ -24,6 +26,12 @@ data ElementaryParser =
                    , parserType :: ParserType
                    }
   deriving (Show, Read, Eq)
+
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
 
 
 data ParsingOptions =
@@ -52,6 +60,13 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [NamedElementaryParser]
                 }
+  deriving (Show, Read, Eq)
+
+
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
   deriving (Show, Read, Eq)
 
 

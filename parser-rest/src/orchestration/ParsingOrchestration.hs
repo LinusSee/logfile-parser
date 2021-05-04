@@ -1,13 +1,15 @@
 module ParsingOrchestration
-( existingLogfileParserNames
+( existingLogfileParserIds
+, existingLogfileParserNames
 , createLogfileParser
+, existingElementaryParserIds
 , existingElementaryParsers
 , createElementaryParser
 , applyElementaryParser
-, applyElementaryParserByName
+, applyElementaryParserById
 , applyLogfileParser
 , applyLogfileParserToFile
-, applyLogfileParserByName
+, applyLogfileParserById
 ) where
 
 import Data.UUID
@@ -23,6 +25,12 @@ import qualified ModelMapping as MM
 
 
 
+existingLogfileParserIds :: Configs.FileDbConfig -> IO [BM.LogfileParserId]
+existingLogfileParserIds dbConfig =
+  fmap (map MM.fromDbLogfileParserId) (LogFileDb.readAllIds dbConfig)
+
+
+-- TODO: Remove when existingLogfileParserIds is finished
 existingLogfileParserNames :: Configs.FileDbConfig -> IO [String]
 existingLogfileParserNames dbConfig = do
   parsers <- LogFileDb.readAll dbConfig
@@ -37,6 +45,11 @@ createLogfileParser dbConfig (BM.LogfileParser name parsers) =
   LogFileDb.save dbConfig (MM.toDbLogfileParser logfileParser)
 
   where logfileParser = BM.LogfileParser name parsers
+
+
+existingElementaryParserIds :: Configs.FileDbConfig -> IO [BM.ElementaryParserId]
+existingElementaryParserIds dbConfig =
+  fmap (map MM.fromDbElementaryParserId) (ElemFileDb.readAllIds dbConfig)
 
 
 existingElementaryParsers :: Configs.FileDbConfig -> IO [BM.ElementaryParser]
@@ -61,20 +74,23 @@ applyElementaryParser ( target, (BM.ElementaryParser name options parser) ) = do
     where parsingResult = ElementaryParsing.applyParser target parser
 
 
-applyElementaryParserByName :: Configs.FileDbConfig -> String -> String -> IO BM.ElementaryParsingResult
-applyElementaryParserByName dbConfig parserName target = do
-  parsers <- fmap (map MM.fromDbElementaryParser) (ElemFileDb.readAll dbConfig)
-  let (BM.ElementaryParser _ _ parser) = head $ filter byName parsers
-  let parsingResult = ElementaryParsing.applyParser target parser
+applyElementaryParserById :: Configs.FileDbConfig -> UUID -> String -> IO BM.ElementaryParsingResult
+applyElementaryParserById dbConfig uuid target = do
+  parser <- fmap (fmap MM.fromDbElementaryParser) (ElemFileDb.readById dbConfig uuid)
+  case parser of
+    Just (BM.ElementaryParser parserName _ parser) -> do
+      let parsingResult = ElementaryParsing.applyParser target parser
 
-  case parsingResult of
-    Left err ->
-      return $ BM.ElementaryParsingResult parserName (BM.ParsingError (show err))
+      case parsingResult of
+        Left err ->
+          return $ BM.ElementaryParsingResult parserName (BM.ParsingError (show err))
 
-    Right result ->
-      return $ BM.ElementaryParsingResult parserName result
+        Right result ->
+          return $ BM.ElementaryParsingResult parserName result
 
-    where byName (BM.ElementaryParser name _ _) = name == parserName
+    Nothing ->
+      -- TODO: Somehow use problem detail (Might need some rethinking in how to generally handle errors)
+      return $ BM.ElementaryParsingResult "Parser not found" (BM.ParsingError ("No parser with UUID " ++ show uuid ++ " was found."))
 
 
 applyLogfileParser :: (String, BM.LogfileParser) -> BM.LogfileParsingResult
@@ -90,36 +106,27 @@ applyLogfileParser ( target, (BM.LogfileParser name parsers) ) = do
         parsingResult = LogfileParsing.applyLogfileParser target logfileParser
 
 
-applyLogfileParserToFile :: Configs.FileDbConfig -> (String, FilePath) -> IO BM.LogfileParsingResult
-applyLogfileParserToFile dbConfig (parserName, logfilePath) = do
-  parsers <- LogFileDb.readAll dbConfig
-
+applyLogfileParserToFile :: Configs.FileDbConfig -> (UUID, FilePath) -> IO BM.LogfileParsingResult
+applyLogfileParserToFile dbConfig (uuid, logfilePath) = do
   target <- readFile logfilePath
 
-  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
-
-  case parsingResult of
-    Left err ->
-      return $ BM.LogfileParsingError (show err)
-
-    Right result ->
-      return result
-
-  where byName (BM.LogfileParser name _ ) = name == parserName
+  applyLogfileParserById dbConfig (uuid, target)
 
 
-applyLogfileParserByName :: Configs.FileDbConfig -> (String, String) -> IO BM.LogfileParsingResult
-applyLogfileParserByName dbConfig (parserName, target) = do
-  parsers <- LogFileDb.readAll dbConfig
-  let parser = head $ filter byName (map MM.fromDbLogfileParser parsers)
-  let parsingResult = LogfileParsing.applyLogfileParser target parser
+applyLogfileParserById :: Configs.FileDbConfig -> (UUID, String) -> IO BM.LogfileParsingResult
+applyLogfileParserById dbConfig (uuid, target) = do
+  maybeParser <- LogFileDb.readById dbConfig uuid
 
-  case parsingResult of
-    Left err ->
-      return $ BM.LogfileParsingError (show err)
+  case maybeParser of
+    Just parser -> do
+      let parsingResult = LogfileParsing.applyLogfileParser target (MM.fromDbLogfileParser parser)
 
-    Right result ->
-      return result
+      case parsingResult of
+        Left err ->
+          return $ BM.LogfileParsingError (show err)
 
-  where byName (BM.LogfileParser name _ ) = name == parserName
+        Right result ->
+          return result
+
+    Nothing ->
+      return $ BM.LogfileParsingError ("No logfile parser found with uuid [" ++ show uuid ++ "]")

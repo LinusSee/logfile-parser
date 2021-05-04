@@ -3,21 +3,26 @@
 
 module ModelMapping
 ( fromDbElementaryParser
+, fromDbElementaryParserId
 , toDbElementaryParser
 , fromDbLogfileParser
 , toDbLogfileParser
 , fromRestElementaryParser
 , fromElementaryParsingRequest
 , toRestElementaryParser
+, toRestElementaryParserId
 , toRestElementaryParsingResponse
 , fromRestLogfileParser
+, toRestLogfileParserId
+, fromDbLogfileParserId
 , fromRestCreateLogfileParserRequest
 , fromRestLogfileParsingRequest
-, fromRestLogfileParsingFileRequest
+-- , fromRestLogfileParsingFileRequest
 , toRestLogfileParsingResponse
 ) where
 
 import Data.Time (TimeOfDay, Day)
+import Data.UUID (UUID)
 
 import qualified BusinessLogicModels as BM
 import qualified DbParserModels as DM
@@ -31,6 +36,11 @@ fromDbElementaryParser (DM.ElementaryParser name options parserType) =
           name
           (fromDbParsingOptions options)
           (fromDbParserType parserType)
+
+
+fromDbElementaryParserId :: DM.ElementaryParserId -> BM.ElementaryParserId
+fromDbElementaryParserId (DM.ElementaryParserId uuid name) =
+  BM.ElementaryParserId uuid name
 
 
 fromDbParsingOptions :: DM.ParsingOptions -> BM.ParsingOptions
@@ -78,6 +88,10 @@ toDbParserType parserType =
 fromDbLogfileParser :: DM.LogfileParser -> BM.LogfileParser
 fromDbLogfileParser (DM.LogfileParser name namedParsers) =
   BM.LogfileParser name (map fromDbNamedParser namedParsers)
+
+fromDbLogfileParserId :: DM.LogfileParserId -> BM.LogfileParserId
+fromDbLogfileParserId (DM.LogfileParserId uuid name) =
+  BM.LogfileParserId uuid name
 
 fromDbNamedParser :: DM.NamedElementaryParser -> BM.NamedElementaryParser
 fromDbNamedParser (DM.NamedElementaryParser name parser) =
@@ -129,6 +143,11 @@ toRestElementaryParser (BM.ElementaryParser name options parserType) =
           (toRestParsingOptions options)
           (toRestParserType parserType)
 
+toRestElementaryParserId :: BM.ElementaryParserId -> RM.ElementaryParserId
+toRestElementaryParserId (BM.ElementaryParserId uuid name) =
+  RM.ElementaryParserId uuid name
+
+
 toRestParsingOptions :: BM.ParsingOptions -> RM.ParsingOptions
 toRestParsingOptions options = RM.ParsingOptions { RM.keepResult = BM.keepResult options }
 
@@ -171,6 +190,10 @@ fromRestLogfileParser (RM.LogfileParser name namedParsers) =
             name
             (map fromRestNamedParser namedParsers)
 
+toRestLogfileParserId :: BM.LogfileParserId -> RM.LogfileParserId
+toRestLogfileParserId (BM.LogfileParserId uuid name) =
+  RM.LogfileParserId uuid name
+
 fromRestCreateLogfileParserRequest :: RM.CreateLogfileParserRequest -> BM.LogfileParser
 fromRestCreateLogfileParserRequest = fromRestLogfileParser
 
@@ -185,9 +208,9 @@ fromRestLogfileParsingRequest :: RM.LogfileParsingRequest -> (String, BM.Logfile
 fromRestLogfileParsingRequest (RM.LogfileParsingRequest target parser) =
   ( target, fromRestCreateLogfileParserRequest parser)
 
-fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> (String, FilePath)
-fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest name logfilePath) =
-  (name, logfilePath)
+-- fromRestLogfileParsingFileRequest :: RM.LogfileParsingFileRequest -> (UUID, FilePath)
+-- fromRestLogfileParsingFileRequest (RM.LogfileParsingFileRequest uuid logfilePath) =
+--   (uuid, logfilePath)
 
 toRestLogfileParsingResponse :: BM.LogfileParsingResult -> RM.LogfileParsingResponse
 toRestLogfileParsingResponse (BM.LogfileParsingResult results) =

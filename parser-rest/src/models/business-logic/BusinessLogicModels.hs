@@ -2,16 +2,19 @@
 
 module BusinessLogicModels
 ( ElementaryParser (..)
+, ElementaryParserId (..)
 , ParsingOptions (..)
 , ParserType (..)
 , ElementaryParsingResult (..)
 , ParsingResultType (..)
 , LogfileParser (..)
+, LogfileParserId (..)
 , NamedElementaryParser (..)
 , LogfileParsingResult (..)
 ) where
 
 import Data.Time (TimeOfDay, Day)
+import Data.UUID
 
 
 data ElementaryParser =
@@ -20,6 +23,12 @@ data ElementaryParser =
                    , parserType :: ParserType
                    }
   deriving (Show, Read, Eq)
+
+
+data ElementaryParserId =
+  ElementaryParserId { id :: UUID
+                     , name :: String
+                     }
 
 
 data ParsingOptions =
@@ -48,6 +57,13 @@ data LogfileParser =
   LogfileParser { name :: String
                 , namedParsers :: [NamedElementaryParser]
                 }
+  deriving (Show, Read, Eq)
+
+
+data LogfileParserId =
+  LogfileParserId { id :: UUID
+                  , name :: String
+                  }
   deriving (Show, Read, Eq)
 
 

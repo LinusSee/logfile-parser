@@ -23,8 +23,8 @@ type Model
 type alias CreateParserModel =
     { requestState : HttpRequestState
     , createForm : PageModels.ParserFormData
-    , existingParsers : List ElementaryParser.ElementaryParser
-    , parserToApply : String
+    , existingParsers : List ElementaryParser.ElementaryParserId
+    , parserToApply : Maybe ElementaryParser.ElementaryParserId
     , stringToParse : String
     , parsingResult : ( String, String )
     , problems : List ValidationProblem
@@ -58,7 +58,7 @@ init session =
             , name = ""
             , parsingOptions = defaultParsingOptions
             }
-        , parserToApply = ""
+        , parserToApply = Nothing
         , stringToParse = ""
         , parsingResult = ( "", "" )
         , existingParsers = []
@@ -66,8 +66,8 @@ init session =
         }
     , Cmd.batch
         [ Http.get
-            { url = "http://localhost:8080/api/parsers/building-blocks/complex"
-            , expect = Http.expectJson GotElementaryParsers ElementaryParser.parsersDataDecoder
+            { url = "http://localhost:8080/api/parsers/building-blocks/complex/ids"
+            , expect = Http.expectJson GotElementaryParsers ElementaryParser.parserIdsDecoder
             }
         ]
     )
@@ -78,7 +78,7 @@ init session =
 
 
 type Msg
-    = GotElementaryParsers (Result Http.Error (List ElementaryParser.ElementaryParser))
+    = GotElementaryParsers (Result Http.Error (List ElementaryParser.ElementaryParserId))
     | PostedParser (Result Http.Error ())
     | ChangeForm FormChanged String
     | ChoseParserToApply String
@@ -115,13 +115,7 @@ update msg (CreateParser session model) =
                                     , name = ""
                                     , parsingOptions = defaultParsingOptions
                                     }
-                                , parserToApply =
-                                    case List.head data of
-                                        Just (ElementaryParser.ElementaryParser name _ _) ->
-                                            name
-
-                                        Nothing ->
-                                            ""
+                                , parserToApply = List.head data
                                 , stringToParse = ""
                                 , parsingResult = ( "", "" )
                                 , existingParsers = data
@@ -201,8 +195,8 @@ update msg (CreateParser session model) =
                             , Cmd.none
                             )
 
-        ChoseParserToApply selection ->
-            ( CreateParser session { model | parserToApply = selection }, Cmd.none )
+        ChoseParserToApply selectedId ->
+            ( CreateParser session { model | parserToApply = List.head (List.filter (\parserId -> parserId.parserId == selectedId) model.existingParsers) }, Cmd.none )
 
         ChangeParsingContent value ->
             ( CreateParser session { model | stringToParse = value }, Cmd.none )
@@ -368,13 +362,18 @@ viewProblems problems =
                 )
 
 
-viewParserApplication : String -> List ElementaryParser.ElementaryParser -> String -> Html Msg
-viewParserApplication selection parsers stringToParse =
+viewParserApplication : Maybe ElementaryParser.ElementaryParserId -> List ElementaryParser.ElementaryParserId -> String -> Html Msg
+viewParserApplication maybeSelection parserIds stringToParse =
     article [ class "article" ]
         [ h2 [ class "header2--centered" ] [ text "Test existing parsers" ]
         , div [ class "input-group", class "input-group--centered-content" ]
             [ label [] [ text "Parser" ]
-            , select [ value selection, onInput ChoseParserToApply ] (List.map (parserToOption selection) parsers)
+            , case maybeSelection of
+                Just selection ->
+                    select [ value selection.parserId, onInput ChoseParserToApply ] (List.map (parserToOption selection.parserId) parserIds)
+
+                Nothing ->
+                    select [ value "", onInput ChoseParserToApply ] (List.map (parserToOption "") parserIds)
             ]
         , div [ class "input-group", class "input-group--centered-content" ]
             [ label [] [ text "Target" ]
@@ -385,9 +384,9 @@ viewParserApplication selection parsers stringToParse =
         ]
 
 
-parserToOption : String -> ElementaryParser.ElementaryParser -> Html Msg
-parserToOption selection (ElementaryParser.ElementaryParser name _ _) =
-    option [ value name, selected (selection == name) ] [ text name ]
+parserToOption : String -> ElementaryParser.ElementaryParserId -> Html Msg
+parserToOption selection parserId =
+    option [ value parserId.parserId, selected (selection == parserId.parserId) ] [ text parserId.name ]
 
 
 viewParsingOptions : ElementaryParser.ParsingOptions -> Html Msg
@@ -567,11 +566,16 @@ postParser formData =
 
 getApplyParser : CreateParserModel -> Cmd Msg
 getApplyParser model =
-    Http.get
-        { url =
-            UrlBuilder.crossOrigin
-                "http://localhost:8080/api/parsers/building-blocks/complex/apply"
-                [ model.parserToApply ]
-                [ UrlBuilder.string "target" model.stringToParse ]
-        , expect = Http.expectJson GotParserApplicationResult ParserApplication.parserApplicationDecoder
-        }
+    case model.parserToApply of
+        Just parserId ->
+            Http.get
+                { url =
+                    UrlBuilder.crossOrigin
+                        "http://localhost:8080/api/parsers/building-blocks/complex/apply"
+                        [ parserId.parserId ]
+                        [ UrlBuilder.string "target" model.stringToParse ]
+                , expect = Http.expectJson GotParserApplicationResult ParserApplication.parserApplicationDecoder
+                }
+
+        Nothing ->
+            Debug.todo "No parser selected: Should not be possible and the user should be given a message"

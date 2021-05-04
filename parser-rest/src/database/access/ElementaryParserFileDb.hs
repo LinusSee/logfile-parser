@@ -1,9 +1,12 @@
 module ElementaryParserFileDb
-  ( readAll
+  ( readById
+  , readAllIds
+  , readAll
   , save
   ) where
 
 import qualified Data.Text as T
+import qualified Data.List as List
 import Control.Monad (when)
 import Data.UUID
 import Data.UUID.V4 (nextRandom)
@@ -12,6 +15,23 @@ import qualified Configs as Configs
 
 import qualified DbParserModels as DM
 
+
+
+readById :: Configs.FileDbConfig -> UUID -> IO (Maybe DM.ElementaryParser)
+readById dbConfig uuid = do
+  entities <- readAllEntities dbConfig
+  return $ fmap extractParser (List.find (matchesId uuid) entities)
+
+  where matchesId targetUuid (DM.Entity currentUuid _) = targetUuid == currentUuid
+        extractParser (DM.Entity _ parser) = parser
+
+
+readAllIds :: Configs.FileDbConfig -> IO [DM.ElementaryParserId]
+readAllIds dbConfig = do
+  entities <- readAllEntities dbConfig
+  return $ map extractIdAndName entities
+
+  where extractIdAndName = \(DM.Entity uuid (DM.ElementaryParser name _ _)) -> DM.ElementaryParserId uuid name
 
 
 readAll :: Configs.FileDbConfig -> IO ([DM.ElementaryParser])

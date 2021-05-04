@@ -30,6 +30,29 @@
 					"response": []
 				},
 				{
+					"name": "Get all elementary parser IDs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8080/api/parsers/building-blocks/complex/ids",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"parsers",
+								"building-blocks",
+								"complex",
+								"ids"
+							]
+						},
+						"description": "Retrieves the IDs and names for all existing elementary parsers."
+					},
+					"response": []
+				},
+				{
 					"name": "Create applied elementary parser",
 					"request": {
 						"method": "POST",
@@ -60,12 +83,12 @@
 					"response": []
 				},
 				{
-					"name": "Apply parser by name to target string",
+					"name": "Apply parser by id to target string",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost:8080/api/parsers/building-blocks/complex/apply/Time Parser?target=11-30",
+							"raw": "localhost:8080/api/parsers/building-blocks/complex/apply/:uuid?target=11-30",
 							"host": [
 								"localhost"
 							],
@@ -76,12 +99,18 @@
 								"building-blocks",
 								"complex",
 								"apply",
-								"Time Parser"
+								":uuid"
 							],
 							"query": [
 								{
 									"key": "target",
 									"value": "11-30"
+								}
+							],
+							"variable": [
+								{
+									"key": "uuid",
+									"value": "16d535ce-caf7-4678-84e6-2f55084af824"
 								}
 							]
 						}
@@ -181,7 +210,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "localhost:8080/api/parsers/logfile/apply/DateTimeParser?target=2000-10-1111:30",
+							"raw": "localhost:8080/api/parsers/logfile/apply/5eb87e69-94f9-48c5-9b20-057bf827f101?target=2000-10-11 11:30",
 							"host": [
 								"localhost"
 							],
@@ -191,12 +220,12 @@
 								"parsers",
 								"logfile",
 								"apply",
-								"DateTimeParser"
+								"5eb87e69-94f9-48c5-9b20-057bf827f101"
 							],
 							"query": [
 								{
 									"key": "target",
-									"value": "2000-10-1111:30"
+									"value": "2000-10-11 11:30"
 								}
 							]
 						}
@@ -249,7 +278,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "--foo_bar_baz\r\nContent-Disposition: form-data; name=\"name\"\r\n\r\nLoglevelDateTime\r\n--foo_bar_baz\r\nContent-Disposition: form-data; name=\"logfile\"; filename=\"mylogfile.log\"\r\nContent-Type: text/plain\r\n\r\nDEBUG 2021-02-20 11:31\r\nINFO 2021-02-21 13:14\r\nINFO 2021-02-21 19:48\r\nERROR 2021-02-22 20:31\r\n--foo_bar_baz--"
+							"raw": "--foo_bar_baz\r\nContent-Disposition: form-data; name=\"id\"\r\n\r\n4985cbb8-ba24-4759-b9d0-fb745ec01e0a\r\n--foo_bar_baz\r\nContent-Disposition: form-data; name=\"logfile\"; filename=\"mylogfile.log\"\r\nContent-Type: text/plain\r\n\r\nDEBUG 2021-02-20 11:31\r\nINFO 2021-02-21 13:14\r\nINFO 2021-02-21 19:48\r\nERROR 2021-02-22 20:31\r\n--foo_bar_baz--"
 						},
 						"url": {
 							"raw": "localhost:8080/api/parsers/logfile/apply/file",
