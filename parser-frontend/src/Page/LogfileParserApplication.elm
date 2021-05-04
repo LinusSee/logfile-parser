@@ -96,7 +96,7 @@ update msg (ApplyLogfileParser session model) =
                                 { url = "http://localhost:8080/api/parsers/logfile/apply/file"
                                 , body =
                                     Http.multipartBody
-                                        [ Http.stringPart "name" parserId.name
+                                        [ Http.stringPart "id" parserId.parserId
                                         , Http.filePart "logfile" logfile
                                         ]
                                 , expect = Http.expectJson GotParsingResult ParserApplication.logfileParserApplicationDecoder
